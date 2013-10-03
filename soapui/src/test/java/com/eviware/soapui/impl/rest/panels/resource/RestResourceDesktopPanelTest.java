@@ -41,11 +41,6 @@ public class RestResourceDesktopPanelTest
 
 		childResource = parentResource.addNewChildResource( "child", "the_child" );
 		resourceDesktopPanel = new RestResourceDesktopPanel( childResource );
-
-		RestParamsPropertyHolder params = childResource.getParams();
-		params.addProperty( PARAM_1 );
-		params.addProperty( PARAM_2 );
-		params.addProperty( PARAM_3 );
 	}
 
 	@Test
@@ -65,10 +60,12 @@ public class RestResourceDesktopPanelTest
 		assertThat( parentResource.getPath(), is( originalParentPath ) );
 	}
 
+
+
 	@Test
 	public void allowsToDeleteParameterAfterParameterLevelChange() throws SoapUIException
 	{
-		RestParamsPropertyHolder params = childResource.getParams();
+		RestParamsPropertyHolder params = addParamsToChildResource();
 
 		JTable parameterTable = getRestParameterTable();
 		RestRequestDesktopPanel requestDesktopPanel =
@@ -86,9 +83,10 @@ public class RestResourceDesktopPanelTest
 	public void doesNotMoveTheParameterToMethodOnParamLocationChangeToMethodWhenListenersNotAttached()
 			throws SoapUIException
 	{
+		RestParamsPropertyHolder params = addParamsToChildResource();
 		JTable parameterTable = getRestParameterTable();
 		parameterTable.setValueAt( METHOD, 0, RestParamsTableModel.PARAM_LOCATION_COLUMN_INDEX );
-		String param1StillExists = ( String )parameterTable.getValueAt( 0, 0 );
+		String param1StillExists =  (String)parameterTable.getValueAt( 0, 0 );
 		assertThat( param1StillExists, Is.is( PARAM_1 ) );
 	}
 
@@ -104,6 +102,15 @@ public class RestResourceDesktopPanelTest
 		RestRequest restRequest = ModelItemFactory.makeRestRequest( childResource );
 		restRequest.setMethod( RestRequestInterface.RequestMethod.GET );
 		return new RestRequestDesktopPanel( restRequest );
+	}
+
+	private RestParamsPropertyHolder addParamsToChildResource()
+	{
+		RestParamsPropertyHolder params = childResource.getParams();
+		params.addProperty( PARAM_1 );
+		params.addProperty( PARAM_2 );
+		params.addProperty( PARAM_3 );
+		return params;
 	}
 
 	private JTable getRestParameterTable()
