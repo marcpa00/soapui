@@ -38,7 +38,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -176,6 +175,7 @@ public class SoapUI
 	public static final String PROXY_ENABLED_ICON = "/proxyEnabled.png";
 	public static final String PROXY_DISABLED_ICON = "/proxyDisabled.png";
 	public static final String BUILDINFO_PROPERTIES = "/buildinfo.properties";
+	private static final int DEFAULT_MAX_THREADPOOL_SIZE = 200;
 
 	@SuppressWarnings("deprecation")
 	public static String PUSH_PAGE_URL = "http://soapui.org/Appindex/soapui-starterpage.html?version="
@@ -202,8 +202,6 @@ public class SoapUI
 	private static TestMonitor testMonitor;
 
 	private JMenu desktopMenu;
-	private JMenu helpMenu;
-	private JMenu fileMenu;
 	private static JMenuBar menuBar;
 	private JDesktopPanelsList desktopPanelsList;
 
@@ -211,7 +209,6 @@ public class SoapUI
 	private static Boolean launchedTestRunner = false;
 
 	private JPanel overviewPanel;
-	private JMenu toolsMenu;
 	private boolean saveOnExit = true;
 	private InternalDesktopListener internalDesktopListener = new InternalDesktopListener();
 	private JInspectorPanel mainInspector;
@@ -225,13 +222,10 @@ public class SoapUI
 	private static GCTimerTask gcTimerTask;
 
 	private final static ThreadPoolExecutor threadPool = ( ThreadPoolExecutor )Executors.newFixedThreadPool(
-			getSystemPropertyAsInt( "soapui.threadpool.max", 200 ), new SoapUIThreadCreator() );
+			getMaxThreadpoolSize(), new SoapUIThreadCreator() );
 	private JTextField searchField;
 	private static JToggleButton applyProxyButton;
 	private static Logger groovyLogger;
-	private static Logger loadUILogger;
-	@SuppressWarnings("unused")
-	private static JButton launchLoadUIButton;
 	private static CmdLineRunner soapUIRunner;
 
 	// --------------------------- CONSTRUCTORS ---------------------------
@@ -269,26 +263,20 @@ public class SoapUI
 		return "UNKNOWN VERSION";
 	}
 
-	private static int getSystemPropertyAsInt( String string, int defaultValue )
+	private static int getMaxThreadpoolSize()
 	{
-
-		String strValue = System.getProperty( "soapui.threadpool.max" );
-		int parseInt = defaultValue;
 		try
 		{
-			parseInt = Integer.parseInt( strValue );
+			return Integer.parseInt( System.getProperty( "soapui.threadpool.max" ) );
 		}
 		catch( Exception e )
 		{
-			// Ignore, return default
+			return DEFAULT_MAX_THREADPOOL_SIZE;
 		}
-
-		return parseInt;
 	}
 
 	private void buildUI()
 	{
-		// display used java version
 		log.info( "Used java version: " + System.getProperty( "java.version" ) );
 		frame.addWindowListener( new MainFrameWindowListener() );
 		UISupport.setMainFrame( frame );
@@ -365,7 +353,7 @@ public class SoapUI
 			applyProxyButton.setIcon( UISupport.createImageIcon( PROXY_DISABLED_ICON ) );
 			ProxyUtils.setProxyEnabled( false );
 		}
-		launchLoadUIButton = mainToolbar.add( new LaunchLoadUIButtonAction() );
+		mainToolbar.add( new LaunchLoadUIButtonAction() );
 
 		mainToolbar.addGlue();
 
@@ -453,7 +441,7 @@ public class SoapUI
 
 	private JMenu buildHelpMenu()
 	{
-		helpMenu = new JMenu( "Help" );
+		JMenu helpMenu = new JMenu( "Help" );
 		helpMenu.setMnemonic( KeyEvent.VK_H );
 
 		helpMenu.add( new ShowPushPageAction() );
@@ -478,7 +466,7 @@ public class SoapUI
 
 	private JMenu buildToolsMenu()
 	{
-		toolsMenu = new JMenu( "Tools" );
+		JMenu toolsMenu = new JMenu( "Tools" );
 		toolsMenu.setMnemonic( KeyEvent.VK_T );
 
 		toolsMenu.add( SwingActionDelegate.createDelegate( WSToolsWsdl2JavaAction.SOAPUI_ACTION_ID ) );
@@ -510,7 +498,7 @@ public class SoapUI
 
 	private JMenu buildFileMenu()
 	{
-		fileMenu = new JMenu( "File" );
+		JMenu fileMenu = new JMenu( "File" );
 		fileMenu.setMnemonic( KeyEvent.VK_F );
 
 		ActionList actions = ActionListBuilder.buildActions( workspace );
@@ -681,7 +669,7 @@ public class SoapUI
 					brandedTitleExt = "";
 				}
 
-				startSoapUI( mainArgs, "soapUI " + SOAPUI_VERSION + " " + brandedTitleExt, SOAPUI_SPLASH,
+				startSoapUI( mainArgs, "soapUI " + SOAPUI_VERSION + " " + brandedTitleExt,
 						new StandaloneSoapUICore( true ) );
 
 				if( isAutoUpdateVersion() )
@@ -790,7 +778,7 @@ public class SoapUI
 		return mainArgs;
 	}
 
-	public static SoapUI startSoapUI( String[] args, String title, String splashImage, SwingSoapUICore core )
+	public static SoapUI startSoapUI( String[] args, String title, SwingSoapUICore core )
 			throws Exception
 	{
 		System.setProperty( "apple.laf.useScreenMenuBar", "true" );
@@ -818,7 +806,7 @@ public class SoapUI
 		CommandLineParser parser = new PosixParser();
 		CommandLine cmd = parser.parse( options, args );
 
-		if( !processCommandLineArgs( cmd, options ) )
+		if( !processCommandLineArgs( cmd ) )
 		{
 			System.exit( 1 );
 		}
@@ -830,11 +818,11 @@ public class SoapUI
 		}
 		else
 		{
-			String wsfile = soapUICore.getSettings().getString( CURRENT_SOAPUI_WORKSPACE,
+			String workspaceFile = soapUICore.getSettings().getString( CURRENT_SOAPUI_WORKSPACE,
 					System.getProperty( "user.home" ) + File.separatorChar + DEFAULT_WORKSPACE_FILE );
 			try
 			{
-				workspace = WorkspaceFactory.getInstance().openWorkspace( wsfile, projectOptions );
+				workspace = WorkspaceFactory.getInstance().openWorkspace( workspaceFile, projectOptions );
 			}
 			catch( Exception e )
 			{
@@ -842,8 +830,8 @@ public class SoapUI
 				if( UISupport
 						.confirm( "Failed to open workspace: [" + e.toString() + "], create new one instead?", "Error" ) )
 				{
-					new File( wsfile ).renameTo( new File( wsfile + ".bak" ) );
-					workspace = WorkspaceFactory.getInstance().openWorkspace( wsfile, projectOptions );
+					new File( workspaceFile ).renameTo( new File( workspaceFile + ".bak" ) );
+					workspace = WorkspaceFactory.getInstance().openWorkspace( workspaceFile, projectOptions );
 				}
 				else
 				{
@@ -884,7 +872,7 @@ public class SoapUI
 					URL url = new URL( arg );
 					SwingUtilities.invokeLater( new RestProjectCreator( url ) );
 				}
-				catch( Exception e )
+				catch( Exception ignore )
 				{
 				}
 			}
@@ -892,7 +880,7 @@ public class SoapUI
 		return soapUI;
 	}
 
-	private static boolean processCommandLineArgs( CommandLine cmd, org.apache.commons.cli.Options options )
+	private static boolean processCommandLineArgs( CommandLine cmd )
 	{
 		if( cmd.hasOption( 'w' ) )
 		{
@@ -1063,10 +1051,7 @@ public class SoapUI
 
 	public static boolean isJXBrowserDisabled( boolean allowNative )
 	{
-		if( UISupport.isHeadless() )
-			return true;
-
-		if( isCommandLine() )
+		if( UISupport.isHeadless() || isCommandLine())
 			return true;
 
 		String disable = System.getProperty( "soapui.jxbrowser.disable", "nope" );
@@ -1076,15 +1061,13 @@ public class SoapUI
 		if( getSoapUICore() != null && getSettings().getBoolean( UISettings.DISABLE_BROWSER ) )
 			return true;
 
-		if( !disable.equals( "false" ) && allowNative == true
+		if( !disable.equals( "false" ) && allowNative
 				&& ( BrowserType.Mozilla.isSupported() || BrowserType.IE.isSupported() || BrowserType.Safari.isSupported() ) )
 			return false;
 
-		if( !disable.equals( "false" )
-				&& ( !PlatformContext.isMacOS() && "64".equals( System.getProperty( "sun.arch.data.model" ) ) ) )
-			return true;
+		return !disable.equals( "false" )
+				&& ( !PlatformContext.isMacOS() && "64".equals( System.getProperty( "sun.arch.data.model" ) ) );
 
-		return false;
 	}
 
 	public static boolean isJXBrowserPluginsDisabled()
@@ -1108,7 +1091,7 @@ public class SoapUI
 		if( msg == null )
 			msg = e.toString();
 
-		log.error( "An error occured [" + msg + "], see error log for details" );
+		log.error( "An error occurred [" + msg + "], see error log for details" );
 
 		try
 		{
@@ -1299,15 +1282,15 @@ public class SoapUI
 				if( p != null )
 				{
 					InputStream is = p.getInputStream();
-					loadUILogger = Logger.getLogger( "com.eviware.soapui" );
+					Logger soapUILogger = Logger.getLogger( "com.eviware.soapui" );
 					try
 					{
 						BufferedInputStream inputStream = new BufferedInputStream( is );
 						BufferedReader bris = new BufferedReader( new InputStreamReader( inputStream ) );
-						String line = null;
+						String line;
 						while( ( line = bris.readLine() ) != null )
 						{
-							loadUILogger.info( line );
+							soapUILogger.info( line );
 						}
 						inputStream.close();
 						bris.close();
@@ -1786,10 +1769,10 @@ public class SoapUI
 				public void run()
 				{
 					SoapUI.log( "Autosaving Workspace" );
-					WorkspaceImpl wrkspc = ( WorkspaceImpl )SoapUI.getWorkspace();
-					if( wrkspc != null )
+					WorkspaceImpl workspaceImplementation = ( WorkspaceImpl )SoapUI.getWorkspace();
+					if( workspaceImplementation != null )
 					{
-						wrkspc.save( false, true );
+						workspaceImplementation.save( false, true );
 					}
 				}
 			} );
