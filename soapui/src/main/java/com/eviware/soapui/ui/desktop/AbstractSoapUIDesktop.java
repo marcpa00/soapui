@@ -12,9 +12,8 @@
 
 package com.eviware.soapui.ui.desktop;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.impl.wsdl.teststeps.WsdlGroovyScriptTestStep;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.iface.Interface;
 import com.eviware.soapui.model.iface.Operation;
@@ -35,6 +34,9 @@ import com.eviware.soapui.model.testsuite.TestSuite;
 import com.eviware.soapui.model.workspace.Workspace;
 import com.eviware.soapui.security.SecurityTest;
 import com.eviware.soapui.support.action.swing.ActionList;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Abstract SoapUIDesktop implementation for extension
@@ -195,7 +197,23 @@ public abstract class AbstractSoapUIDesktop implements SoapUIDesktop
 			mockService.removeMockServiceListener( mockServiceListener );
 			closeDependantPanels( mockService );
 		}
-	}
+
+        public void beforeSave(Project project) {
+            SoapUI.log.info("In beforeSave(" + project.getName()+")");
+            for (TestSuite testSuite : project.getTestSuiteList()) {
+                for (TestCase testCase : testSuite.getTestCaseList()) {
+                    for (TestStep testStep : testCase.getTestStepList()) {
+                        SoapUI.log.info("checking test step '"+ testStep.getName() + "' for external file attribute...");
+                        SoapUI.log.info("  testStep.class : " + testStep.getClass().getSimpleName());
+                        if (testStep instanceof WsdlGroovyScriptTestStep) {
+                            WsdlGroovyScriptTestStep step = (WsdlGroovyScriptTestStep) testStep;
+                            step.saveToExternalFile();
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 	private class InternalInterfaceListener extends InterfaceListenerAdapter
 	{

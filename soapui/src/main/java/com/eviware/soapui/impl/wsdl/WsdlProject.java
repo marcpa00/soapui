@@ -12,6 +12,82 @@
 
 package com.eviware.soapui.impl.wsdl;
 
+import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.config.InterfaceConfig;
+import com.eviware.soapui.config.MockServiceConfig;
+import com.eviware.soapui.config.MockServiceDocumentConfig;
+import com.eviware.soapui.config.ProjectConfig;
+import com.eviware.soapui.config.SecurityTestConfig;
+import com.eviware.soapui.config.SoapuiProjectDocumentConfig;
+import com.eviware.soapui.config.TestCaseConfig;
+import com.eviware.soapui.config.TestStepSecurityTestConfig;
+import com.eviware.soapui.config.TestSuiteConfig;
+import com.eviware.soapui.config.TestSuiteDocumentConfig;
+import com.eviware.soapui.config.TestSuiteRunTypesConfig;
+import com.eviware.soapui.config.TestSuiteRunTypesConfig.Enum;
+import com.eviware.soapui.impl.WorkspaceImpl;
+import com.eviware.soapui.impl.WsdlInterfaceFactory;
+import com.eviware.soapui.impl.rest.support.RestRequestConverter.RestConversionException;
+import com.eviware.soapui.impl.settings.XmlBeansSettingsImpl;
+import com.eviware.soapui.impl.support.AbstractInterface;
+import com.eviware.soapui.impl.support.EndpointSupport;
+import com.eviware.soapui.impl.wsdl.endpoint.DefaultEndpointStrategy;
+import com.eviware.soapui.impl.wsdl.mock.WsdlMockService;
+import com.eviware.soapui.impl.wsdl.support.ExternalDependency;
+import com.eviware.soapui.impl.wsdl.support.PathUtils;
+import com.eviware.soapui.impl.wsdl.support.wsdl.UrlWsdlLoader;
+import com.eviware.soapui.impl.wsdl.support.wsdl.WsdlLoader;
+import com.eviware.soapui.impl.wsdl.support.wss.DefaultWssContainer;
+import com.eviware.soapui.impl.wsdl.testcase.WsdlProjectRunner;
+import com.eviware.soapui.impl.wsdl.teststeps.WsdlGroovyScriptTestStep;
+import com.eviware.soapui.model.ModelItem;
+import com.eviware.soapui.model.environment.DefaultEnvironment;
+import com.eviware.soapui.model.environment.Environment;
+import com.eviware.soapui.model.environment.EnvironmentListener;
+import com.eviware.soapui.model.environment.Property;
+import com.eviware.soapui.model.iface.Interface;
+import com.eviware.soapui.model.mock.MockService;
+import com.eviware.soapui.model.project.EndpointStrategy;
+import com.eviware.soapui.model.project.Project;
+import com.eviware.soapui.model.project.ProjectListener;
+import com.eviware.soapui.model.propertyexpansion.DefaultPropertyExpansionContext;
+import com.eviware.soapui.model.propertyexpansion.PropertyExpansion;
+import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContainer;
+import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContext;
+import com.eviware.soapui.model.settings.Settings;
+import com.eviware.soapui.model.support.ModelSupport;
+import com.eviware.soapui.model.testsuite.ProjectRunContext;
+import com.eviware.soapui.model.testsuite.ProjectRunListener;
+import com.eviware.soapui.model.testsuite.ProjectRunner;
+import com.eviware.soapui.model.testsuite.TestCase;
+import com.eviware.soapui.model.testsuite.TestRunnable;
+import com.eviware.soapui.model.testsuite.TestStep;
+import com.eviware.soapui.model.testsuite.TestSuite;
+import com.eviware.soapui.model.testsuite.TestSuite.TestSuiteRunType;
+import com.eviware.soapui.settings.ProjectSettings;
+import com.eviware.soapui.settings.UISettings;
+import com.eviware.soapui.settings.WsdlSettings;
+import com.eviware.soapui.support.SoapUIException;
+import com.eviware.soapui.support.StringUtils;
+import com.eviware.soapui.support.Tools;
+import com.eviware.soapui.support.UISupport;
+import com.eviware.soapui.support.resolver.ResolveContext;
+import com.eviware.soapui.support.resolver.ResolveDialog;
+import com.eviware.soapui.support.scripting.SoapUIScriptEngine;
+import com.eviware.soapui.support.scripting.SoapUIScriptEngineRegistry;
+import com.eviware.soapui.support.types.StringToObjectMap;
+import com.eviware.soapui.support.xml.XmlUtils;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.ssl.OpenSSL;
+import org.apache.log4j.Logger;
+import org.apache.xmlbeans.XmlCursor;
+import org.apache.xmlbeans.XmlError;
+import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlOptions;
+
+import javax.swing.*;
+import javax.xml.namespace.QName;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -32,98 +108,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.swing.ImageIcon;
-import javax.xml.namespace.QName;
-
-import org.apache.commons.ssl.OpenSSL;
-import org.apache.log4j.Logger;
-import org.apache.xmlbeans.XmlError;
-import org.apache.xmlbeans.XmlException;
-import org.apache.xmlbeans.XmlObject;
-import org.apache.xmlbeans.XmlOptions;
-
-import com.eviware.soapui.SoapUI;
-import com.eviware.soapui.config.CrossSiteScriptingScanConfig;
-import com.eviware.soapui.config.GroovySecurityCheckConfig;
-import com.eviware.soapui.config.GroovySecurityScanConfig;
-import com.eviware.soapui.config.InterfaceConfig;
-import com.eviware.soapui.config.InvalidSecurityCheckConfig;
-import com.eviware.soapui.config.InvalidSecurityScanConfig;
-import com.eviware.soapui.config.MaliciousAttachmentConfig;
-import com.eviware.soapui.config.MaliciousAttachmentElementConfig;
-import com.eviware.soapui.config.MaliciousAttachmentSecurityCheckConfig;
-import com.eviware.soapui.config.MaliciousAttachmentSecurityScanConfig;
-import com.eviware.soapui.config.MockServiceConfig;
-import com.eviware.soapui.config.MockServiceDocumentConfig;
-import com.eviware.soapui.config.ParameterExposureCheckConfig;
-import com.eviware.soapui.config.ProjectConfig;
-import com.eviware.soapui.config.SQLInjectionCheckConfig;
-import com.eviware.soapui.config.SQLInjectionScanConfig;
-import com.eviware.soapui.config.SchemaTypeForSecurityCheckConfig;
-import com.eviware.soapui.config.SchemaTypeForSecurityScanConfig;
-import com.eviware.soapui.config.SecurityCheckConfig;
-import com.eviware.soapui.config.SecurityScanConfig;
-import com.eviware.soapui.config.SecurityTestConfig;
-import com.eviware.soapui.config.SoapuiProjectDocumentConfig;
-import com.eviware.soapui.config.TestAssertionConfig;
-import com.eviware.soapui.config.TestCaseConfig;
-import com.eviware.soapui.config.TestStepSecurityTestConfig;
-import com.eviware.soapui.config.TestSuiteConfig;
-import com.eviware.soapui.config.TestSuiteDocumentConfig;
-import com.eviware.soapui.config.TestSuiteRunTypesConfig;
-import com.eviware.soapui.config.TestSuiteRunTypesConfig.Enum;
-import com.eviware.soapui.config.XmlBombSecurityCheckConfig;
-import com.eviware.soapui.config.XmlBombSecurityScanConfig;
-import com.eviware.soapui.impl.WorkspaceImpl;
-import com.eviware.soapui.impl.WsdlInterfaceFactory;
-import com.eviware.soapui.impl.rest.support.RestRequestConverter.RestConversionException;
-import com.eviware.soapui.impl.settings.XmlBeansSettingsImpl;
-import com.eviware.soapui.impl.support.AbstractInterface;
-import com.eviware.soapui.impl.support.EndpointSupport;
-import com.eviware.soapui.impl.wsdl.endpoint.DefaultEndpointStrategy;
-import com.eviware.soapui.impl.wsdl.mock.WsdlMockService;
-import com.eviware.soapui.impl.wsdl.support.ExternalDependency;
-import com.eviware.soapui.impl.wsdl.support.PathUtils;
-import com.eviware.soapui.impl.wsdl.support.wsdl.UrlWsdlLoader;
-import com.eviware.soapui.impl.wsdl.support.wsdl.WsdlLoader;
-import com.eviware.soapui.impl.wsdl.support.wss.DefaultWssContainer;
-import com.eviware.soapui.impl.wsdl.testcase.WsdlProjectRunner;
-import com.eviware.soapui.model.ModelItem;
-import com.eviware.soapui.model.environment.DefaultEnvironment;
-import com.eviware.soapui.model.environment.Environment;
-import com.eviware.soapui.model.environment.EnvironmentListener;
-import com.eviware.soapui.model.environment.Property;
-import com.eviware.soapui.model.iface.Interface;
-import com.eviware.soapui.model.mock.MockService;
-import com.eviware.soapui.model.project.EndpointStrategy;
-import com.eviware.soapui.model.project.Project;
-import com.eviware.soapui.model.project.ProjectListener;
-import com.eviware.soapui.model.propertyexpansion.DefaultPropertyExpansionContext;
-import com.eviware.soapui.model.propertyexpansion.PropertyExpansion;
-import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContainer;
-import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContext;
-import com.eviware.soapui.model.settings.Settings;
-import com.eviware.soapui.model.support.ModelSupport;
-import com.eviware.soapui.model.testsuite.ProjectRunContext;
-import com.eviware.soapui.model.testsuite.ProjectRunListener;
-import com.eviware.soapui.model.testsuite.ProjectRunner;
-import com.eviware.soapui.model.testsuite.TestRunnable;
-import com.eviware.soapui.model.testsuite.TestSuite;
-import com.eviware.soapui.model.testsuite.TestSuite.TestSuiteRunType;
-import com.eviware.soapui.settings.ProjectSettings;
-import com.eviware.soapui.settings.UISettings;
-import com.eviware.soapui.settings.WsdlSettings;
-import com.eviware.soapui.support.SoapUIException;
-import com.eviware.soapui.support.StringUtils;
-import com.eviware.soapui.support.Tools;
-import com.eviware.soapui.support.UISupport;
-import com.eviware.soapui.support.resolver.ResolveContext;
-import com.eviware.soapui.support.resolver.ResolveDialog;
-import com.eviware.soapui.support.scripting.SoapUIScriptEngine;
-import com.eviware.soapui.support.scripting.SoapUIScriptEngineRegistry;
-import com.eviware.soapui.support.types.StringToObjectMap;
-import com.eviware.soapui.support.xml.XmlUtils;
 
 /**
  * WSDL project implementation
@@ -770,6 +754,31 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 		// working with it
 		// if user choose save project, save all etc.
 		SoapuiProjectDocumentConfig projectDocument = ( SoapuiProjectDocumentConfig )this.projectDocument.copy();
+
+        // BEGIN marcpa
+
+        // check the projectDocument copy to see if it sees modifications to steps made in beforeSave()...
+        SoapUI.log.info("checking if saving to external file made the script content empty (as it should):");
+        String conNameSpace = "declare namespace con='http://eviware.com/soapui/config';";
+
+        XmlObject scriptList[] = projectDocument.selectPath(conNameSpace + "$this/con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/script");
+        if (scriptList.length == 0) {
+            SoapUI.log.info("No testStep with a script found.");
+        }
+        for (XmlObject scriptConfig : scriptList) {
+            XmlObject fileAttribute = scriptConfig.selectAttribute(new QName("", "file"));
+            if (fileAttribute != null) {
+                SoapUI.log.info("scriptConfig '" + scriptConfig.toString() + "', has a file attribute : '" + fileAttribute.newCursor().getTextValue() + "'" );
+                SoapUI.log.info("   ==> clearing scriptText because it is externally kept.");
+                XmlCursor cursor = scriptConfig.newCursor();
+                cursor.setTextValue("");
+                cursor.dispose();
+            } else {
+                SoapUI.log.info("FAIL : NO file attribute found for the script '" + scriptConfig.newCursor().getName() + "' !");
+            }
+        }
+
+        // END marcpa
 
 		// check for caching
 		if( !getSettings().getBoolean( WsdlSettings.CACHE_WSDLS ) )

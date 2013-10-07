@@ -896,6 +896,7 @@
                 <xsd:attribute name="language" type="xsd:string"></xsd:attribute>
                 <xsd:attribute name="id" type="xsd:string"></xsd:attribute>
                 <xsd:attribute name="disabled" type="xsd:boolean"></xsd:attribute>
+                <xsd:attribute name="file" type="xsd:string"></xsd:attribute>
             </xsd:extension>
         </xsd:simpleContent>
     </xsd:complexType>

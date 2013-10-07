@@ -12,10 +12,6 @@
 
 package com.eviware.soapui.impl.wsdl.teststeps;
 
-import javax.swing.ImageIcon;
-
-import org.apache.log4j.Logger;
-
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.TestStepConfig;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
@@ -33,8 +29,19 @@ import com.eviware.soapui.support.GroovyUtils;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.scripting.SoapUIScriptEngine;
 import com.eviware.soapui.support.scripting.SoapUIScriptEngineRegistry;
-import com.eviware.soapui.support.xml.XmlObjectConfigurationBuilder;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
+import com.google.common.io.Files;
+import org.apache.log4j.Logger;
+import org.apache.xmlbeans.XmlCursor;
+import org.apache.xmlbeans.XmlObject;
+
+import javax.swing.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * TestStep that executes an arbitraty Groovy script
@@ -46,6 +53,8 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 {
 	private final static Logger logger = Logger.getLogger( "groovy.log" );
 	private String scriptText = "";
+    private String scriptRootPath;
+    private String scriptExternalFilePath;
 	private Object scriptResult;
 	private ImageIcon failedIcon;
 	private ImageIcon okIcon;
@@ -61,6 +70,8 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 			setIcon( okIcon );
 			failedIcon = UISupport.createImageIcon( "/groovy_script_failed.gif" );
 		}
+
+        scriptRootPath = new File(getTestCase().getTestSuite().getProject().getPath()).getParent();
 
 		if( config.getConfig() == null )
 		{
@@ -96,23 +107,123 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 			}
 	}
 
-	public Logger getLogger()
+    public Logger getLogger()
 	{
 		SoapUI.ensureGroovyLog();
 		return logger;
 	}
 
+    private String readFile(String path) {
+        File f = new File(path);
+        if (f.exists()) {
+            SoapUI.log.info("Reading file '" + path + "'...");
+            try {
+                StringBuilder sBuilder = new StringBuilder();
+                String line;
+                BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
+                while ((line = bufferedReader.readLine()) != null) {
+                    sBuilder.append(line + "\n");
+                }
+                SoapUI.log.info(sBuilder.toString());
+                return sBuilder.toString();
+            } catch (FileNotFoundException fnfe) {
+                fnfe.printStackTrace();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        } else {
+            SoapUI.log.info("File with path " + path + " does not exists");
+            SoapUI.log.info("  current working directory is " + System.getProperty("user.dir"));
+        }
+        return "";
+    }
+
+    public void saveToExternalFile() {
+        if (this.scriptExternalFilePath != null) {
+            SoapUI.log.info("*** this step has a scriptExternalFilePath : saving to file " + this.scriptExternalFilePath);
+            if (saveScriptToFile()) {
+                SoapUI.log.info("script '" + getConfig().newCursor().getName() + "' saved.");
+            }
+        }
+    }
+
+    private boolean saveScriptToFile() {
+        if (this.scriptExternalFilePath == null) {
+            return false;
+        }
+        StringBuffer pathBuffer = new StringBuffer();
+        // TODO (marcpa) : use a portable way to do this (maybe create a File and check isAbsolutePath() ?
+        if (!scriptExternalFilePath.startsWith("/")) {
+            // is relative
+            if (scriptRootPath == null) {
+                scriptRootPath = ".";
+            }
+            pathBuffer.append(scriptRootPath).append(System.getProperty("file.separator")).append(scriptExternalFilePath);
+        } else {
+            // is absolute path
+            pathBuffer.append(scriptExternalFilePath);
+        }
+
+        File f = new File(pathBuffer.toString());
+        try {
+            if (! f.exists()) {
+                f.createNewFile();
+            }
+            Files.write(scriptText, f, Charset.forName("UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
 	private void readConfig( TestStepConfig config )
 	{
+
+        SoapUI.log.info("Script Root path is : " + scriptRootPath);
+
 		XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( config.getConfig() );
-		scriptText = reader.readString( "script", "" );
+
+        String externalFilePath = reader.readString("script/@file", null);
+        SoapUI.log.info("script/@file : " + externalFilePath);
+        if (externalFilePath != null) {
+            scriptExternalFilePath = externalFilePath;
+            StringBuffer pathBuffer = new StringBuffer();
+            if (!scriptExternalFilePath.startsWith("/")) {
+                // is relative
+                if (scriptRootPath == null) {
+                    scriptRootPath = ".";
+                }
+                pathBuffer.append(scriptRootPath).append(System.getProperty("file.separator")).append(scriptExternalFilePath);
+            } else {
+                // is absolute path
+                pathBuffer.append(scriptExternalFilePath);
+            }
+
+            scriptText = readFile(pathBuffer.toString());
+        } else {
+            scriptText = reader.readString( "script", "" );
+            SoapUI.log.info("In WsdlGroovyScriptTestStep.readConfig() : (config.config as XmlObjectConfigurationReader).readString('script') = ");
+            SoapUI.log.info(scriptText);
+        }
 	}
 
 	private void saveScript( TestStepConfig config )
 	{
-		XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
-		builder.add( "script", scriptText );
-		config.setConfig( builder.finish() );
+		//XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
+		//builder.add( "script", scriptText );
+		//config.setConfig( builder.finish() );
+
+        XmlObject xmlObject = XmlObject.Factory.newInstance();
+        XmlCursor cursor = xmlObject.newCursor();
+        cursor.toNextToken();
+        cursor.beginElement("script");
+        if (scriptExternalFilePath != null && !scriptExternalFilePath.isEmpty()) {
+            cursor.insertAttributeWithValue("file", scriptExternalFilePath);
+        }
+        cursor.insertChars(scriptText);
+        cursor.dispose();
+        config.setConfig(xmlObject);
 	}
 
 	public void resetConfigOnMove( TestStepConfig config )
@@ -128,6 +239,10 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 
 	public TestStepResult run( TestCaseRunner testRunner, TestCaseRunContext context )
 	{
+        SoapUI.log.info("*******");
+        SoapUI.log.info("*** In run() of WsdlGroovyScriptTestStep");
+        SoapUI.log.info("*******");
+
 		SoapUI.ensureGroovyLog();
 
 		WsdlTestStepResult result = new WsdlTestStepResult( this );
