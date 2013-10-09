@@ -14,6 +14,7 @@ package com.eviware.soapui.ui.desktop;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlGroovyScriptTestStep;
+import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.iface.Interface;
 import com.eviware.soapui.model.iface.Operation;
@@ -207,6 +208,9 @@ public abstract class AbstractSoapUIDesktop implements SoapUIDesktop
                         SoapUI.log.info("  testStep.class : " + testStep.getClass().getSimpleName());
                         if (testStep instanceof WsdlGroovyScriptTestStep) {
                             WsdlGroovyScriptTestStep step = (WsdlGroovyScriptTestStep) testStep;
+                            step.saveToExternalFile();
+                        } else if (testStep instanceof WsdlTestRequestStep) {
+                            WsdlTestRequestStep step = (WsdlTestRequestStep) testStep;
                             step.saveToExternalFile();
                         }
                     }

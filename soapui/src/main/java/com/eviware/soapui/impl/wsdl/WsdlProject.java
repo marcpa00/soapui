@@ -39,7 +39,6 @@ import com.eviware.soapui.impl.wsdl.support.wsdl.UrlWsdlLoader;
 import com.eviware.soapui.impl.wsdl.support.wsdl.WsdlLoader;
 import com.eviware.soapui.impl.wsdl.support.wss.DefaultWssContainer;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlProjectRunner;
-import com.eviware.soapui.impl.wsdl.teststeps.WsdlGroovyScriptTestStep;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.environment.DefaultEnvironment;
 import com.eviware.soapui.model.environment.Environment;
@@ -59,9 +58,7 @@ import com.eviware.soapui.model.support.ModelSupport;
 import com.eviware.soapui.model.testsuite.ProjectRunContext;
 import com.eviware.soapui.model.testsuite.ProjectRunListener;
 import com.eviware.soapui.model.testsuite.ProjectRunner;
-import com.eviware.soapui.model.testsuite.TestCase;
 import com.eviware.soapui.model.testsuite.TestRunnable;
-import com.eviware.soapui.model.testsuite.TestStep;
 import com.eviware.soapui.model.testsuite.TestSuite;
 import com.eviware.soapui.model.testsuite.TestSuite.TestSuiteRunType;
 import com.eviware.soapui.settings.ProjectSettings;
@@ -77,7 +74,6 @@ import com.eviware.soapui.support.scripting.SoapUIScriptEngine;
 import com.eviware.soapui.support.scripting.SoapUIScriptEngineRegistry;
 import com.eviware.soapui.support.types.StringToObjectMap;
 import com.eviware.soapui.support.xml.XmlUtils;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.ssl.OpenSSL;
 import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlCursor;
@@ -758,26 +754,46 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         // BEGIN marcpa
 
         // check the projectDocument copy to see if it sees modifications to steps made in beforeSave()...
-        SoapUI.log.info("checking if saving to external file made the script content empty (as it should):");
+        SoapUI.log.info("Clearing the textValue of testStep having a 'file' attribute (i.e. content is save in an external file).");
         String conNameSpace = "declare namespace con='http://eviware.com/soapui/config';";
 
-        XmlObject scriptList[] = projectDocument.selectPath(conNameSpace + "$this/con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/script");
-        if (scriptList.length == 0) {
-            SoapUI.log.info("No testStep with a script found.");
-        }
-        for (XmlObject scriptConfig : scriptList) {
-            XmlObject fileAttribute = scriptConfig.selectAttribute(new QName("", "file"));
-            if (fileAttribute != null) {
-                SoapUI.log.info("scriptConfig '" + scriptConfig.toString() + "', has a file attribute : '" + fileAttribute.newCursor().getTextValue() + "'" );
-                SoapUI.log.info("   ==> clearing scriptText because it is externally kept.");
-                XmlCursor cursor = scriptConfig.newCursor();
-                cursor.setTextValue("");
-                cursor.dispose();
-            } else {
-                SoapUI.log.info("FAIL : NO file attribute found for the script '" + scriptConfig.newCursor().getName() + "' !");
-            }
-        }
+        List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
+        xmlObjects.addAll(Arrays.asList(projectDocument.selectPath(conNameSpace + "$this/con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/script")));
+        xmlObjects.addAll(Arrays.asList(projectDocument.selectPath(conNameSpace + "$this/con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/con:request")));
 
+        if (xmlObjects.size() == 0) {
+            SoapUI.log.info("No testStep with a script or (wsdl)request found.");
+        }
+        for (XmlObject xmlObject : xmlObjects) {
+            XmlCursor cursor = xmlObject.newCursor();
+            XmlObject fileAttribute = xmlObject.selectAttribute(new QName("", "file"));
+            if (fileAttribute != null) {
+                XmlCursor fileAttributeCursor = fileAttribute.newCursor();
+                SoapUI.log.info("config '" + cursor.getName() + "', has a file attribute : '" + fileAttributeCursor.getTextValue() + "'" );
+                SoapUI.log.info("   ==> clearing step content because it is externally kept.");
+                if (cursor.getName().toString().equals("script")) {
+                    cursor.setTextValue("");
+                } else {
+                    XmlObject requests[] = xmlObject.selectPath(conNameSpace + "$this/con:request");
+                    XmlCursor reqCursor = null;
+                    if (requests.length > 0) {
+                        for (XmlObject req : requests) {
+                            reqCursor = req.newCursor();
+                            reqCursor.setTextValue("");
+                        }
+                    }
+                    if (reqCursor != null) {
+                        reqCursor.dispose();
+                    }
+                }
+                fileAttributeCursor.dispose();
+            } else {
+                XmlCursor testStepCursor = xmlObject.selectPath(conNameSpace + "$this/../../@name")[0].newCursor();
+                SoapUI.log.info("NO file attribute found for the testStep '" + testStepCursor.getTextValue() + "'");
+                testStepCursor.dispose();
+            }
+            cursor.dispose();
+        }
         // END marcpa
 
 		// check for caching

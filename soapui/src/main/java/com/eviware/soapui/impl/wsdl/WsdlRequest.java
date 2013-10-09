@@ -12,14 +12,6 @@
 
 package com.eviware.soapui.impl.wsdl;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.log4j.Logger;
-
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.CredentialsConfig;
 import com.eviware.soapui.config.WsaVersionTypeConfig;
@@ -53,6 +45,13 @@ import com.eviware.soapui.settings.WsdlSettings;
 import com.eviware.soapui.support.StringUtils;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.types.StringToStringsMap;
+import org.apache.log4j.Logger;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Request implementation holding a SOAP request
@@ -90,6 +89,7 @@ public class WsdlRequest extends AbstractHttpRequest<WsdlRequestConfig> implemen
 	private WsaConfig wsaConfig;
 	private WsrmConfig wsrmConfig;
 
+
 	public WsdlRequest( WsdlOperation operation, WsdlRequestConfig callConfig )
 	{
 		this( operation, callConfig, false );
@@ -116,7 +116,8 @@ public class WsdlRequest extends AbstractHttpRequest<WsdlRequestConfig> implemen
 		}
 	}
 
-	public void updateConfig( WsdlRequestConfig request )
+
+    public void updateConfig( WsdlRequestConfig request )
 	{
 		setConfig( request );
 
@@ -244,7 +245,9 @@ public class WsdlRequest extends AbstractHttpRequest<WsdlRequestConfig> implemen
 		}
 	}
 
-	private class InternalInterfaceListener extends InterfaceListenerAdapter implements PropertyChangeListener
+
+
+    private class InternalInterfaceListener extends InterfaceListenerAdapter implements PropertyChangeListener
 	{
 		public void propertyChange( PropertyChangeEvent evt )
 		{

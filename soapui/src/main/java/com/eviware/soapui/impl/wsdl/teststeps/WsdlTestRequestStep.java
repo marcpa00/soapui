@@ -12,21 +12,6 @@
 
 package com.eviware.soapui.impl.wsdl.teststeps;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.ImageIcon;
-import javax.xml.namespace.QName;
-
-import org.apache.log4j.Logger;
-import org.apache.xmlbeans.SchemaType;
-import org.apache.xmlbeans.XmlString;
-
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.RequestStepConfig;
 import com.eviware.soapui.config.TestStepConfig;
@@ -76,6 +61,28 @@ import com.eviware.soapui.support.resolver.RemoveTestStepResolver;
 import com.eviware.soapui.support.resolver.ResolveContext;
 import com.eviware.soapui.support.resolver.ResolveContext.PathToResolve;
 import com.eviware.soapui.support.types.StringToStringsMap;
+import com.google.common.io.Files;
+import org.apache.log4j.Logger;
+import org.apache.xmlbeans.SchemaType;
+import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlString;
+
+import javax.swing.*;
+import javax.xml.namespace.QName;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * WsdlTestStep that executes a WsdlTestRequest
@@ -93,6 +100,9 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 	private final InternalProjectListener projectListener = new InternalProjectListener();
 	private final InternalInterfaceListener interfaceListener = new InternalInterfaceListener();
 	private WsdlSubmit<WsdlRequest> submit;
+
+    private String requestRootPath;
+    private String requestExternalFilePath;
 
 	public WsdlTestRequestStep( WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest )
 	{
@@ -120,6 +130,8 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 		{
 			requestStepConfig = ( RequestStepConfig )getConfig().addNewConfig().changeType( RequestStepConfig.type );
 		}
+
+        this.requestExternalFilePath = computeExternalFilePathFromConfig(requestStepConfig);
 
 		// init properties
 		if( testRequest != null )
@@ -854,5 +866,106 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 			}
 		}
 	}
+    private String computeExternalFilePathFromConfig(RequestStepConfig config) {
+
+        String conNameSpace = "declare namespace con='http://eviware.com/soapui/config';";
+
+        List<XmlObject> xmlObjects = Arrays.asList(config.selectPath(conNameSpace + "$this/con:request"));
+
+        String externalFilePath = null;
+        if (xmlObjects.size() == 0) {
+            SoapUI.log.info("No wsdl test request found.");
+        }
+        for (XmlObject xmlObject : xmlObjects) {
+            XmlObject fileAttribute = xmlObject.selectAttribute(new QName("", "file"));
+            if (fileAttribute != null) {
+                externalFilePath = fileAttribute.newCursor().getTextValue();
+                SoapUI.log.info("request/@file : " + externalFilePath);
+                if (externalFilePath != null) {
+                    requestExternalFilePath = externalFilePath;
+                    StringBuffer pathBuffer = new StringBuffer();
+                    if (!requestExternalFilePath.startsWith("/")) {
+                        // is relative
+                        if (requestRootPath == null) {
+                            requestRootPath = ".";
+                        }
+                        pathBuffer.append(requestRootPath).append(System.getProperty("file.separator")).append(requestExternalFilePath);
+                    } else {
+                        // is absolute path
+                        pathBuffer.append(requestExternalFilePath);
+                    }
+
+                    if (testRequest != null) {
+                        testRequest.setRequestContent(readFile(pathBuffer.toString()));
+                    }
+                }
+            }
+        }
+        return externalFilePath;
+    }
+
+    private String readFile(String path) {
+        File f = new File(path);
+        if (f.exists()) {
+            SoapUI.log.info("Reading file '" + path + "'...");
+            try {
+                StringBuilder sBuilder = new StringBuilder();
+                String line;
+                BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
+                while ((line = bufferedReader.readLine()) != null) {
+                    sBuilder.append(line + "\n");
+                }
+                SoapUI.log.info(sBuilder.toString());
+                return sBuilder.toString();
+            } catch (FileNotFoundException fnfe) {
+                fnfe.printStackTrace();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        } else {
+            SoapUI.log.info("File with path " + path + " does not exists");
+            SoapUI.log.info("  current working directory is " + System.getProperty("user.dir"));
+        }
+        return "";
+    }
+
+    public void saveToExternalFile() {
+        if (this.requestExternalFilePath != null) {
+            SoapUI.log.info("*** this step has a scriptExternalFilePath : saving to file " + this.requestExternalFilePath);
+            if (saveScriptToFile()) {
+                SoapUI.log.info("script '" + getConfig().newCursor().getName() + "' saved.");
+            }
+        }
+    }
+
+    private boolean saveScriptToFile() {
+        if (this.requestExternalFilePath == null) {
+            return false;
+        }
+        StringBuffer pathBuffer = new StringBuffer();
+        // TODO (marcpa) : use a portable way to do this (maybe create a File and check isAbsolutePath() ?
+        if (!requestExternalFilePath.startsWith("/")) {
+            // is relative
+            if (requestRootPath == null) {
+                requestRootPath = ".";
+            }
+            pathBuffer.append(requestRootPath).append(System.getProperty("file.separator")).append(requestExternalFilePath);
+        } else {
+            // is absolute path
+            pathBuffer.append(requestExternalFilePath);
+        }
+
+        File f = new File(pathBuffer.toString());
+        try {
+            if (! f.exists()) {
+                f.createNewFile();
+            }
+            Files.write(testRequest.getRequestContent(), f, Charset.forName("UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
 
 }

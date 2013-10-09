@@ -265,6 +265,7 @@
                 <xsd:attribute name="incomingWss" type="xsd:string"></xsd:attribute>
                 <xsd:attribute name="useWsAddressing" type="xsd:boolean"></xsd:attribute>
                 <xsd:attribute name="useWsReliableMessaging" type="xsd:boolean"></xsd:attribute>
+                <xsd:attribute name="file" type="xsd:string"></xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
