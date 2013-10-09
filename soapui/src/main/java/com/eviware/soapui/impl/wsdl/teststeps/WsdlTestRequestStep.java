@@ -958,6 +958,10 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
         File f = new File(pathBuffer.toString());
         try {
             if (! f.exists()) {
+                File parent = f.getParentFile();
+                if (! parent.exists()) {
+                    parent.mkdirs();
+                }
                 f.createNewFile();
             }
             Files.write(testRequest.getRequestContent(), f, Charset.forName("UTF-8"));

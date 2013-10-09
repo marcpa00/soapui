@@ -167,6 +167,10 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
         File f = new File(pathBuffer.toString());
         try {
             if (! f.exists()) {
+                File parent = f.getParentFile();
+                if (! parent.exists()) {
+                    parent.mkdirs();
+                }
                 f.createNewFile();
             }
             Files.write(scriptText, f, Charset.forName("UTF-8"));
