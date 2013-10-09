@@ -74,6 +74,7 @@ import com.eviware.soapui.support.scripting.SoapUIScriptEngine;
 import com.eviware.soapui.support.scripting.SoapUIScriptEngineRegistry;
 import com.eviware.soapui.support.types.StringToObjectMap;
 import com.eviware.soapui.support.xml.XmlUtils;
+import com.google.common.io.Files;
 import org.apache.commons.ssl.OpenSSL;
 import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlCursor;
@@ -95,6 +96,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -107,7 +109,7 @@ import java.util.Set;
 
 /**
  * WSDL project implementation
- * 
+ *
  * @author Ole.Matzura
  */
 
@@ -331,7 +333,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 			try
 			{
 				int majorVersion = Integer
-						.parseInt( projectDocument.getSoapuiProject().getSoapuiVersion().split( "\\." )[0] );
+						.parseInt(projectDocument.getSoapuiProject().getSoapuiVersion().split("\\.")[0]);
 				if( majorVersion > Integer.parseInt( SoapUI.SOAPUI_VERSION.split( "\\." )[0] ) )
 					log.warn( "Project '" + projectDocument.getSoapuiProject().getName() + "' is from a newer version ("
 							+ projectDocument.getSoapuiProject().getSoapuiVersion() + ") of soapUI than this ("
@@ -443,7 +445,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 
 	/**
 	 * Decode encrypted data and restore user/pass
-	 * 
+	 *
 	 * @param soapuiProject
 	 * @return 0 - not encrypted, 1 - successfull decryption , -1 error while
 	 *         decrypting, bad password, no password.
@@ -753,7 +755,9 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 
         // BEGIN marcpa
 
-        // check the projectDocument copy to see if it sees modifications to steps made in beforeSave()...
+        // For steps having a 'file' attribute, the content have been saved to external file in beforeSave()... modify the
+        // project copy to be saved to clear out the textValue of testStep because we don't want to have that content
+        // in 2 places.  We let the in-memory `this.projectDocument` intact because we want this content to appear in the UI !
         SoapUI.log.info("Clearing the textValue of testStep having a 'file' attribute (i.e. content is save in an external file).");
         String conNameSpace = "declare namespace con='http://eviware.com/soapui/config';";
 
@@ -767,7 +771,60 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         for (XmlObject xmlObject : xmlObjects) {
             XmlCursor cursor = xmlObject.newCursor();
             XmlObject fileAttribute = xmlObject.selectAttribute(new QName("", "file"));
-            if (fileAttribute != null) {
+            if (fileAttribute == null) {
+                // TODO (marcpa) : use a config property to decide if we should convert step "storage" from embedded in project file to external file here.
+
+                XmlCursor testStepCursor = xmlObject.selectPath(conNameSpace + "$this/../..")[0].newCursor();
+                String testStepName = testStepCursor.getAttributeText(new QName("", "name"));
+                String testStepType = testStepCursor.getAttributeText(new QName("", "type"));
+
+                SoapUI.log.info("NO file attribute found for the testStep '" + testStepName + "', of type '" + testStepType + "'");
+
+                SoapUI.log.info("generating the 'file' attribute to point to an external file and create this external file according to path of test step.");
+                String suffix;
+                if (testStepType.equals("request")) {
+                    suffix = "-request.xml";
+                } else if (testStepType.equals("groovy")) {
+                    suffix = ".groovy";
+                } else {
+                    suffix = ".txt";
+                }
+                StringBuilder stringBuilder = new StringBuilder(testStepName).append(suffix);
+                while (testStepCursor.toParent()) {
+                    String name = testStepCursor.getAttributeText(new QName("", "name"));
+                    if (name == null) {
+                        // TODO (marcpa) : use a config property having the root path for external files, (should probably defaults to the project's parent dir)
+                        stringBuilder.insert(0, "scripts/");
+                    } else {
+                        stringBuilder.insert(0, "/").insert(0, name);
+                    }
+                }
+                SoapUI.log.info("computed path : " + stringBuilder.toString());
+                // add a 'file' attribute to the element at xmlObject
+                cursor.setAttributeText(new QName("", "file"), stringBuilder.toString());
+
+                // now wave the content in this file
+                String content = null;
+                if (testStepType.equals("request")) {
+                    XmlCursor requestContentCursor = xmlObject.newCursor();
+                    if (requestContentCursor.toFirstChild()) {
+                        do {
+                            if (requestContentCursor.getName() != null && requestContentCursor.getName().getLocalPart().equals("request")) {
+                                content = requestContentCursor.getTextValue();
+                                break;
+                            }
+                        } while (requestContentCursor.toNextSibling());
+                    }
+                    if (content == null) {
+                        SoapUI.log.info("Could not get to the actual request content !? : external file will be empty.");
+                        content = "";
+                    }
+                } else {
+                    content = cursor.getTextValue();
+                }
+                saveStepContentToFile(content, stringBuilder.toString());
+                testStepCursor.dispose();
+            } else {
                 XmlCursor fileAttributeCursor = fileAttribute.newCursor();
                 SoapUI.log.info("config '" + cursor.getName() + "', has a file attribute : '" + fileAttributeCursor.getTextValue() + "'" );
                 SoapUI.log.info("   ==> clearing step content because it is externally kept.");
@@ -787,10 +844,6 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                     }
                 }
                 fileAttributeCursor.dispose();
-            } else {
-                XmlCursor testStepCursor = xmlObject.selectPath(conNameSpace + "$this/../../@name")[0].newCursor();
-                SoapUI.log.info("NO file attribute found for the testStep '" + testStepCursor.getTextValue() + "'");
-                testStepCursor.dispose();
             }
             cursor.dispose();
         }
@@ -1742,7 +1795,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 		else
 		{
 			TestSuiteConfig config = ( TestSuiteConfig )projectDocument.getSoapuiProject().addNewTestSuite()
-					.set( newTestSuiteConfig.getTestSuite() );
+					.set(newTestSuiteConfig.getTestSuite());
 			WsdlTestSuite testSuite = buildTestSuite( config );
 
 			ModelSupport.unsetIds( testSuite );
@@ -1751,10 +1804,10 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 			/*
 			 * security test keeps reference to test step by id, which gets changed
 			 * during importing, so old values needs to be rewritten to new ones.
-			 * 
+			 *
 			 * Create tarnsition table ( old id , new id ) and use it to replace
 			 * all old ids in new imported test case.
-			 * 
+			 *
 			 * Here needs to be done for all test cases separatly.
 			 */
 			for( int cnt2 = 0; cnt2 < config.getTestCaseList().size(); cnt2++ )
@@ -1764,7 +1817,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 				LinkedHashMap<String, String> oldNewIds = new LinkedHashMap<String, String>();
 				for( int cnt = 0; cnt < importTestCaseConfig.getTestStepList().size(); cnt++ )
 					oldNewIds.put( importTestCaseConfig.getTestStepList().get( cnt ).getId(), newTestCase.getTestStepList()
-							.get( cnt ).getId() );
+							.get(cnt).getId() );
 
 				for( SecurityTestConfig scan : newTestCase.getSecurityTestList() )
 					for( TestStepSecurityTestConfig secStepConfig : scan.getTestStepSecurityTestList() )
@@ -2065,7 +2118,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 		else
 		{
 			MockServiceConfig config = ( MockServiceConfig )projectDocument.getSoapuiProject().addNewMockService()
-					.set( newMockServiceConfig.getMockService() );
+					.set(newMockServiceConfig.getMockService());
 			WsdlMockService mockService = new WsdlMockService( this, config );
 
 			ModelSupport.unsetIds( mockService );
@@ -2260,5 +2313,37 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 	//			}
 	//		}
 	//	}
+
+
+    private boolean saveStepContentToFile(String content, String externalFilePath) {
+        if (externalFilePath == null) {
+            return false;
+        }
+        StringBuffer pathBuffer = new StringBuffer();
+        // TODO (marcpa) : use a portable way to do this (maybe create a File and check isAbsolutePath() ?
+        if (!externalFilePath.startsWith("/")) {
+            // is relative
+            pathBuffer.append(new File(this.path).getParent()).append(System.getProperty("file.separator")).append(externalFilePath);
+        } else {
+            // is absolute path
+            pathBuffer.append(externalFilePath);
+        }
+
+        File f = new File(pathBuffer.toString());
+        try {
+            if (! f.exists()) {
+                File parent = f.getParentFile();
+                if (! parent.exists()) {
+                    parent.mkdirs();
+                }
+                f.createNewFile();
+            }
+            Files.write(content, f, Charset.forName("UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
 
 }
