@@ -399,6 +399,8 @@
 	<tns:action id="ImportPackedProjectAction"
 		actionClass="com.eviware.soapui.actions.ImportPackedProject" />
 
+    <tns:action id="ConfigureExternalFileAction"
+                actionClass="com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction" />
 
 	<!-- Workspace Action Group -->
 	<tns:actionGroup name="Workspace Actions" id="WorkspaceImplActions"
@@ -660,7 +662,9 @@
 		<tns:actionMapping actionId="ShowDesktopPanelAction"
 			name="Show Request Editor" description="Shows the Request Editor for this Request"
 			keyStroke="ENTER" />
-		<tns:actionMapping actionId="SeperatorAction" />
+        <tns:actionMapping actionId="SeperatorAction" />
+        <tns:actionMapping actionId="ConfigureExternalFileAction"/>
+        <tns:actionMapping actionId="SeperatorAction" />
 		<tns:actionMapping actionId="AddRequestToTestCaseAction"
 			keyStroke="menu alt A" iconPath="/addToTestCase.gif" />
 		<tns:actionMapping actionId="AddRequestToMockServiceAction"
