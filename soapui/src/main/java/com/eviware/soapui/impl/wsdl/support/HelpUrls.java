@@ -237,7 +237,7 @@ public interface HelpUrls
 	public static final String ADD_ASSERTION_PANEL = "http://www.soapui.org/Functional-Testing/getting-started-with-assertions.html#add_assertion";
 
     // use external file for step content
-    public static final String USE_EXT_FILE_HELP_URL_ROOT = "http://github.com/marcpa00/soapui/tree/step-in-external-file/"
+    public static final String USE_EXT_FILE_HELP_URL_ROOT = "http://github.com/marcpa00/soapui/tree/step-in-external-file/";
     public static final String USE_EXT_FILE_FOR_STEP_HELP_URL = USE_EXT_FILE_HELP_URL_ROOT + "soapui/src/html/use-external-file-for-step-content.html";
 
 }
