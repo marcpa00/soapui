@@ -887,7 +887,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
                     if (!requestExternalFilePath.startsWith("/")) {
                         // is relative
                         if (requestRootPath == null) {
-                            requestRootPath = ".";
+                            requestRootPath = new File(((Project)this.getTestCase().getParent().getParent()).getPath()).getParent();
                         }
                         pathBuffer.append(requestRootPath).append(System.getProperty("file.separator")).append(requestExternalFilePath);
                     } else {
