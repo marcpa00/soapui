@@ -14,9 +14,8 @@ package com.eviware.soapui.impl.wsdl.actions.request;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.WsdlRequestConfig;
-import com.eviware.soapui.impl.wsdl.WsdlProject;
-import com.eviware.soapui.impl.wsdl.WsdlRequest;
 import com.eviware.soapui.impl.wsdl.support.HelpUrls;
+import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequest;
 import com.eviware.soapui.support.action.support.AbstractSoapUIAction;
 import com.eviware.soapui.ui.desktop.SoapUIDesktop;
 import com.eviware.x.form.XFormDialog;
@@ -26,10 +25,9 @@ import com.eviware.x.form.support.ADialogBuilder;
 import com.eviware.x.form.support.AField;
 import com.eviware.x.form.support.AField.AFieldType;
 import com.eviware.x.form.support.AForm;
+import com.eviware.x.impl.swing.JTextFieldFormField;
 
-import java.io.File;
-
-public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlRequest>
+public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRequest>
 {
 	public static final String SOAPUI_ACTION_ID = "ConfigureExternalFileAction";
 	private XFormDialog dialog;
@@ -39,17 +37,23 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlReques
 		super( "Configure external file settings for step", "Specify which file to load, if content should be saved to external file and how to name the file." );
 	}
 
-	public void perform( WsdlRequest request, Object param )
+	public void perform( WsdlTestRequest request, Object param )
 	{
         configureExternalFile(request);
 	}
 
-	protected boolean configureExternalFile( WsdlRequest request )
+	protected boolean configureExternalFile( WsdlTestRequest request )
 	{
 		String title = getName();
 		boolean create = false;
 
-		if( dialog == null ) {
+        StringBuilder stringBuilder = new StringBuilder(request.getTestCase().getTestSuite().getProject().getName());
+        stringBuilder.append("/").append(request.getTestCase().getTestSuite().getName());
+        stringBuilder.append("/").append(request.getTestCase().getName());
+        stringBuilder.append("/").append(request.getName()).append("-request.xml");
+        String automaticFilename = stringBuilder.toString();
+
+        if( dialog == null ) {
 			dialog = ADialogBuilder.buildDialog( Form.class );
         }
 
@@ -58,9 +62,15 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlReques
 		dialog.setValue( Form.LOAD_FROM_FILE, null );
 
         dialog.setBooleanValue(Form.USE_AUTOMATIC_FILENAME, true);
-        dialog.setValue(Form.AUTOMATIC_FILENAME, "${#Project#name}/${#TestSuite#name/${#TestCase#name}/" + request.getName() + "-request.xml");
+        dialog.setValue(Form.AUTOMATIC_FILENAME, automaticFilename );
 
-        dialog.setValue(Form.ROOT_PATH, new File(((WsdlProject) request.getParent().getParent().getParent().getParent()).getPath()).getParent());
+        String rootPath = request.getTestCase().getTestSuite().getProject().getPath();
+        if (rootPath != null && rootPath.endsWith(".xml")) {
+            rootPath = rootPath.replaceAll(".xml", ".resources");
+        } else {
+            rootPath = rootPath + ".resources";
+        }
+        dialog.setValue( Form.ROOT_PATH, rootPath );
         dialog.setValue(Form.CUSTOM_FILENAME, request.getName() + "-request.xml");
 
         dialog.getFormField( Form.USE_EXTERNAL_STEP_FILE ).addFormFieldListener( new XFormFieldListener()
@@ -74,9 +84,11 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlReques
                 if ( Boolean.valueOf( newValue ) == false ) {
                     dialog.getFormField( Form.CUSTOM_FILENAME ).setEnabled( false );
                     dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( false );
+                    //dialog.getFormField( Form.AUTOMATIC_FILENAME_TEMPLATE ).setEnabled( false );
                 } else {
                     dialog.getFormField( Form.CUSTOM_FILENAME ).setEnabled( ! Boolean.valueOf( dialog.getBooleanValue( Form.USE_AUTOMATIC_FILENAME ) ));
                     dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( Boolean.valueOf( dialog.getBooleanValue( Form.USE_AUTOMATIC_FILENAME ) ));
+                    //dialog.getFormField( Form.AUTOMATIC_FILENAME_TEMPLATE ).setEnabled( Boolean.valueOf( dialog.getBooleanValue( Form.USE_AUTOMATIC_FILENAME ) ));
                 }
 
             }
@@ -88,16 +100,18 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlReques
                 if ( dialog.getBooleanValue( Form.USE_EXTERNAL_STEP_FILE ) ) {
                     dialog.getFormField( Form.CUSTOM_FILENAME ).setEnabled( ! Boolean.valueOf(newValue ));
                     dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( Boolean.valueOf(newValue ));
+                    //dialog.getFormField( Form.AUTOMATIC_FILENAME_TEMPLATE ).setEnabled( Boolean.valueOf(newValue ));
                 }
             }
         });
 
-        // by default, fields are enabled
+        // by default, fields are enabled : need to disable them according to flag USE_EXTERNAL_STEP_FILE
         if (! dialog.getBooleanValue( Form.USE_EXTERNAL_STEP_FILE ) ) {
             // fields disabled because USE_EXTERNAL_STEP_FILE is false
             dialog.getFormField( Form.LOAD_FROM_FILE).setEnabled( false );
             dialog.getFormField( Form.USE_AUTOMATIC_FILENAME ).setEnabled( false );
             dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( false );
+            //dialog.getFormField( Form.AUTOMATIC_FILENAME_TEMPLATE ).setEnabled( false );
             dialog.getFormField( Form.ROOT_PATH ).setEnabled( false );
             dialog.getFormField( Form.CUSTOM_FILENAME ).setEnabled( false );
         } else if ( dialog.getBooleanValue( Form.USE_AUTOMATIC_FILENAME ) ) {
@@ -107,6 +121,15 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlReques
             // fields to disable when automatic filename is not enabled
             dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( false );
         }
+
+        XFormField formField = dialog.getFormField(Form.AUTOMATIC_FILENAME);
+        if (formField instanceof JTextFieldFormField) {
+            ((JTextFieldFormField)formField).getComponent().setEditable(false);
+        }
+//        formField = dialog.getFormField( Form.AUTOMATIC_FILENAME_TEMPLATE );
+//        if (formField instanceof JTextFieldFormField) {
+//            ((JTextFieldFormField)formField).getComponent().setEditable(false);
+//        }
 
 		SoapUIDesktop desktop = SoapUI.getDesktop();
 
@@ -118,6 +141,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlReques
         SoapUI.log.info( Form.USE_EXTERNAL_STEP_FILE + " is : " + dialog.getFormField( Form.USE_AUTOMATIC_FILENAME ).getValue() );
         SoapUI.log.info( Form.LOAD_FROM_FILE + " is : " + dialog.getFormField( Form.LOAD_FROM_FILE).getValue() );
         SoapUI.log.info( Form.USE_AUTOMATIC_FILENAME + " is : " + dialog.getFormField( Form.USE_AUTOMATIC_FILENAME ).getValue() );
+//        SoapUI.log.info( Form.AUTOMATIC_FILENAME_TEMPLATE + " is : " + dialog.getFormField( Form.AUTOMATIC_FILENAME_TEMPLATE ).getValue() );
         SoapUI.log.info( Form.AUTOMATIC_FILENAME + " is : " + dialog.getFormField( Form.AUTOMATIC_FILENAME ).getValue() );
         SoapUI.log.info( Form.ROOT_PATH + " is : " + dialog.getFormField( Form.ROOT_PATH ).getValue() );
         SoapUI.log.info( Form.CUSTOM_FILENAME + " is : " + dialog.getFormField( Form.CUSTOM_FILENAME ).getValue() );
@@ -174,18 +198,40 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlReques
 		@AField( name = "Load From", description = "Browse and choose a file from which step content wil be read.", type = AFieldType.FILE )
 		public final static String LOAD_FROM_FILE = "Load From";
 
-		@AField( name = "Root Path", description = "Path from where to resolve relative file names.", type = AFieldType.FOLDER )
+        @AField( name = "Top directory relative to where the paths will be resolved___", description = "", type = AFieldType.SEPARATOR)
+        public final static String SEPARATOR_AT_TOP = "Top directory relative to where the paths will be resolved___";
+
+        @AField( name = "Root Path", description = "Path from where to resolve relative file names.", type = AFieldType.FOLDER )
 		public final static String ROOT_PATH = "Root Path";
 
-		@AField( name = "File to use (manual)", description = "Explicit filename where to read and save step content.")
-		public final static String CUSTOM_FILENAME = "File to use (manual)";
+        @AField( name = "middle-separator", description = "", type = AFieldType.SEPARATOR )
+        public final static String SEPARATOR_AT_MIDDLE = "middle-separator";
 
-        @AField( name = "File to use (automatic)", description = "Filename where to read and save step content, automatically computed from the path of step in project.")
-        public final static String AUTOMATIC_FILENAME = "File to use (automatic)";
+        @AField( name = "Automatic filename settings___", description = "", type = AFieldType.LABEL)
+        public final static String SECTION_AUTOMATIC_FILENAME = "Automatic filename settings___";
 
-		@AField( name = "Use Automatic Filename", description = "Use a filename automatically computed based on the path of step in project.", type = AFieldType.BOOLEAN )
-		public final static String USE_AUTOMATIC_FILENAME = "Use Automatic Filename";
+        @AField( name = "###Use Automatic Filename", description = "Use a filename automatically computed based on the path of step in project.", type = AFieldType.BOOLEAN )
+        public final static String USE_AUTOMATIC_FILENAME = "###Use Automatic Filename";
 
+//        @AField( name="Pattern", description = "", type = AFieldType.LABEL)
+//        public final static String AUTOMATIC_FILENAME_TEMPLATE_LABEL = "Pattern";
 
+//        @AField( name="###pattern-value", description = "Template used when computing the automatic filename for this step.", type = AFieldType.STRING)
+//        public final static String AUTOMATIC_FILENAME_TEMPLATE = "###pattern-value";
+
+        @AField( name = "Automatic filename computed", description = "", type = AFieldType.LABEL)
+        public final static String AUTOMATIC_FILENAME_LABEL = "Automatic filename computed";
+
+        @AField( name = "###result-of-expansion-value", description = "Filename where to read and save step content, automatically computed from the path of step in project.", type = AFieldType.STRING)
+        public final static String AUTOMATIC_FILENAME = "###result-of-expansion-value";
+
+        @AField( name = "bottom-separator", description = "", type = AFieldType.SEPARATOR)
+        public final static String SEPARATOR_BETWEEN_MANUAL_AUTOMATIC = "bottom-separator";
+
+        @AField( name = "Manual filename settings___", description = "", type = AFieldType.LABEL)
+        public final static String SECTION_MANUAL_FILENAME = "Manual filename settings___";
+
+        @AField( name = "File to use", description = "Explicit filename where to read and save step content.")
+		public final static String CUSTOM_FILENAME = "File to use";
 	}
 }
