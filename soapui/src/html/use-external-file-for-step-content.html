@@ -14,7 +14,7 @@ the main soapui project XML file.
 <p>
 <i>Note: at the moment, this is only implemented for request steps of type "groovy script"
 and "wsdl request".</i>
-<h2>How it behaves by default</h2>
+<h2>How it behave by default</h2>
 Completly externalizing test steps content from the soapui project XML
 file would be a breaking change in the project file format : these
 files would no longer be understood by versions of soapui not having
@@ -26,7 +26,7 @@ When loading a project, the steps having a 'file' attribute will have
 their content populated from the physical file given in the value of
 the attribute.  The content present in the project XML document will
 be ignored and replaced by the file's content.  The user will see no
-difference at that point and will be able to open and edit a step as
+difference at that point and will be able to open and edit the step as
 before. 
 <p>
 When saving a project, for the steps having a file attribute, the
@@ -36,13 +36,14 @@ be overwritten).  The content value in the project file will be
 kept as is, thus there will be a duplication of the content, one
 instance in the project XML document saved to disk and another in the
 file named by the 'file' attribute.  This redundancy is needed to keep
-the project file format backward compatible and still have the benefit
-of externalizing the step's content.
-<p>
+the project file format backward compatible and still have (some) of
+the benefits of externalizing the step's content.
+<h2>Feature activation</h2>
 An options popup dialog have been added to request step panel where
-one can activate the use of <i>external file for step content</i>
-feature. By default, this is not enabled.
-<h3>Enabling the feature for new steps<h3>
+one can activate the use of <i>external file step content</i>
+feature. By default, this is not enabled. (should be enabled globally
+through a global settings ?)
+<h3>Enabling the feature for new steps</h3>
 Enabling it on a new step and using the file selector to navigate to a file will set the 'file'
 attribute to the absolute pathname of the choosen file.
 <h3>Enabling the feature on existing steps</h3>
@@ -142,5 +143,5 @@ directory where the project file is located and a directory named
 after the project filename with '.xml' replaced by '.resources'.
 <hr>
 <address></address>
-<!-- hhmts start -->Last modified: Sun Oct 13 12:59:20 EDT 2013 <!-- hhmts end -->
+<!-- hhmts start -->Last modified: Sun Oct 13 16:36:46 EDT 2013 <!-- hhmts end -->
 </body> </html>
