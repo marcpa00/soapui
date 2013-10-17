@@ -104,6 +104,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
     private String requestRootPath;
     private String requestExternalFilePath;
 
+
 	public WsdlTestRequestStep( WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest )
 	{
 		super( testCase, config, true, forLoadTest );
@@ -970,6 +971,22 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
             return false;
         }
         return true;
+    }
+
+    public String getRequestExternalFilePath() {
+        return requestExternalFilePath;
+    }
+
+    public void setRequestExternalFilePath(String requestExternalFilePath) {
+        this.requestExternalFilePath = requestExternalFilePath;
+    }
+
+    public String getRequestRootPath() {
+        return requestRootPath;
+    }
+
+    public void setRequestRootPath(String requestRootPath) {
+        this.requestRootPath = requestRootPath;
     }
 
 }
