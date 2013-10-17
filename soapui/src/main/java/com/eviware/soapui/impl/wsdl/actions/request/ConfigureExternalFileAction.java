@@ -136,17 +136,27 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
                 dialog.setBooleanValue( Form.USE_MANUAL_FILENAME, useManualFilename );
             }
             if ( useAutomaticFilename ) {
-                dialog.getFormField( Form.USE_PROJECT_NAME ).setEnabled( true );
-                dialog.getFormField( Form.USE_TEST_SUITE_NAME ).setEnabled( true );
-                dialog.getFormField( Form.USE_TEST_CASE_NAME ).setEnabled( true );
-                dialog.getFormField( Form.USE_TEST_STEP_NAME ).setEnabled( true );
+                dialog.getFormField( Form.USE_PROJECT_NAME ).setEnabled( false );
+                dialog.getFormField( Form.USE_TEST_SUITE_NAME ).setEnabled( false );
+                dialog.getFormField( Form.USE_TEST_CASE_NAME ).setEnabled( false );
+                dialog.getFormField( Form.USE_TEST_STEP_NAME ).setEnabled( false );
+
+                dialog.getFormField( Form.COMPOSED_FILENAME ).setEnabled( false );
+                dialog.getFormField( Form.MANUAL_FILENAME ).setEnabled( false );
             }
 
             if ( useComposedFilname ) {
-                dialog.getFormField( Form.MANUAL_FILENAME).setEnabled( true );
+                dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( false );
+                dialog.getFormField( Form.MANUAL_FILENAME).setEnabled( false );
             }
-            if ( useAutomaticFilename ) {
-                dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( true );
+            if ( useManualFilename ) {
+                dialog.getFormField( Form.USE_PROJECT_NAME ).setEnabled( false );
+                dialog.getFormField( Form.USE_TEST_SUITE_NAME ).setEnabled( false );
+                dialog.getFormField( Form.USE_TEST_CASE_NAME ).setEnabled( false );
+                dialog.getFormField( Form.USE_TEST_STEP_NAME ).setEnabled( false );
+
+                dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( false );
+                dialog.getFormField( Form.COMPOSED_FILENAME ).setEnabled( false );
             }
         }
         XFormField formField = dialog.getFormField(Form.AUTOMATIC_FILENAME);
@@ -355,8 +365,10 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
         @AField( name = "top-separator", description = "", type = AFieldType.SEPARATOR)
         public final static String SEPARATOR_AT_TOP = "top-separator";
 
-        @AField( name = "Root Path", description = "Path from where to resolve relative file names.", type = AFieldType.FOLDER )
-		public final static String ROOT_PATH = "Root Path";
+        @AField( name = "Root Path", description = "", type = AFieldType.LABEL)
+        public final static String ROOT_PATH_LABEL = "Root Path";
+        @AField( name = "###Root Path", description = "Path from where to resolve relative file names.", type = AFieldType.FOLDER )
+		public final static String ROOT_PATH = "###Root Path";
 
         @AField( name = "bottom-separator-1", description = "", type = AFieldType.SEPARATOR )
         public final static String SEPARATOR_AT_BOTTOM_1 = "bottom-separator-1";
@@ -379,23 +391,22 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
         @AField( name = "###" + USE_COMPOSED_FILENAME_LABEL, description = USE_COMPOSED_FILENAME_LABEL, type = AFieldType.BOOLEAN )
         public final static String USE_COMPOSED_FILENAME = "###" + USE_COMPOSED_FILENAME_LABEL;
 
-        @AField( name = "Use project name", description = "Use the project name containing this test step in the filename path.", type = AFieldType.BOOLEAN)
+        @AField( name = "Use project name", description = "", type = AFieldType.BOOLEAN)
         public final static String USE_PROJECT_NAME = "Use project name";
-
         @AField( name = "###projectName", description = "")
         public final static String PROJECT_NAME = "###projectName";
 
-        @AField( name = "Use test case name", description = "Use the test case name containing this test step in the filename path.", type = AFieldType.BOOLEAN)
+        @AField( name = "Use test case name", description = "", type = AFieldType.BOOLEAN)
         public final static String USE_TEST_CASE_NAME = "Use test case name";
         @AField( name = "###testCaseName", description = "")
         public final static String TEST_CASE_NAME = "###testCaseName";
 
-        @AField( name = "Use test suite name", description = "Use the test suite name containing this test step in the filename path.", type = AFieldType.BOOLEAN)
+        @AField( name = "Use test suite name", description = "", type = AFieldType.BOOLEAN)
         public final static String USE_TEST_SUITE_NAME = "Use test suite name";
         @AField( name = "###testSuiteName", description = "")
         public final static String TEST_SUITE_NAME = "###testSuiteName";
 
-        @AField( name = "Use test step name", description = "Use the test step name as the last portion of filename path.", type = AFieldType.BOOLEAN)
+        @AField( name = "Use test step name", description = "", type = AFieldType.BOOLEAN)
         public final static String USE_TEST_STEP_NAME = "Use test step name";
         @AField( name = "###testStepName", description = "")
         public final static String TEST_STEP_NAME = "###testStepName";
@@ -412,9 +423,8 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
         @AField( name = "###" + USE_MANUAL_FILENAME_LABEL, description = USE_MANUAL_FILENAME_LABEL, type = AFieldType.BOOLEAN )
         public final static String USE_MANUAL_FILENAME = "###" + USE_MANUAL_FILENAME_LABEL;
 
-        @AField( name = "Manually provided filename", description = "", type = AFieldType.LABEL)
-        public final static String MANUAL_FILENAME_LABEL = "Manually provided filename";
-        @AField( name = "###manual-filename", description = "Explicit filename where to read and save step content.")
+        // no label for this field because it feels redundant since the checkbox above clearly states what this is for
+        @AField( name = "###manual-filename", description = "Explicit filename where to read and save step content.  Absolute path or relative to 'Root Path' above.")
 		public final static String MANUAL_FILENAME = "###manual-filename";
 
 	}
