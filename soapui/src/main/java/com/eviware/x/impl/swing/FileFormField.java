@@ -12,18 +12,6 @@
 
 package com.eviware.x.impl.swing;
 
-import java.awt.event.ActionEvent;
-import java.io.File;
-
-import javax.swing.AbstractAction;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.text.Document;
-
-import org.apache.log4j.Logger;
-
 import com.eviware.soapui.settings.ProjectSettings;
 import com.eviware.soapui.support.DocumentListenerAdapter;
 import com.eviware.soapui.support.UISupport;
@@ -32,6 +20,12 @@ import com.eviware.x.form.XForm.FieldType;
 import com.eviware.x.form.XFormTextField;
 import com.jgoodies.forms.builder.ButtonBarBuilder;
 import com.l2fprod.common.swing.JDirectoryChooser;
+import org.apache.log4j.Logger;
+
+import javax.swing.*;
+import javax.swing.text.Document;
+import java.awt.event.ActionEvent;
+import java.io.File;
 
 public class FileFormField extends AbstractSwingXFormField<JPanel> implements XFormTextField
 {
@@ -157,7 +151,11 @@ public class FileFormField extends AbstractSwingXFormField<JPanel> implements XF
 			String value = FileFormField.this.getValue();
 			if( value.length() > 0 )
 			{
-				fileChooser.setSelectedFile( new File( value ) );
+                File f = new File( value );
+                if ( ! f.isAbsolute() ) {
+                    f = f.getAbsoluteFile();
+                }
+                fileChooser.setSelectedFile( f );
 			}
 			else if( currentDirectory != null )
 			{
@@ -188,7 +186,7 @@ public class FileFormField extends AbstractSwingXFormField<JPanel> implements XF
 		else if( name.equals( CURRENT_DIRECTORY ) )
 		{
 			currentDirectory = ( String )value;
-			log.debug( "Set projectRoot to [" + projectRoot + "]" );
+			log.debug( "Set currentDirectory to [" + currentDirectory + "]" );
 		}
 	}
 
