@@ -13,9 +13,9 @@
 package com.eviware.soapui.impl.wsdl.actions.request;
 
 import com.eviware.soapui.SoapUI;
-import com.eviware.soapui.config.WsdlRequestConfig;
 import com.eviware.soapui.impl.wsdl.support.HelpUrls;
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequest;
+import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep;
 import com.eviware.soapui.support.action.support.AbstractSoapUIAction;
 import com.eviware.soapui.ui.desktop.SoapUIDesktop;
 import com.eviware.x.form.XFormDialog;
@@ -60,7 +60,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
                 rootPath = rootPath + ".resources";
             }
         }
-        Boolean useExternalStepFile = !request.getTestStep().getRequestExternalFilePath().isEmpty();
+        Boolean useExternalStepFile = request.getTestStep().getRequestExternalFilePath() != null && !request.getTestStep().getRequestExternalFilePath().isEmpty();
 
         dialog.setValue( Form.ROOT_PATH, rootPath );
         dialog.setBooleanValue(Form.USE_EXTERNAL_STEP_FILE, useExternalStepFile);
@@ -168,11 +168,36 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
             ((JTextFieldFormField)formField).getComponent().setEditable(false);
         }
 
-        String invisibleFormFields[] = { Form.PROJECT_NAME, Form.TEST_SUITE_NAME, Form.TEST_CASE_NAME, Form.TEST_STEP_NAME };
+        String invisibleFormFields[] = { Form.PROJECT_NAME, Form.TEST_SUITE_NAME, Form.TEST_CASE_NAME, Form.TEST_STEP_NAME, Form.FILENAME };
         for (String invisibleFormField : Arrays.asList(invisibleFormFields)) {
             ((AbstractSwingXFormField)dialog.getFormField( invisibleFormField )).getComponent().setVisible(false);
         }
 
+        if (useExternalStepFile) {
+            if (useAutomaticFilename) {
+                dialog.setValue( Form.FILENAME, automaticFilename);
+            } else if (useComposedFilname) {
+                dialog.setValue( Form.FILENAME, composedFilename);
+            } else if (useManualFilename) {
+                dialog.setValue( Form.FILENAME, manualFilename);
+            }
+        }
+
+        setupListeners();
+
+		SoapUIDesktop desktop = SoapUI.getDesktop();
+
+		if( !dialog.show() )
+			return false;
+
+        WsdlTestRequestStep testRequestStep = request.getTestStep();
+        testRequestStep.setRequestExternalFilePath( dialog.getValue( Form.FILENAME ) );
+        testRequestStep.saveToExternalFile(testRequestStep.updateConfigWithExternalFilePath(), false);
+
+		return true;
+	}
+
+    private void setupListeners() {
         dialog.getFormField( Form.USE_EXTERNAL_STEP_FILE ).addFormFieldListener( new XFormFieldListener()
         {
             public void valueChanged( XFormField sourceField, String newValue, String oldValue )
@@ -231,6 +256,22 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
                 dialog.getFormField( Form.USE_TEST_STEP_NAME ).setEnabled( newEnabledValue );
                 dialog.getFormField( Form.COMPOSED_FILENAME ).setEnabled( newEnabledValue );
                 dialog.getFormField( Form.MANUAL_FILENAME ).setEnabled( newEnabledValue );
+
+                Boolean useExternalStepFile = dialog.getBooleanValue( Form.USE_EXTERNAL_STEP_FILE );
+                Boolean useAutomaticFilename = dialog.getBooleanValue( Form.USE_AUTOMATIC_FILENAME );
+                Boolean useComposedFilename = dialog.getBooleanValue(Form.USE_COMPOSED_FILENAME);
+                Boolean useManualFilename = dialog.getBooleanValue(Form.USE_MANUAL_FILENAME);
+
+                if (useExternalStepFile) {
+                    if (useAutomaticFilename) {
+                        dialog.setValue( Form.FILENAME, dialog.getValue( Form.AUTOMATIC_FILENAME ));
+                    } else if (useComposedFilename) {
+                        dialog.setValue( Form.FILENAME, dialog.getValue( Form.COMPOSED_FILENAME ));
+                    } else if (useManualFilename) {
+                        dialog.setValue( Form.FILENAME, dialog.getValue( Form.MANUAL_FILENAME ));
+                    }
+                }
+
             }
         });
 
@@ -259,6 +300,20 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
                 Boolean newEnabledValue = !Boolean.valueOf(newValue);
                 dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( newEnabledValue );
                 dialog.getFormField( Form.MANUAL_FILENAME ).setEnabled( newEnabledValue );
+                Boolean useExternalStepFile = dialog.getBooleanValue( Form.USE_EXTERNAL_STEP_FILE );
+                Boolean useAutomaticFilename = dialog.getBooleanValue( Form.USE_AUTOMATIC_FILENAME );
+                Boolean useComposedFilename = dialog.getBooleanValue( Form.USE_COMPOSED_FILENAME );
+                Boolean useManualFilename = dialog.getBooleanValue( Form.USE_MANUAL_FILENAME );
+
+                if (useExternalStepFile) {
+                    if (useAutomaticFilename) {
+                        dialog.setValue( Form.FILENAME, dialog.getValue( Form.AUTOMATIC_FILENAME ));
+                    } else if (useComposedFilename) {
+                        dialog.setValue( Form.FILENAME, dialog.getValue( Form.COMPOSED_FILENAME ));
+                    } else if (useManualFilename) {
+                        dialog.setValue( Form.FILENAME, dialog.getValue( Form.MANUAL_FILENAME ));
+                    }
+                }
             }
         });
 
@@ -287,6 +342,20 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
                 dialog.getFormField( Form.USE_TEST_STEP_NAME ).setEnabled( newEnabledValue );
                 dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( newEnabledValue );
                 dialog.getFormField( Form.COMPOSED_FILENAME ).setEnabled( newEnabledValue );
+                Boolean useExternalStepFile = dialog.getBooleanValue( Form.USE_EXTERNAL_STEP_FILE );
+                Boolean useAutomaticFilename = dialog.getBooleanValue( Form.USE_AUTOMATIC_FILENAME );
+                Boolean useComposedFilename = dialog.getBooleanValue( Form.USE_COMPOSED_FILENAME );
+                Boolean useManualFilename = dialog.getBooleanValue( Form.USE_MANUAL_FILENAME );
+
+                if (useExternalStepFile) {
+                    if (useAutomaticFilename) {
+                        dialog.setValue( Form.FILENAME, dialog.getValue( Form.AUTOMATIC_FILENAME ));
+                    } else if (useComposedFilename) {
+                        dialog.setValue( Form.FILENAME, dialog.getValue( Form.COMPOSED_FILENAME ));
+                    } else if (useManualFilename) {
+                        dialog.setValue( Form.FILENAME, dialog.getValue( Form.MANUAL_FILENAME ));
+                    }
+                }
             }
         });
 
@@ -314,17 +383,25 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
                 dialog.setValue( Form.COMPOSED_FILENAME, recomputeComposedFilename());
             }
         });
-
-		SoapUIDesktop desktop = SoapUI.getDesktop();
-
-		if( !dialog.show() )
-			return false;
-
-        WsdlRequestConfig config = request.getConfig();
-
-        // TODO (marcpa) set the config with selected options
-		return true;
-	}
+        dialog.getFormField( Form.AUTOMATIC_FILENAME ).addFormFieldListener( new XFormFieldListener() {
+            @Override
+            public void valueChanged(XFormField sourceField, String newValue, String oldValue) {
+                dialog.setValue( Form.FILENAME, newValue );
+            }
+        });
+        dialog.getFormField( Form.COMPOSED_FILENAME ).addFormFieldListener( new XFormFieldListener() {
+            @Override
+            public void valueChanged(XFormField sourceField, String newValue, String oldValue) {
+                dialog.setValue( Form.FILENAME, newValue );
+            }
+        });
+        dialog.getFormField( Form.MANUAL_FILENAME ).addFormFieldListener( new XFormFieldListener() {
+            @Override
+            public void valueChanged(XFormField sourceField, String newValue, String oldValue) {
+                dialog.setValue( Form.FILENAME, newValue );
+            }
+        });
+    }
 
     private String recomputeComposedFilename() {
         StringBuilder stringBuilder = new StringBuilder();
@@ -424,8 +501,10 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
         public final static String USE_MANUAL_FILENAME = "###" + USE_MANUAL_FILENAME_LABEL;
 
         // no label for this field because it feels redundant since the checkbox above clearly states what this is for
-        @AField( name = "###manual-filename", description = "Explicit filename where to read and save step content.  Absolute path or relative to 'Root Path' above.")
+        @AField( name = "###manual-filename", description = "Explicit filename where to read and save step content.  Absolute path or relative to 'Root Path' above.", type = AFieldType.FILE)
 		public final static String MANUAL_FILENAME = "###manual-filename";
 
+        @AField( name = "###filename", description = "")
+        public final static String FILENAME = "###filename";
 	}
 }

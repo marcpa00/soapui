@@ -55,6 +55,7 @@ import com.eviware.soapui.model.testsuite.TestStep;
 import com.eviware.soapui.model.testsuite.TestStepResult;
 import com.eviware.soapui.model.testsuite.TestStepResult.TestStepStatus;
 import com.eviware.soapui.security.Securable;
+import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.resolver.ChangeOperationResolver;
 import com.eviware.soapui.support.resolver.ImportInterfaceResolver;
 import com.eviware.soapui.support.resolver.RemoveTestStepResolver;
@@ -64,6 +65,7 @@ import com.eviware.soapui.support.types.StringToStringsMap;
 import com.google.common.io.Files;
 import org.apache.log4j.Logger;
 import org.apache.xmlbeans.SchemaType;
+import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlString;
 
@@ -93,7 +95,7 @@ import java.util.Map;
 public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements OperationTestStep,
 		PropertyChangeListener, PropertyExpansionContainer, Assertable, HttpRequestTestStep, Securable
 {
-	private final static Logger log = Logger.getLogger( WsdlTestRequestStep.class );
+    private final static Logger log = Logger.getLogger( WsdlTestRequestStep.class );
 	private RequestStepConfig requestStepConfig;
 	private WsdlTestRequest testRequest;
 	private WsdlOperation wsdlOperation;
@@ -103,9 +105,10 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
     private String requestRootPath;
     private String requestExternalFilePath;
+    public static final String CON_NAME_SPACE = "declare namespace con='http://eviware.com/soapui/config';";
 
 
-	public WsdlTestRequestStep( WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest )
+    public WsdlTestRequestStep( WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest )
 	{
 		super( testCase, config, true, forLoadTest );
 
@@ -132,7 +135,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 			requestStepConfig = ( RequestStepConfig )getConfig().addNewConfig().changeType( RequestStepConfig.type );
 		}
 
-        this.requestExternalFilePath = computeExternalFilePathFromConfig(requestStepConfig);
+        requestExternalFilePath = computeExternalFilePathFromConfig();
 
 		// init properties
 		if( testRequest != null )
@@ -249,8 +252,9 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
 		WsdlTestRequestStep result = ( WsdlTestRequestStep )targetTestCase.addTestStep( config );
 		testRequest.copyAttachmentsTo( result.getTestRequest() );
+        requestExternalFilePath = computeExternalFilePathFromConfig();
 
-		return result;
+        return result;
 	}
 
 	private WsdlOperation findWsdlOperation()
@@ -323,7 +327,10 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
 		requestStepConfig = ( RequestStepConfig )config.getConfig().changeType( RequestStepConfig.type );
 		testRequest.updateConfig( requestStepConfig.getRequest() );
-	}
+
+        requestExternalFilePath = computeExternalFilePathFromConfig();
+
+    }
 
 	@Override
 	public ImageIcon getIcon()
@@ -867,11 +874,49 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 			}
 		}
 	}
-    private String computeExternalFilePathFromConfig(RequestStepConfig config) {
 
-        String conNameSpace = "declare namespace con='http://eviware.com/soapui/config';";
+    /**
+     * Update config with current requestExternalFilePath.  If config already have a 'file' attribute equals to
+     * this.requestExternalFilePath, no change to config is made and false is returned, otherwise config is updated
+     * and true is returned.
+     *
+     * @return true if the config have been updated, false otherwise.
+     */
+    public boolean updateConfigWithExternalFilePath() {
 
-        List<XmlObject> xmlObjects = Arrays.asList(config.selectPath(conNameSpace + "$this/con:request"));
+        if (requestExternalFilePath == null || requestExternalFilePath.isEmpty()) {
+            return false;
+        }
+
+        List<XmlObject> xmlObjects = Arrays.asList(requestStepConfig.selectPath(CON_NAME_SPACE + "$this/con:request"));
+
+        if (xmlObjects.size() == 0) {
+            SoapUI.log.info("No wsdl test request found.");
+        }
+        boolean configUpdated = false;
+        for (XmlObject xmlObject : xmlObjects) {
+            XmlObject fileAttribute = xmlObject.selectAttribute(new QName("", "file"));
+            if (fileAttribute == null) {
+                XmlCursor stepCursor = xmlObject.newCursor();
+                stepCursor.setAttributeText(new QName("", "file"), requestExternalFilePath );
+                SoapUI.log.info("added a request/@file with value : " + requestExternalFilePath);
+                configUpdated = true;
+            } else {
+                XmlCursor fileAttributeCursor = fileAttribute.newCursor();
+                String actualValue = fileAttributeCursor.getTextValue();
+                if (! requestExternalFilePath.equals(actualValue)) {
+                    fileAttributeCursor.setTextValue( requestExternalFilePath );
+                    SoapUI.log.info("updated request/@file to value : " + requestExternalFilePath);
+                    configUpdated = true;
+                }
+            }
+        }
+        return configUpdated;
+    }
+
+    private String computeExternalFilePathFromConfig() {
+
+        List<XmlObject> xmlObjects = Arrays.asList(requestStepConfig.selectPath(CON_NAME_SPACE + "$this/con:request"));
 
         String externalFilePath = null;
         if (xmlObjects.size() == 0) {
@@ -931,21 +976,37 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
     }
 
     public void saveToExternalFile() {
+        saveToExternalFile(false, true);
+    }
+
+    public void saveToExternalFile(Boolean configChanged, Boolean forceSave) {
         if (this.requestExternalFilePath != null) {
-            SoapUI.log.info("*** this step has a scriptExternalFilePath : saving to file " + this.requestExternalFilePath);
-            if (saveScriptToFile()) {
-                SoapUI.log.info("script '" + getConfig().newCursor().getName() + "' saved.");
+            SoapUI.log.info("*** this step has a scriptExternalFilePath : '" + this.requestExternalFilePath + "'");
+
+            // true when config is being changed in this method, i.e. if user chooses another file to save to
+            boolean localConfigChanged = false;
+            File file = new File( requestExternalFilePath );
+            boolean originalFileExists = file.exists();
+            if ( originalFileExists && configChanged && !UISupport.confirm("File [" + file.getName() + "] exists, overwrite?",
+                    "Overwrite File?") ) {
+                file = UISupport.getFileDialogs().saveAs( this, "Save test step external file " + getName(), ".xml", "XML Files (*.xml)",
+                        new File( requestExternalFilePath ).getAbsoluteFile() );
+                requestExternalFilePath = file.getAbsolutePath();
+                localConfigChanged = updateConfigWithExternalFilePath();
+            }
+            if ((localConfigChanged || (!originalFileExists && configChanged) || forceSave) && saveStepToFile()) {
+                SoapUI.log.info("step '" + getName() + "' saved to " + requestExternalFilePath);
             }
         }
     }
 
-    private boolean saveScriptToFile() {
+    private boolean saveStepToFile() {
         if (this.requestExternalFilePath == null) {
             return false;
         }
         StringBuffer pathBuffer = new StringBuffer();
         // TODO (marcpa) : use a portable way to do this (maybe create a File and check isAbsolutePath() ?
-        if (!requestExternalFilePath.startsWith("/")) {
+        if (!requestExternalFilePath.startsWith( System.getProperty("file.separator")) ) {
             // is relative
             if (requestRootPath == null) {
                 requestRootPath = ".";
