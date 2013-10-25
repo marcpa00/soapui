@@ -913,6 +913,7 @@
         </xsd:complexContent>
     </xsd:complexType>
 
+<!--
     <xsd:complexType name="Script">
         <xsd:simpleContent>
             <xsd:extension base="xsd:string">
@@ -922,6 +923,22 @@
                 <xsd:attribute name="file" type="xsd:string"></xsd:attribute>
             </xsd:extension>
         </xsd:simpleContent>
+    </xsd:complexType>
+-->
+
+    <xsd:complexType name="Script">
+        <xsd:complexContent>
+            <xsd:restriction base="xsd:anyType">
+                <xsd:sequence>
+                    <xsd:element name="file" type="xsd:string" maxOccurs="1" minOccurs="0"></xsd:element>
+                    <xsd:element name="filenameComposition" type="tns:ExternalFilenameComposition" maxOccurs="1" minOccurs="0"></xsd:element>
+                </xsd:sequence>
+                <xsd:attribute name="language" type="xsd:string"></xsd:attribute>
+                <xsd:attribute name="id" type="xsd:string"></xsd:attribute>
+                <xsd:attribute name="disabled" type="xsd:boolean"></xsd:attribute>
+                <xsd:attribute name="externalFilenameBuildMode" type="tns:ExternalFilenameBuildMode"></xsd:attribute>
+            </xsd:restriction>
+        </xsd:complexContent>
     </xsd:complexType>
 
     <xsd:complexType name="MockResponse">
