@@ -258,6 +258,8 @@
                     <xsd:element name="wsrmConfig" type="tns:WsrmConfig"
                         maxOccurs="1" minOccurs="0">
                     </xsd:element>
+                    <xsd:element name="file" type="xsd:string" maxOccurs="1" minOccurs="0"/>
+                    <xsd:element name="filenameComposition" type="tns:ExternalFilenameComposition" maxOccurs="1" minOccurs="0"></xsd:element>
                 </xsd:sequence>
                 <xsd:attribute name="wssPasswordType" type="xsd:string">
                 </xsd:attribute>
@@ -265,9 +267,29 @@
                 <xsd:attribute name="incomingWss" type="xsd:string"></xsd:attribute>
                 <xsd:attribute name="useWsAddressing" type="xsd:boolean"></xsd:attribute>
                 <xsd:attribute name="useWsReliableMessaging" type="xsd:boolean"></xsd:attribute>
-                <xsd:attribute name="file" type="xsd:string"></xsd:attribute>
+                <xsd:attribute name="externalFilenameBuildMode" type="tns:ExternalFilenameBuildMode"></xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:simpleType name="ExternalFilenameBuildMode">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="AUTO"></xsd:enumeration>
+            <xsd:enumeration value="MANUAL"></xsd:enumeration>
+            <xsd:enumeration value="COMPOSED"></xsd:enumeration>
+            <xsd:enumeration value="NONE"></xsd:enumeration>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:complexType name="ExternalFilenameComposition">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute name="projectName" type="xsd:boolean"></xsd:attribute>
+                <xsd:attribute name="testSuiteName" type="xsd:boolean"></xsd:attribute>
+                <xsd:attribute name="testCaseName" type="xsd:boolean"></xsd:attribute>
+                <xsd:attribute name="testStepName" type="xsd:boolean"></xsd:attribute>
+            </xsd:extension>
+        </xsd:simpleContent>
     </xsd:complexType>
 
     <xsd:element name="soapui-project" type="tns:Project"></xsd:element>
