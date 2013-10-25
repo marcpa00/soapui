@@ -13,10 +13,12 @@
 package com.eviware.soapui.impl.wsdl;
 
 import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.config.ExternalFilenameBuildModeConfig;
 import com.eviware.soapui.config.InterfaceConfig;
 import com.eviware.soapui.config.MockServiceConfig;
 import com.eviware.soapui.config.MockServiceDocumentConfig;
 import com.eviware.soapui.config.ProjectConfig;
+import com.eviware.soapui.config.ScriptConfig;
 import com.eviware.soapui.config.SecurityTestConfig;
 import com.eviware.soapui.config.SoapuiProjectDocumentConfig;
 import com.eviware.soapui.config.TestCaseConfig;
@@ -25,6 +27,7 @@ import com.eviware.soapui.config.TestSuiteConfig;
 import com.eviware.soapui.config.TestSuiteDocumentConfig;
 import com.eviware.soapui.config.TestSuiteRunTypesConfig;
 import com.eviware.soapui.config.TestSuiteRunTypesConfig.Enum;
+import com.eviware.soapui.config.WsdlRequestConfig;
 import com.eviware.soapui.impl.WorkspaceImpl;
 import com.eviware.soapui.impl.WsdlInterfaceFactory;
 import com.eviware.soapui.impl.rest.support.RestRequestConverter.RestConversionException;
@@ -755,10 +758,18 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 
         // BEGIN marcpa
 
-        // For steps having a 'file' attribute, the content have been saved to external file in beforeSave()... modify the
-        // project copy to be saved to clear out the textValue of testStep because we don't want to have that content
+        // TODO (marcpa) : AUTO-CONVERT behavior : should be controlled by a global settings.
+        // TODO (marcpa) : doing this here fells hacky, but on the other hand, it is the "best" place I found to store
+        //                 the content text of a step request in an external file only and no longer in the project XML
+        //                 document because working on the copy of the document makes it trivial to not mess up the
+        //                 in-memory project.
+        // TODO (marcpa) : At least, this should be refactored in a separate method.
+        //
+        // For every wsdl request and groovy script test step, ensure there is a file element present.
+        // For steps having a 'file' element, the content have been saved to external file in beforeSave()... modify the
+        // project copy to clear out the textValue of testStep because we don't want to have that content
         // in 2 places.  We let the in-memory `this.projectDocument` intact because we want this content to appear in the UI !
-        SoapUI.log.info("Clearing the textValue of testStep having a 'file' attribute (i.e. content is save in an external file).");
+        SoapUI.log.info("Clearing the textValue of testStep using an external file).");
         String conNameSpace = "declare namespace con='http://eviware.com/soapui/config';";
 
         List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
@@ -769,6 +780,57 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             SoapUI.log.info("No testStep with a script or (wsdl)request found.");
         }
         for (XmlObject xmlObject : xmlObjects) {
+            XmlCursor cursor = xmlObject.newCursor();
+            XmlCursor testStepCursor = xmlObject.selectPath(conNameSpace + "$this/../..")[0].newCursor();
+            String testStepName = testStepCursor.getAttributeText(new QName("", "name"));
+            String testStepType = testStepCursor.getAttributeText(new QName("", "type"));
+
+            if (testStepType != null) {
+                String suffix;
+                if (testStepType.equals("request")) {
+                    suffix = "-request.xml";
+                } else if (testStepType.equals("groovy")) {
+                    suffix = ".groovy";
+                } else {
+                    suffix = ".txt";
+                }
+                StringBuilder stringBuilder = new StringBuilder(testStepName).append(suffix);
+                while (testStepCursor.toParent()) {
+                    String name = testStepCursor.getAttributeText(new QName("", "name"));
+                    if (name == null) {
+                        // TODO (marcpa) : use a config property having the root path for external files, (should probably defaults to the project's parent dir)
+                        stringBuilder.insert(0, "./");
+                    } else {
+                        stringBuilder.insert(0, "/").insert(0, name);
+                    }
+                }
+                SoapUI.log.info("computed path : " + stringBuilder.toString());
+
+                // AUTO-CONVERT : Add file element if not already there and set the externalFilenameBuildMode to AUTOMATIC (i.e. filename is made of path in project)
+                WsdlRequestConfig wsdlRequestConfig;
+                ScriptConfig scriptConfig;
+                if (testStepType.equals("request")) {
+                    wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
+
+                    // TODO (marcpa) : add a test on the global settings for auto-convert
+                    if (! wsdlRequestConfig.isSetFile()) {
+                        // step does not yet use a file element, add it
+                        wsdlRequestConfig.setFile(stringBuilder.toString());
+                        wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                    }
+                } else if (testStepType.equals("groovy")) {
+                    scriptConfig = (ScriptConfig) xmlObject.changeType(ScriptConfig.type);
+                    if (! scriptConfig.isSetFile()) {
+                        scriptConfig.setFile(stringBuilder.toString());
+                        scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                    }
+                }
+            }
+        }
+
+
+/*
+
             XmlCursor cursor = xmlObject.newCursor();
             XmlObject fileAttribute = xmlObject.selectAttribute(new QName("", "file"));
             if (fileAttribute == null) {
@@ -845,8 +907,10 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                 }
                 fileAttributeCursor.dispose();
             }
+
             cursor.dispose();
         }
+*/
         // END marcpa
 
 		// check for caching
@@ -1559,7 +1623,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 		if( !getConfig().isSetBeforeSaveScript() )
 			getConfig().addNewBeforeSaveScript();
 
-		getConfig().getBeforeSaveScript().setStringValue( script );
+		getConfig().getBeforeSaveScript().set setStringValue( script );
 		if( beforeSaveScriptEngine != null )
 			beforeSaveScriptEngine.setScript( script );
 
@@ -1840,7 +1904,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 	}
 
 	/**
-	 * @see com.eviware.soapui.impl.WsdlInterfaceFactory.importWsdl
+	 * @see com.eviware.soapui.impl.WsdlInterfaceFactory.importWsdl()
 	 * @deprecated
 	 */
 

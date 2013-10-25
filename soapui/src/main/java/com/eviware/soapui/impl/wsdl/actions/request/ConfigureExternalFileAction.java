@@ -13,6 +13,8 @@
 package com.eviware.soapui.impl.wsdl.actions.request;
 
 import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.config.ExternalFilenameBuildModeConfig;
+import com.eviware.soapui.config.WsdlRequestConfig;
 import com.eviware.soapui.impl.wsdl.support.HelpUrls;
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequest;
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep;
@@ -60,17 +62,49 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
                 rootPath = rootPath + ".resources";
             }
         }
+
+        // Initialize booleans to default values then override those set in config
         Boolean useExternalStepFile = request.getTestStep().getRequestExternalFilePath() != null && !request.getTestStep().getRequestExternalFilePath().isEmpty();
+        Boolean useAutomaticFilename = true;
+        Boolean useComposedFilname = false;
+        Boolean useManualFilename = false;
+        Boolean useProjectName = false;
+        Boolean useTestSuiteName = true;
+        Boolean useTestCaseName = true;
+        Boolean useTestStepName = true;
+
+        WsdlRequestConfig wsdlRequestConfig = request.getConfig();
+        if (wsdlRequestConfig.isSetExternalFilenameBuildMode()) {
+            if (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.NONE) {
+                // All out
+                useExternalStepFile = false;
+                useAutomaticFilename = false;
+                useComposedFilname = false;
+                useManualFilename = false;
+            } else {
+                useExternalStepFile = true;
+                useAutomaticFilename = (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.AUTO);
+                useComposedFilname = (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED);
+                useManualFilename = (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.MANUAL);
+            }
+        }
+
+        if (wsdlRequestConfig.isSetFilenameComposition()) {
+            useProjectName = wsdlRequestConfig.getFilenameComposition().getProjectName();
+            useTestSuiteName = wsdlRequestConfig.getFilenameComposition().getTestSuiteName();
+            useTestCaseName = wsdlRequestConfig.getFilenameComposition().getTestCaseName();
+            useTestStepName = wsdlRequestConfig.getFilenameComposition().getTestStepName();
+        }
 
         dialog.setValue( Form.ROOT_PATH, rootPath );
         dialog.setBooleanValue(Form.USE_EXTERNAL_STEP_FILE, useExternalStepFile);
 
-        dialog.setBooleanValue( Form.USE_PROJECT_NAME, true );
-        dialog.setBooleanValue( Form.USE_TEST_SUITE_NAME, true );
-        dialog.setBooleanValue( Form.USE_TEST_CASE_NAME, true );
-        dialog.setBooleanValue( Form.USE_TEST_STEP_NAME, true );
+        dialog.setBooleanValue( Form.USE_PROJECT_NAME, useProjectName );
+        dialog.setBooleanValue( Form.USE_TEST_SUITE_NAME, useTestSuiteName );
+        dialog.setBooleanValue( Form.USE_TEST_CASE_NAME, useTestCaseName );
+        dialog.setBooleanValue( Form.USE_TEST_STEP_NAME, useTestStepName  );
 
-        // Do not use the project name because by default it is part of root path
+        // Build automatic pathname : do not use the project name because by default it is part of root path
         StringBuilder automaticFilenameBuilder = new StringBuilder();
         automaticFilenameBuilder.append(request.getTestCase().getTestSuite().getName());
         automaticFilenameBuilder.append("/").append(request.getTestCase().getName());
@@ -87,19 +121,11 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
         dialog.setValue( Form.TEST_CASE_NAME, testCaseName );
         dialog.setValue( Form.TEST_STEP_NAME, testStepName );
 
-        Boolean useAutomaticFilename = true;
-        Boolean useComposedFilname = false;
-        Boolean useManualFilename = false;
-
         String composedFilename = recomputeComposedFilename();
+
         String manualFilename = request.getTestStep().getRequestExternalFilePath();
         if (manualFilename == null || manualFilename.isEmpty()) {
             manualFilename = request.getName() + "-request.xml";
-        } else {
-            // request already have a 'file' attribute, use its value as the manual filename
-            useAutomaticFilename = false;
-            useComposedFilname = false;
-            useManualFilename = true;
         }
         dialog.setValue( Form.AUTOMATIC_FILENAME, automaticFilename );
         dialog.setValue( Form.COMPOSED_FILENAME, composedFilename );
@@ -127,14 +153,6 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
 
             dialog.getFormField( Form.ROOT_PATH ).setEnabled( false );
         } else {
-            if (! useAutomaticFilename && ! useComposedFilname && ! useManualFilename ) {
-                useAutomaticFilename = true;
-                useComposedFilname = false;
-                useManualFilename = false;
-                dialog.setBooleanValue( Form.USE_AUTOMATIC_FILENAME, useAutomaticFilename );
-                dialog.setBooleanValue( Form.USE_COMPOSED_FILENAME, useComposedFilname );
-                dialog.setBooleanValue( Form.USE_MANUAL_FILENAME, useManualFilename );
-            }
             if ( useAutomaticFilename ) {
                 dialog.getFormField( Form.USE_PROJECT_NAME ).setEnabled( false );
                 dialog.getFormField( Form.USE_TEST_SUITE_NAME ).setEnabled( false );
@@ -191,8 +209,31 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
 			return false;
 
         WsdlTestRequestStep testRequestStep = request.getTestStep();
-        testRequestStep.setRequestExternalFilePath( dialog.getValue( Form.FILENAME ) );
-        testRequestStep.saveToExternalFile(testRequestStep.updateConfigWithExternalFilePath(), false);
+
+        // change testRequestStep with values from dialog
+        if (! dialog.getBooleanValue( Form.USE_EXTERNAL_STEP_FILE )) {
+            testRequestStep.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
+        } else {
+            if (dialog.getBooleanValue( Form.USE_AUTOMATIC_FILENAME )) {
+                testRequestStep.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+            } else if (dialog.getBooleanValue( Form.USE_COMPOSED_FILENAME )) {
+                testRequestStep.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.COMPOSED);
+            } else if (dialog.getBooleanValue( Form.USE_MANUAL_FILENAME )) {
+                testRequestStep.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.MANUAL);
+            }
+            testRequestStep.setRequestExternalFilePath( dialog.getValue( Form.FILENAME ) );
+            if (testRequestStep.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED) {
+                if (! request.getConfig().isSetFilenameComposition()) {
+                    request.getConfig().addNewFilenameComposition();
+                }
+                testRequestStep.getExternalFilenameCompositionConfig().setProjectName( dialog.getBooleanValue( Form.USE_PROJECT_NAME ) );
+                testRequestStep.getExternalFilenameCompositionConfig().setTestSuiteName( dialog.getBooleanValue( Form.USE_TEST_SUITE_NAME ) );
+                testRequestStep.getExternalFilenameCompositionConfig().setTestCaseName( dialog.getBooleanValue( Form.USE_TEST_CASE_NAME ) );
+                testRequestStep.getExternalFilenameCompositionConfig().setTestStepName( dialog.getBooleanValue( Form.USE_TEST_STEP_NAME ) );
+            }
+            testRequestStep.saveToExternalFile(testRequestStep.updateConfigWithExternalFilePath(), false);
+        }
+
 
 		return true;
 	}
@@ -362,25 +403,33 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
         dialog.getFormField( Form.USE_PROJECT_NAME ).addFormFieldListener( new XFormFieldListener() {
             @Override
             public void valueChanged(XFormField sourceField, String newValue, String oldValue) {
-                dialog.setValue( Form.COMPOSED_FILENAME, recomputeComposedFilename());
+                String composedFilename = recomputeComposedFilename();
+                dialog.setValue( Form.COMPOSED_FILENAME, composedFilename );
+                dialog.setValue( Form.FILENAME, composedFilename );
             }
         });
         dialog.getFormField( Form.USE_TEST_SUITE_NAME ).addFormFieldListener( new XFormFieldListener() {
             @Override
             public void valueChanged(XFormField sourceField, String newValue, String oldValue) {
-                dialog.setValue( Form.COMPOSED_FILENAME, recomputeComposedFilename());
+                String composedFilename = recomputeComposedFilename();
+                dialog.setValue( Form.COMPOSED_FILENAME, composedFilename );
+                dialog.setValue( Form.FILENAME, composedFilename );
             }
         });
         dialog.getFormField( Form.USE_TEST_CASE_NAME ).addFormFieldListener( new XFormFieldListener() {
             @Override
             public void valueChanged(XFormField sourceField, String newValue, String oldValue) {
-                dialog.setValue( Form.COMPOSED_FILENAME, recomputeComposedFilename());
+                String composedFilename = recomputeComposedFilename();
+                dialog.setValue( Form.COMPOSED_FILENAME, composedFilename );
+                dialog.setValue( Form.FILENAME, composedFilename );
             }
         });
         dialog.getFormField( Form.USE_TEST_STEP_NAME ).addFormFieldListener( new XFormFieldListener() {
             @Override
             public void valueChanged(XFormField sourceField, String newValue, String oldValue) {
-                dialog.setValue( Form.COMPOSED_FILENAME, recomputeComposedFilename());
+                String composedFilename = recomputeComposedFilename();
+                dialog.setValue( Form.COMPOSED_FILENAME, composedFilename );
+                dialog.setValue( Form.FILENAME, composedFilename );
             }
         });
         dialog.getFormField( Form.AUTOMATIC_FILENAME ).addFormFieldListener( new XFormFieldListener() {
@@ -473,15 +522,15 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
         @AField( name = "###projectName", description = "")
         public final static String PROJECT_NAME = "###projectName";
 
-        @AField( name = "Use test case name", description = "", type = AFieldType.BOOLEAN)
-        public final static String USE_TEST_CASE_NAME = "Use test case name";
-        @AField( name = "###testCaseName", description = "")
-        public final static String TEST_CASE_NAME = "###testCaseName";
-
         @AField( name = "Use test suite name", description = "", type = AFieldType.BOOLEAN)
         public final static String USE_TEST_SUITE_NAME = "Use test suite name";
         @AField( name = "###testSuiteName", description = "")
         public final static String TEST_SUITE_NAME = "###testSuiteName";
+
+        @AField( name = "Use test case name", description = "", type = AFieldType.BOOLEAN)
+        public final static String USE_TEST_CASE_NAME = "Use test case name";
+        @AField( name = "###testCaseName", description = "")
+        public final static String TEST_CASE_NAME = "###testCaseName";
 
         @AField( name = "Use test step name", description = "", type = AFieldType.BOOLEAN)
         public final static String USE_TEST_STEP_NAME = "Use test step name";
