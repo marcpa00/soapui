@@ -18,7 +18,6 @@ import com.eviware.soapui.config.InterfaceConfig;
 import com.eviware.soapui.config.MockServiceConfig;
 import com.eviware.soapui.config.MockServiceDocumentConfig;
 import com.eviware.soapui.config.ProjectConfig;
-import com.eviware.soapui.config.ScriptConfig;
 import com.eviware.soapui.config.SecurityTestConfig;
 import com.eviware.soapui.config.SoapuiProjectDocumentConfig;
 import com.eviware.soapui.config.TestCaseConfig;
@@ -77,7 +76,6 @@ import com.eviware.soapui.support.scripting.SoapUIScriptEngine;
 import com.eviware.soapui.support.scripting.SoapUIScriptEngineRegistry;
 import com.eviware.soapui.support.types.StringToObjectMap;
 import com.eviware.soapui.support.xml.XmlUtils;
-import com.google.common.io.Files;
 import org.apache.commons.ssl.OpenSSL;
 import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlCursor;
@@ -99,7 +97,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -757,160 +754,9 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 		SoapuiProjectDocumentConfig projectDocument = ( SoapuiProjectDocumentConfig )this.projectDocument.copy();
 
         // BEGIN marcpa
-
-        // TODO (marcpa) : AUTO-CONVERT behavior : should be controlled by a global settings.
-        // TODO (marcpa) : doing this here fells hacky, but on the other hand, it is the "best" place I found to store
-        //                 the content text of a step request in an external file only and no longer in the project XML
-        //                 document because working on the copy of the document makes it trivial to not mess up the
-        //                 in-memory project.
-        // TODO (marcpa) : At least, this should be refactored in a separate method.
-        //
-        // For every wsdl request and groovy script test step, ensure there is a file element present.
-        // For steps having a 'file' element, the content have been saved to external file in beforeSave()... modify the
-        // project copy to clear out the textValue of testStep because we don't want to have that content
-        // in 2 places.  We let the in-memory `this.projectDocument` intact because we want this content to appear in the UI !
-        SoapUI.log.info("Clearing the textValue of testStep using an external file).");
-        String conNameSpace = "declare namespace con='http://eviware.com/soapui/config';";
-
-        List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
-        xmlObjects.addAll(Arrays.asList(projectDocument.selectPath(conNameSpace + "$this/con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/script")));
-        xmlObjects.addAll(Arrays.asList(projectDocument.selectPath(conNameSpace + "$this/con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/con:request")));
-
-        if (xmlObjects.size() == 0) {
-            SoapUI.log.info("No testStep with a script or (wsdl)request found.");
+        if (getSettings().getBoolean( UISettings.STEP_IN_EXTERNAL_FILE) ) {
+            saveStepsInExternalFiles(projectDocument);
         }
-        for (XmlObject xmlObject : xmlObjects) {
-            XmlCursor cursor = xmlObject.newCursor();
-            XmlCursor testStepCursor = xmlObject.selectPath(conNameSpace + "$this/../..")[0].newCursor();
-            String testStepName = testStepCursor.getAttributeText(new QName("", "name"));
-            String testStepType = testStepCursor.getAttributeText(new QName("", "type"));
-
-            if (testStepType != null) {
-                String suffix;
-                if (testStepType.equals("request")) {
-                    suffix = "-request.xml";
-                } else if (testStepType.equals("groovy")) {
-                    suffix = ".groovy";
-                } else {
-                    suffix = ".txt";
-                }
-                StringBuilder stringBuilder = new StringBuilder(testStepName).append(suffix);
-                while (testStepCursor.toParent()) {
-                    String name = testStepCursor.getAttributeText(new QName("", "name"));
-                    if (name == null) {
-                        // TODO (marcpa) : use a config property having the root path for external files, (should probably defaults to the project's parent dir)
-                        stringBuilder.insert(0, "./");
-                    } else {
-                        stringBuilder.insert(0, "/").insert(0, name);
-                    }
-                }
-                SoapUI.log.info("computed path : " + stringBuilder.toString());
-
-                // AUTO-CONVERT : Add file element if not already there and set the externalFilenameBuildMode to AUTOMATIC (i.e. filename is made of path in project)
-                WsdlRequestConfig wsdlRequestConfig;
-                ScriptConfig scriptConfig;
-                if (testStepType.equals("request")) {
-                    wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
-
-                    // TODO (marcpa) : add a test on the global settings for auto-convert
-                    if (! wsdlRequestConfig.isSetFile()) {
-                        // step does not yet use a file element, add it
-                        wsdlRequestConfig.setFile(stringBuilder.toString());
-                        wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
-                    }
-                } else if (testStepType.equals("groovy")) {
-                    scriptConfig = (ScriptConfig) xmlObject.changeType(ScriptConfig.type);
-                    if (! scriptConfig.isSetFile()) {
-                        scriptConfig.setFile(stringBuilder.toString());
-                        scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
-                    }
-                }
-            }
-        }
-
-
-/*
-
-            XmlCursor cursor = xmlObject.newCursor();
-            XmlObject fileAttribute = xmlObject.selectAttribute(new QName("", "file"));
-            if (fileAttribute == null) {
-                // TODO (marcpa) : use a config property to decide if we should convert step "storage" from embedded in project file to external file here.
-
-                XmlCursor testStepCursor = xmlObject.selectPath(conNameSpace + "$this/../..")[0].newCursor();
-                String testStepName = testStepCursor.getAttributeText(new QName("", "name"));
-                String testStepType = testStepCursor.getAttributeText(new QName("", "type"));
-
-                SoapUI.log.info("NO file attribute found for the testStep '" + testStepName + "', of type '" + testStepType + "'");
-
-                SoapUI.log.info("generating the 'file' attribute to point to an external file and create this external file according to path of test step.");
-                String suffix;
-                if (testStepType.equals("request")) {
-                    suffix = "-request.xml";
-                } else if (testStepType.equals("groovy")) {
-                    suffix = ".groovy";
-                } else {
-                    suffix = ".txt";
-                }
-                StringBuilder stringBuilder = new StringBuilder(testStepName).append(suffix);
-                while (testStepCursor.toParent()) {
-                    String name = testStepCursor.getAttributeText(new QName("", "name"));
-                    if (name == null) {
-                        // TODO (marcpa) : use a config property having the root path for external files, (should probably defaults to the project's parent dir)
-                        stringBuilder.insert(0, "scripts/");
-                    } else {
-                        stringBuilder.insert(0, "/").insert(0, name);
-                    }
-                }
-                SoapUI.log.info("computed path : " + stringBuilder.toString());
-                // add a 'file' attribute to the element at xmlObject
-                cursor.setAttributeText(new QName("", "file"), stringBuilder.toString());
-
-                // now wave the content in this file
-                String content = null;
-                if (testStepType.equals("request")) {
-                    XmlCursor requestContentCursor = xmlObject.newCursor();
-                    if (requestContentCursor.toFirstChild()) {
-                        do {
-                            if (requestContentCursor.getName() != null && requestContentCursor.getName().getLocalPart().equals("request")) {
-                                content = requestContentCursor.getTextValue();
-                                break;
-                            }
-                        } while (requestContentCursor.toNextSibling());
-                    }
-                    if (content == null) {
-                        SoapUI.log.info("Could not get to the actual request content !? : external file will be empty.");
-                        content = "";
-                    }
-                } else {
-                    content = cursor.getTextValue();
-                }
-                saveStepContentToFile(content, stringBuilder.toString());
-                testStepCursor.dispose();
-            } else {
-                XmlCursor fileAttributeCursor = fileAttribute.newCursor();
-                SoapUI.log.info("config '" + cursor.getName() + "', has a file attribute : '" + fileAttributeCursor.getTextValue() + "'" );
-                SoapUI.log.info("   ==> clearing step content because it is externally kept.");
-                if (cursor.getName().toString().equals("script")) {
-                    cursor.setTextValue("");
-                } else {
-                    XmlObject requests[] = xmlObject.selectPath(conNameSpace + "$this/con:request");
-                    XmlCursor reqCursor = null;
-                    if (requests.length > 0) {
-                        for (XmlObject req : requests) {
-                            reqCursor = req.newCursor();
-                            reqCursor.setTextValue("");
-                        }
-                    }
-                    if (reqCursor != null) {
-                        reqCursor.dispose();
-                    }
-                }
-                fileAttributeCursor.dispose();
-            }
-
-            cursor.dispose();
-        }
-*/
         // END marcpa
 
 		// check for caching
@@ -1623,7 +1469,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 		if( !getConfig().isSetBeforeSaveScript() )
 			getConfig().addNewBeforeSaveScript();
 
-		getConfig().getBeforeSaveScript().set setStringValue( script );
+		getConfig().getBeforeSaveScript().setStringValue(script);
 		if( beforeSaveScriptEngine != null )
 			beforeSaveScriptEngine.setScript( script );
 
@@ -2378,36 +2224,93 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 	//		}
 	//	}
 
+    private void saveStepsInExternalFiles(SoapuiProjectDocumentConfig projectDocumentCopy) {
 
-    private boolean saveStepContentToFile(String content, String externalFilePath) {
-        if (externalFilePath == null) {
-            return false;
+        Boolean beBackwardCompatible = getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE);
+        // TODO (marcpa) : AUTO-CONVERT behavior : should be controlled by a global settings.
+        // TODO (marcpa) : doing this here fells hacky, but on the other hand, it is the "best" place I found to store
+        //                 the content text of a step request in an external file only and no longer in the project XML
+        //                 document because working on the copy of the document makes it trivial to not mess up the
+        //                 in-memory project.
+        // TODO (marcpa) : At least, this should be refactored in a separate method.
+        //
+        // For every wsdl request and groovy script test step, ensure there is a file element present.
+        // For steps having a 'file' element, the content have been saved to external file in beforeSave()... modify the
+        // project copy to clear out the textValue of testStep because we don't want to have that content
+        // in 2 places.  We let the in-memory `this.projectDocument` intact because we want this content to appear in the UI !
+        if (! beBackwardCompatible) {
+            SoapUI.log.info("Clearing the textValue of testStep using an external file).");
         }
-        StringBuffer pathBuffer = new StringBuffer();
-        // TODO (marcpa) : use a portable way to do this (maybe create a File and check isAbsolutePath() ?
-        if (!externalFilePath.startsWith("/")) {
-            // is relative
-            pathBuffer.append(new File(this.path).getParent()).append(System.getProperty("file.separator")).append(externalFilePath);
-        } else {
-            // is absolute path
-            pathBuffer.append(externalFilePath);
-        }
+        String conNameSpace = "declare namespace con='http://eviware.com/soapui/config';";
 
-        File f = new File(pathBuffer.toString());
-        try {
-            if (! f.exists()) {
-                File parent = f.getParentFile();
-                if (! parent.exists()) {
-                    parent.mkdirs();
+        List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
+        xmlObjects.addAll(Arrays.asList(projectDocumentCopy.selectPath(conNameSpace + "$this/con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/script")));
+        xmlObjects.addAll(Arrays.asList(projectDocumentCopy.selectPath(conNameSpace + "$this/con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/con:request")));
+
+        if (xmlObjects.size() == 0) {
+            SoapUI.log.info("No testStep with a script or (wsdl)request found.");
+        }
+        for (XmlObject xmlObject : xmlObjects) {
+            XmlCursor cursor = xmlObject.newCursor();
+            XmlCursor testStepCursor = xmlObject.selectPath(conNameSpace + "$this/../..")[0].newCursor();
+            String testStepName = testStepCursor.getAttributeText(new QName("", "name"));
+            String testStepType = testStepCursor.getAttributeText(new QName("", "type"));
+
+            if (testStepType != null) {
+                String suffix;
+                if (testStepType.equals("request")) {
+                    suffix = "-request.xml";
+                } else if (testStepType.equals("groovy")) {
+                    suffix = ".groovy";
+                } else {
+                    suffix = ".txt";
                 }
-                f.createNewFile();
+                StringBuilder stringBuilder = new StringBuilder(testStepName).append(suffix);
+                while (testStepCursor.toParent()) {
+                    String name = testStepCursor.getAttributeText(new QName("", "name"));
+                    if (name == null) {
+                        // TODO (marcpa) : use a config property having the root path for external files, (should probably defaults to the project's parent dir)
+                        stringBuilder.insert(0, "./");
+                    } else {
+                        stringBuilder.insert(0, "/").insert(0, name);
+                    }
+                }
+                SoapUI.log.info("computed path : " + stringBuilder.toString());
+
+                // AUTO-CONVERT : Add file element if not already there and set the externalFilenameBuildMode to AUTOMATIC (i.e. filename is made of path in project)
+                WsdlRequestConfig wsdlRequestConfig;
+                if (testStepType.equals("request")) {
+                    wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
+
+                    // TODO (marcpa) : add a test on the global settings for auto-convert
+                    if (! wsdlRequestConfig.isSetExternalFilename()) {
+                        // step does not yet use a file element, add it
+                        wsdlRequestConfig.setExternalFilename(stringBuilder.toString());
+                        wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                    }
+                    if (! beBackwardCompatible) {
+                        wsdlRequestConfig.getRequest().setStringValue("");
+                        SoapUI.log.info("Test step is of type request and uses an external file to store content : cleared the in-memory content (avoids duplicates, but is backward incompatible.");
+                    }
+                } else if (testStepType.equals("groovy")) {
+
+                    XmlCursor stepCursor = xmlObject.newCursor();
+
+                    QName qNameOfExternalFilename = new QName("", "externalFilename");
+                    QName qNameOfExternalFilenameBuildMode = new QName("", "externalFilenameBuildMode");
+                    XmlObject externalFilenameAttribute = xmlObject.selectAttribute(qNameOfExternalFilename);
+                    if (externalFilenameAttribute == null) {
+                        stepCursor.setAttributeText(qNameOfExternalFilename, stringBuilder.toString());
+                        stepCursor.setAttributeText(qNameOfExternalFilenameBuildMode, ExternalFilenameBuildModeConfig.AUTO.toString());
+                    }
+                    if (! beBackwardCompatible) {
+                        stepCursor.setTextValue("");
+                        SoapUI.log.info("Test step is of type groovy and uses an external file to store content : cleared the in-memory content (avoids duplicates, but is backward incompatible.");
+                    }
+                    stepCursor.dispose();
+                }
             }
-            Files.write(content, f, Charset.forName("UTF-8"));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
         }
-        return true;
     }
 
 }

@@ -89,11 +89,17 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
             }
         }
 
-        if (wsdlRequestConfig.isSetFilenameComposition()) {
-            useProjectName = wsdlRequestConfig.getFilenameComposition().getProjectName();
-            useTestSuiteName = wsdlRequestConfig.getFilenameComposition().getTestSuiteName();
-            useTestCaseName = wsdlRequestConfig.getFilenameComposition().getTestCaseName();
-            useTestStepName = wsdlRequestConfig.getFilenameComposition().getTestStepName();
+        if (wsdlRequestConfig.isSetComposeWithProjectName()) {
+            useProjectName = wsdlRequestConfig.getComposeWithProjectName();
+        }
+        if (wsdlRequestConfig.isSetComposeWithTestSuiteName()) {
+            useTestSuiteName = wsdlRequestConfig.getComposeWithTestSuiteName();
+        }
+        if (wsdlRequestConfig.isSetComposeWithTestCaseName()) {
+            useTestCaseName = wsdlRequestConfig.getComposeWithTestCaseName();
+        }
+        if (wsdlRequestConfig.isSetComposeWithTestStepName()) {
+            useTestStepName = wsdlRequestConfig.getComposeWithTestStepName();
         }
 
         dialog.setValue( Form.ROOT_PATH, rootPath );
@@ -223,13 +229,10 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
             }
             testRequestStep.setRequestExternalFilePath( dialog.getValue( Form.FILENAME ) );
             if (testRequestStep.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED) {
-                if (! request.getConfig().isSetFilenameComposition()) {
-                    request.getConfig().addNewFilenameComposition();
-                }
-                testRequestStep.getExternalFilenameCompositionConfig().setProjectName( dialog.getBooleanValue( Form.USE_PROJECT_NAME ) );
-                testRequestStep.getExternalFilenameCompositionConfig().setTestSuiteName( dialog.getBooleanValue( Form.USE_TEST_SUITE_NAME ) );
-                testRequestStep.getExternalFilenameCompositionConfig().setTestCaseName( dialog.getBooleanValue( Form.USE_TEST_CASE_NAME ) );
-                testRequestStep.getExternalFilenameCompositionConfig().setTestStepName( dialog.getBooleanValue( Form.USE_TEST_STEP_NAME ) );
+                testRequestStep.setComposeWithProjectName( dialog.getBooleanValue( Form.USE_PROJECT_NAME ) );
+                testRequestStep.setComposeWithTestSuiteName( dialog.getBooleanValue( Form.USE_TEST_SUITE_NAME ) );
+                testRequestStep.setComposeWithTestCaseName( dialog.getBooleanValue( Form.USE_TEST_CASE_NAME ) );
+                testRequestStep.setComposeWithTestStepName( dialog.getBooleanValue( Form.USE_TEST_STEP_NAME ) );
             }
             testRequestStep.saveToExternalFile(testRequestStep.updateConfigWithExternalFilePath(), false);
         }

@@ -60,6 +60,12 @@ public interface UISettings
 	@Setting( name = "AutoSave Interval", description = "Sets the autosave interval in minutes, 0 = off", type = SettingType.INT )
 	public static final String AUTO_SAVE_INTERVAL = UISettings.class.getSimpleName() + "@auto_save_interval";
 
+    @Setting( name = "Step in external file", description = "should the content of test steps be stored in a file, outside the project file", type = SettingType.BOOLEAN)
+    public final static String STEP_IN_EXTERNAL_FILE = ProjectSettings.class.getSimpleName() + "@stepInExternalFile";
+
+    @Setting( name = "Save step content in external file and in project file", description = "when saving a step content in external file, also keep a copy of the value in the project XML file", type = SettingType.BOOLEAN)
+    public final static String ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE = ProjectSettings.class.getSimpleName() + "@alsoKeepInProjectWhenStepInExternalFile";
+
 	public static final String DESKTOP_TYPE = UISettings.class.getSimpleName() + "@desktop-type";
 
 	@Setting( name = "Native LF", description = "(use native Look & Feel - requires restart)", type = SettingType.BOOLEAN )

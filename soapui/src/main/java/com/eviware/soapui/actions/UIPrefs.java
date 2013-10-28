@@ -12,13 +12,6 @@
 
 package com.eviware.soapui.actions;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.JCheckBox;
-import javax.swing.JTextField;
-import javax.swing.ToolTipManager;
-
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.model.settings.Settings;
 import com.eviware.soapui.settings.UISettings;
@@ -26,6 +19,10 @@ import com.eviware.soapui.support.Tools;
 import com.eviware.soapui.support.components.SimpleForm;
 import com.eviware.soapui.support.types.StringToStringMap;
 import com.eviware.soapui.ui.desktop.DesktopRegistry;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * Preferences class for UISettings
@@ -57,6 +54,8 @@ public class UIPrefs implements Prefs
 	public static final String DISABLE_TOOLTIPS = "Disable Tooltips";
 	public static final String DISABLE_BROWSER = "Disable Browser";
 	public static final String DISABLE_BROWSER_PLUGINS = "Disable Plugins in Browser";
+    public static final String STEP_IN_EXTERNAL_FILES = "Step in external file";
+    public static final String ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE = "Also keep step content in project file";
 
 	private SimpleForm editorForm;
 	private final String title;
@@ -101,6 +100,10 @@ public class UIPrefs implements Prefs
 
 			editorForm.appendTextField( AUTOSAVE_INTERVAL,
 					"Sets the autosave interval in minutes (0 means autosave is off)" );
+
+            editorForm.appendSeparator();
+            editorForm.appendCheckBox( STEP_IN_EXTERNAL_FILES, "Save content of test steps in a file, outside the project file", false);
+            editorForm.appendCheckBox( ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE, "Also keep step content in project file when saving (for backward compatibility)", true);
 
 			if( SoapUI.isStandalone() )
 			{
@@ -160,6 +163,8 @@ public class UIPrefs implements Prefs
 		settings.setString( UISettings.AUTO_SAVE_INTERVAL, values.get( AUTOSAVE_INTERVAL ) );
 		settings.setBoolean( UISettings.AUTO_SAVE_PROJECTS_ON_EXIT, values.getBoolean( AUTOSAVE_ONEXIT ) );
 		settings.setBoolean( UISettings.LINEBREAK, values.getBoolean( LINEBREAK ) );
+        settings.setBoolean( UISettings.STEP_IN_EXTERNAL_FILE, values.getBoolean( STEP_IN_EXTERNAL_FILES ) );
+        settings.setBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE, values.getBoolean( ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE ) );
 
 		if( SoapUI.isStandalone() )
 		{
@@ -208,6 +213,8 @@ public class UIPrefs implements Prefs
 		values.put( AUTOSAVE_INTERVAL, settings.getString( UISettings.AUTO_SAVE_INTERVAL, "0" ) );
 		values.put( AUTOSAVE_ONEXIT, settings.getBoolean( UISettings.AUTO_SAVE_PROJECTS_ON_EXIT ) );
 		values.put( LINEBREAK, settings.getBoolean( UISettings.LINEBREAK ) );
+        values.put( STEP_IN_EXTERNAL_FILES, settings.getBoolean( UISettings.STEP_IN_EXTERNAL_FILE ) );
+        values.put( ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE, settings.getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE ) );
 
 		if( SoapUI.isStandalone() )
 		{

@@ -12,27 +12,6 @@
 
 package com.eviware.soapui;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.security.GeneralSecurityException;
-import java.util.TimerTask;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPasswordField;
-
-import org.apache.commons.ssl.OpenSSL;
-import org.apache.log4j.Logger;
-import org.apache.log4j.xml.DOMConfigurator;
-
 import com.eviware.soapui.config.SoapuiSettingsDocumentConfig;
 import com.eviware.soapui.impl.settings.XmlBeansSettingsImpl;
 import com.eviware.soapui.impl.wsdl.support.http.HttpClientSupport;
@@ -58,6 +37,23 @@ import com.eviware.soapui.support.action.SoapUIActionRegistry;
 import com.eviware.soapui.support.factory.SoapUIFactoryRegistry;
 import com.eviware.soapui.support.listener.SoapUIListenerRegistry;
 import com.eviware.soapui.support.types.StringList;
+import org.apache.commons.ssl.OpenSSL;
+import org.apache.log4j.Logger;
+import org.apache.log4j.xml.DOMConfigurator;
+
+import javax.swing.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.security.GeneralSecurityException;
+import java.util.TimerTask;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * Initializes core objects. Transform to a Spring "ApplicationContext"?
@@ -382,6 +378,8 @@ public class DefaultSoapUICore implements SoapUICore
 		setIfNotSet( WsaSettings.OVERRIDE_EXISTING_HEADERS, false );
 		setIfNotSet( WsaSettings.ENABLE_FOR_OPTIONAL, false );
 		setIfNotSet( VersionUpdateSettings.AUTO_CHECK_VERSION_UPDATE, true );
+        setIfNotSet( UISettings.STEP_IN_EXTERNAL_FILE, false );
+        setIfNotSet( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE, true);
 
 		boolean setWsiDir = false;
 		String wsiLocationString = settings.getString( WSISettings.WSI_LOCATION, null );
