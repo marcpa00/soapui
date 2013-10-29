@@ -2232,14 +2232,16 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         //                 the content text of a step request in an external file only and no longer in the project XML
         //                 document because working on the copy of the document makes it trivial to not mess up the
         //                 in-memory project.
-        // TODO (marcpa) : At least, this should be refactored in a separate method.
         //
-        // For every wsdl request and groovy script test step, ensure there is a file element present.
-        // For steps having a 'file' element, the content have been saved to external file in beforeSave()... modify the
-        // project copy to clear out the textValue of testStep because we don't want to have that content
-        // in 2 places.  We let the in-memory `this.projectDocument` intact because we want this content to appear in the UI !
+
+        // When UISettings have USE_EXTERNAL_FILE and step does not override it :
+        //
+        // * for every wsdl request and groovy script test step, ensure there is an externalFilename attribute present.
+        // * for steps having an 'externalFilename' attribute, the content have been saved to external file in beforeSave()... modify the
+        //   project copy to clear out the textValue of testStep because we don't want to have that content
+        //   in 2 places.  We let the in-memory `this.projectDocument` intact because we want this content to appear in the UI !
         if (! beBackwardCompatible) {
-            SoapUI.log.info("Clearing the textValue of testStep using an external file).");
+            SoapUI.log.info("Clearing the textValue of testStep using an external file (unless they are flagged as not using step in external file).");
         }
         String conNameSpace = "declare namespace con='http://eviware.com/soapui/config';";
 
@@ -2253,8 +2255,17 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         for (XmlObject xmlObject : xmlObjects) {
             XmlCursor cursor = xmlObject.newCursor();
             XmlCursor testStepCursor = xmlObject.selectPath(conNameSpace + "$this/../..")[0].newCursor();
+
             String testStepName = testStepCursor.getAttributeText(new QName("", "name"));
             String testStepType = testStepCursor.getAttributeText(new QName("", "type"));
+
+            String externalFilenameBuildModeValue = cursor.getAttributeText(new QName("", "externalFilenameBuildMode"));
+            if (externalFilenameBuildModeValue != null && externalFilenameBuildModeValue.equals(ExternalFilenameBuildModeConfig.NONE.toString())) {
+                // skip this step, it does not want to use external filename
+                SoapUI.log.info("step " + testStepName + " of type " + testStepType + " : ");
+                SoapUI.log.info("   step does not want to use step in external file (mode is NONE) : skipping it.");
+                continue;
+            }
 
             if (testStepType != null) {
                 String suffix;
