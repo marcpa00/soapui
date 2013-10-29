@@ -13,6 +13,8 @@
 package com.eviware.soapui.impl.wsdl.teststeps;
 
 import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.config.ExternalFilenameBuildModeConfig;
+import com.eviware.soapui.config.ScriptConfig;
 import com.eviware.soapui.config.TestStepConfig;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansion;
@@ -25,17 +27,19 @@ import com.eviware.soapui.model.testsuite.TestCaseRunner;
 import com.eviware.soapui.model.testsuite.TestRunner.Status;
 import com.eviware.soapui.model.testsuite.TestStepResult;
 import com.eviware.soapui.model.testsuite.TestStepResult.TestStepStatus;
+import com.eviware.soapui.settings.UISettings;
 import com.eviware.soapui.support.GroovyUtils;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.scripting.SoapUIScriptEngine;
 import com.eviware.soapui.support.scripting.SoapUIScriptEngineRegistry;
+import com.eviware.soapui.support.xml.XmlObjectConfigurationBuilder;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
 import com.google.common.io.Files;
 import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlCursor;
-import org.apache.xmlbeans.XmlObject;
 
 import javax.swing.*;
+import javax.xml.namespace.QName;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -44,7 +48,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
- * TestStep that executes an arbitraty Groovy script
+ * TestStep that executes an arbitrary Groovy script
  * 
  * @author ole.matzura
  */
@@ -59,6 +63,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 	private ImageIcon failedIcon;
 	private ImageIcon okIcon;
 	private SoapUIScriptEngine scriptEngine;
+    private ScriptConfig scriptConfig;
 
 	public WsdlGroovyScriptTestStep( WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest )
 	{
@@ -181,6 +186,18 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
         return true;
     }
 
+    /**
+     * Read config to initialize current test step.
+     *
+     * This is a groovy script, but the 'script' element is *not* a 'Script' XML type as defined in the XSD, simply an instance of an anyType.
+     *
+     * However, when reading a config, we create an instance of ScriptConfig because its API is more natural than fiddling with XmlObject/XmlCursor
+     * directly.  At the end, this test step config is set from the xml representation built up in ScriptConfig.
+     *
+     * Therefore, the ScriptConfig object created here does not live past beyond the return point of this method.
+     *
+     * @param config
+     */
 	private void readConfig( TestStepConfig config )
 	{
 
@@ -188,10 +205,75 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 
 		XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( config.getConfig() );
 
-        String externalFilePath = reader.readString("script/@file", null);
-        SoapUI.log.info("script/@file : " + externalFilePath);
-        if (externalFilePath != null) {
-            scriptExternalFilePath = externalFilePath;
+        scriptConfig = ScriptConfig.Factory.newInstance();
+
+        String externalFilename = reader.readString("script/@externalFilename", null);
+        String externalFilenameBuildMode = reader.readString("script/@externalFilenameBuildMode", null);
+        String composeWithProjectName = reader.readString("script/@composeWithProjectName", "false");
+        String composeWithTestSuiteName = reader.readString("script/@composeWithTestSuiteName", "false");
+        String composeWithTestCaseName = reader.readString("script/@composeWithTestCaseName", "false");
+        String composeWithTestStepName = reader.readString("script/@composeWithTestSuiteName", "true");
+
+        SoapUI.log.info("script/@externalFilename : " + externalFilename);
+
+        if (externalFilenameBuildMode != null) {
+            scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.Enum.forString(externalFilenameBuildMode));
+        }
+        if (externalFilename == null || externalFilename.isEmpty()) {
+            String projectName, testSuiteName, testCaseName, testStepName;
+            String sep = System.getProperty("file.separator");
+            projectName = getTestCase().getTestSuite().getProject().getName();
+            testSuiteName = getTestCase().getTestSuite().getName();
+            testCaseName = getTestCase().getName();
+            testStepName = getName();
+            if (externalFilenameBuildMode == null || externalFilenameBuildMode.isEmpty()) {
+                externalFilenameBuildMode = ExternalFilenameBuildModeConfig.NONE.toString();
+                scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
+            }
+            if (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.AUTO) {
+                StringBuilder stringBuilder = new StringBuilder(projectName).append(sep)
+                        .append(testSuiteName).append(sep)
+                        .append(testCaseName).append(sep)
+                        .append(testStepName).append(".groovy");
+                externalFilename = stringBuilder.toString();
+            } else if (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED) {
+                scriptConfig.setComposeWithProjectName(Boolean.parseBoolean(composeWithProjectName));
+                scriptConfig.setComposeWithTestSuiteName(Boolean.parseBoolean(composeWithTestSuiteName));
+                scriptConfig.setComposeWithTestCaseName(Boolean.parseBoolean(composeWithTestCaseName));
+                scriptConfig.setComposeWithTestStepName(Boolean.parseBoolean(composeWithTestStepName));
+
+                StringBuilder stringBuilder = new StringBuilder();
+                if (scriptConfig.getComposeWithProjectName()) {
+                    stringBuilder.append(projectName);
+                }
+                if (scriptConfig.getComposeWithTestSuiteName()) {
+                    stringBuilder.append(testSuiteName);
+                }
+                if (scriptConfig.getComposeWithTestCaseName()) {
+                    stringBuilder.append(testCaseName);
+                }
+                if (scriptConfig.getComposeWithTestStepName()) {
+                    stringBuilder.append(testStepName);
+                }
+                if (stringBuilder.length() == 0) {
+                    stringBuilder.append("new-script");
+                }
+                stringBuilder.append(".groovy");
+                externalFilename = stringBuilder.toString();
+            } else if (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.MANUAL) {
+                // MANUAL but attribute externalFilename was not specified or empty : set it to a default name
+                externalFilename = "new-script.groovy";
+            }
+        } else {
+            if (externalFilenameBuildMode == null || externalFilenameBuildMode.isEmpty()) {
+                externalFilenameBuildMode = ExternalFilenameBuildModeConfig.MANUAL.toString();
+                scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.MANUAL);
+            }
+        }
+
+        if (externalFilename != null) {
+            scriptConfig.setExternalFilename(externalFilename);
+            scriptExternalFilePath = externalFilename;
             StringBuffer pathBuffer = new StringBuffer();
             if (!scriptExternalFilePath.startsWith("/")) {
                 // is relative
@@ -210,24 +292,38 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
             SoapUI.log.info("In WsdlGroovyScriptTestStep.readConfig() : (config.config as XmlObjectConfigurationReader).readString('script') = ");
             SoapUI.log.info(scriptText);
         }
-	}
+
+        XmlCursor scriptCursor = config.getConfig().newCursor();
+        if (scriptCursor.toChild(new QName("", "script"))) {
+            scriptCursor.getObject().set(scriptConfig);
+            SoapUI.log.info("In WsdlGroovyScriptTestStep.readConfig() : replaced the script child element with compute script config.");
+        } else {
+            SoapUI.log.info("In WsdlGroovyScriptTestStep.readConfig() : no script child element found, weird...");
+        }
+        scriptCursor.dispose();
+    }
 
 	private void saveScript( TestStepConfig config )
 	{
-		//XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
-		//builder.add( "script", scriptText );
-		//config.setConfig( builder.finish() );
+        if (!getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE) || (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE) && getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE))) {
 
-        XmlObject xmlObject = XmlObject.Factory.newInstance();
-        XmlCursor cursor = xmlObject.newCursor();
-        cursor.toNextToken();
-        cursor.beginElement("script");
-        if (scriptExternalFilePath != null && !scriptExternalFilePath.isEmpty()) {
-            cursor.insertAttributeWithValue("file", scriptExternalFilePath);
+            // XmlObjectConfigurationBuilder is providing a simpler API that manipulating XmlObject directly, but it wipes out attributes on 'script' element :
+            // that is why we resort to bits and pieces instead when script exists already
+            XmlCursor cursor = config.getConfig().newCursor();
+            if (cursor.toFirstChild()) {
+                cursor.setTextValue(scriptText);
+                cursor.dispose();
+            } else {
+                XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
+                builder.add( "script", scriptText );
+                config.setConfig( builder.finish() );
+            }
+
+            //XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
+            //builder.add( "script", scriptText );
+            //config.setConfig( builder.finish() );
         }
-        cursor.insertChars(scriptText);
-        cursor.dispose();
-        config.setConfig(xmlObject);
+        // when in step in external file mode, no need to "save" the content into config, scriptText will be written to file at save time
 	}
 
 	public void resetConfigOnMove( TestStepConfig config )
