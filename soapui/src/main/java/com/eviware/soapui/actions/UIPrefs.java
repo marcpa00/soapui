@@ -56,6 +56,8 @@ public class UIPrefs implements Prefs
 	public static final String DISABLE_BROWSER_PLUGINS = "Disable Plugins in Browser";
     public static final String STEP_IN_EXTERNAL_FILES = "Step in external file";
     public static final String ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE = "Also keep step content in project file";
+    public static final String AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE = "Convert to step in external file" ;
+
 
 	private SimpleForm editorForm;
 	private final String title;
@@ -104,6 +106,7 @@ public class UIPrefs implements Prefs
             editorForm.appendSeparator();
             editorForm.appendCheckBox( STEP_IN_EXTERNAL_FILES, "Save content of test steps in a file, outside the project file", false);
             editorForm.appendCheckBox( ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE, "Also keep step content in project file when saving (for backward compatibility)", true);
+            editorForm.appendCheckBox( AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE, "Automatically convert steps to use an external file for content.", false);
 
 			if( SoapUI.isStandalone() )
 			{
@@ -215,6 +218,7 @@ public class UIPrefs implements Prefs
 		values.put( LINEBREAK, settings.getBoolean( UISettings.LINEBREAK ) );
         values.put( STEP_IN_EXTERNAL_FILES, settings.getBoolean( UISettings.STEP_IN_EXTERNAL_FILE ) );
         values.put( ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE, settings.getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE ) );
+        values.put( AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE, settings.getBoolean( UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE ) );
 
 		if( SoapUI.isStandalone() )
 		{

@@ -75,6 +75,9 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
 
         // ... then override them from config
         WsdlRequestConfig wsdlRequestConfig = request.getConfig();
+        if (request.getSettings().getBoolean(UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE) && ! wsdlRequestConfig.isSetExternalFilenameBuildMode()) {
+            wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+        }
         if (wsdlRequestConfig.isSetExternalFilenameBuildMode()) {
             if (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.NONE) {
                 // All out
@@ -88,6 +91,11 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
                 useComposedFilname = (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED);
                 useManualFilename = (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.MANUAL);
             }
+        } else {
+            useExternalStepFile = false;
+            useAutomaticFilename = false;
+            useComposedFilname = false;
+            useManualFilename = false;
         }
 
         composedFilenameObject = new ComposedFilenameObject(useProjectName, useTestSuiteName, useTestCaseName, useTestStepName, wsdlRequestConfig).invoke();
@@ -139,7 +147,9 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
         // change testRequestStep with values from dialog
         if (! dialog.getBooleanValue( Form.USE_EXTERNAL_STEP_FILE )) {
             testRequestStep.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
-            wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
+            if (request.getSettings().getBoolean(UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE)) {
+                wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
+            }
             if (wsdlRequestConfig.isSetComposeWithProjectName()) { wsdlRequestConfig.unsetComposeWithProjectName(); }
             if (wsdlRequestConfig.isSetComposeWithTestSuiteName()) { wsdlRequestConfig.unsetComposeWithTestSuiteName(); }
             if (wsdlRequestConfig.isSetComposeWithTestCaseName() ) { wsdlRequestConfig.unsetComposeWithTestCaseName(); }

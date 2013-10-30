@@ -57,6 +57,7 @@ import com.eviware.soapui.model.testsuite.TestStep;
 import com.eviware.soapui.model.testsuite.TestStepResult;
 import com.eviware.soapui.model.testsuite.TestStepResult.TestStepStatus;
 import com.eviware.soapui.security.Securable;
+import com.eviware.soapui.settings.UISettings;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.resolver.ChangeOperationResolver;
 import com.eviware.soapui.support.resolver.ImportInterfaceResolver;
@@ -156,7 +157,11 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
         composeWithTestSuiteName = wsdlRequestConfig.isSetComposeWithTestSuiteName() ? wsdlRequestConfig.getComposeWithTestSuiteName() : false;
         composeWithTestCaseName = wsdlRequestConfig.isSetComposeWithTestCaseName() ? wsdlRequestConfig.getComposeWithTestCaseName() : false;
         composeWithTestStepName = wsdlRequestConfig.isSetComposeWithTestStepName() ? wsdlRequestConfig.getComposeWithTestStepName() : false;
-        requestExternalFilePath = wsdlRequestConfig.isSetExternalFilename() ? computeExternalFilePathFromConfig() : "new-request.xml";
+        if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
+            requestExternalFilePath = wsdlRequestConfig.isSetExternalFilename() ? computeExternalFilePathFromConfig() : "new-request.xml";
+        } else {
+            requestExternalFilePath = null;
+        }
     }
 
 
@@ -931,6 +936,10 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
      * @return true if the config have been updated, false otherwise.
      */
     public boolean updateConfigWithExternalFilePath() {
+        if (!getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
+            return false;
+        }
+
         if (requestExternalFilePath == null || requestExternalFilePath.isEmpty()) {
             return false;
         }
@@ -946,6 +955,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
     }
 
     private String computeExternalFilePathFromConfig() {
+
 
         String pathname = wsdlRequestConfig.getExternalFilename();
 
@@ -996,30 +1006,34 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
     }
 
     public void saveToExternalFile() {
-        saveToExternalFile(false, true);
+        if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
+            saveToExternalFile(false, true);
+        }
     }
 
     public void saveToExternalFile(Boolean configChanged, Boolean forceSave) {
-        if (this.requestExternalFilePath != null) {
-            SoapUI.log.info("*** this step has an externalFilePath : '" + this.requestExternalFilePath + "'");
+        if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
+            if (this.requestExternalFilePath != null) {
+                SoapUI.log.info("*** this step has an externalFilePath : '" + this.requestExternalFilePath + "'");
 
-            // true when config is being changed in this method, i.e. if user chooses another file to save to
-            boolean localConfigChanged = false;
-            File file = new File( requestExternalFilePath );
-            boolean originalFileExists = file.exists();
-            if ( originalFileExists && configChanged && !UISupport.confirm("File [" + file.getName() + "] exists, overwrite?",
-                    "Overwrite File?") ) {
-                file = UISupport.getFileDialogs().saveAs( this, "Save test step external file " + getName(), ".xml", "XML Files (*.xml)",
-                        new File( requestExternalFilePath ).getAbsoluteFile() );
-                if (file != null) {
-                    requestExternalFilePath = file.getAbsolutePath();
-                    localConfigChanged = updateConfigWithExternalFilePath();
-                } else {
-                    localConfigChanged = false;
+                // true when config is being changed in this method, i.e. if user chooses another file to save to
+                boolean localConfigChanged = false;
+                File file = new File( requestExternalFilePath );
+                boolean originalFileExists = file.exists();
+                if ( originalFileExists && configChanged && !UISupport.confirm("File [" + file.getName() + "] exists, overwrite?",
+                        "Overwrite File?") ) {
+                    file = UISupport.getFileDialogs().saveAs( this, "Save test step external file " + getName(), ".xml", "XML Files (*.xml)",
+                            new File( requestExternalFilePath ).getAbsoluteFile() );
+                    if (file != null) {
+                        requestExternalFilePath = file.getAbsolutePath();
+                        localConfigChanged = updateConfigWithExternalFilePath();
+                    } else {
+                        localConfigChanged = false;
+                    }
                 }
-            }
-            if ((localConfigChanged || (!originalFileExists && configChanged) || forceSave) && saveStepToFile()) {
-                SoapUI.log.info("step '" + getName() + "' saved to " + requestExternalFilePath);
+                if ((localConfigChanged || (!originalFileExists && configChanged) || forceSave) && saveStepToFile()) {
+                    SoapUI.log.info("step '" + getName() + "' saved to " + requestExternalFilePath);
+                }
             }
         }
     }

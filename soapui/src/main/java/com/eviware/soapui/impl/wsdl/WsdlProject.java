@@ -2227,7 +2227,6 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     private void saveStepsInExternalFiles(SoapuiProjectDocumentConfig projectDocumentCopy) {
 
         Boolean beBackwardCompatible = getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE);
-        // TODO (marcpa) : AUTO-CONVERT behavior : should be controlled by a global settings.
         // TODO (marcpa) : doing this here fells hacky, but on the other hand, it is the "best" place I found to store
         //                 the content text of a step request in an external file only and no longer in the project XML
         //                 document because working on the copy of the document makes it trivial to not mess up the
@@ -2266,6 +2265,10 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                 SoapUI.log.info("   step does not want to use step in external file (mode is NONE) : skipping it.");
                 continue;
             }
+            if (externalFilenameBuildModeValue == null && ! getSettings().getBoolean(UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE)) {
+                // skip this step, it does not use external filename and we are not in auto-convert mode
+                continue;
+            }
 
             if (testStepType != null) {
                 String suffix;
@@ -2293,7 +2296,6 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                 if (testStepType.equals("request")) {
                     wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
 
-                    // TODO (marcpa) : add a test on the global settings for auto-convert
                     if (! wsdlRequestConfig.isSetExternalFilename()) {
                         // step does not yet use a file element, add it
                         wsdlRequestConfig.setExternalFilename(stringBuilder.toString());

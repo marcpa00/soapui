@@ -61,10 +61,13 @@ public interface UISettings
 	public static final String AUTO_SAVE_INTERVAL = UISettings.class.getSimpleName() + "@auto_save_interval";
 
     @Setting( name = "Step in external file", description = "should the content of test steps be stored in a file, outside the project file", type = SettingType.BOOLEAN)
-    public final static String STEP_IN_EXTERNAL_FILE = ProjectSettings.class.getSimpleName() + "@stepInExternalFile";
+    public final static String STEP_IN_EXTERNAL_FILE = UISettings.class.getSimpleName() + "@stepInExternalFile";
 
     @Setting( name = "Save step content in external file and in project file", description = "when saving a step content in external file, also keep a copy of the value in the project XML file", type = SettingType.BOOLEAN)
-    public final static String ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE = ProjectSettings.class.getSimpleName() + "@alsoKeepInProjectWhenStepInExternalFile";
+    public final static String ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE = UISettings.class.getSimpleName() + "@alsoKeepInProjectWhenStepInExternalFile";
+
+    @Setting( name = "Convert to step in external file", description = "utomatically convert steps to use an external file for content", type = SettingType.BOOLEAN)
+    public final static String AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE = UISettings.class.getSimpleName() + "@autoConvertStepToUseExternalFile";
 
 	public static final String DESKTOP_TYPE = UISettings.class.getSimpleName() + "@desktop-type";
 
