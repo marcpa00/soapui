@@ -13,10 +13,8 @@
 package com.eviware.soapui.impl.wsdl.teststeps;
 
 import com.eviware.soapui.SoapUI;
-import com.eviware.soapui.config.ExternalFilenameBuildModeConfig;
 import com.eviware.soapui.config.RequestStepConfig;
 import com.eviware.soapui.config.TestStepConfig;
-import com.eviware.soapui.config.WsdlRequestConfig;
 import com.eviware.soapui.impl.support.http.HttpRequestTestStep;
 import com.eviware.soapui.impl.wsdl.AbstractWsdlModelItem;
 import com.eviware.soapui.impl.wsdl.WsdlInterface;
@@ -57,15 +55,12 @@ import com.eviware.soapui.model.testsuite.TestStep;
 import com.eviware.soapui.model.testsuite.TestStepResult;
 import com.eviware.soapui.model.testsuite.TestStepResult.TestStepStatus;
 import com.eviware.soapui.security.Securable;
-import com.eviware.soapui.settings.UISettings;
-import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.resolver.ChangeOperationResolver;
 import com.eviware.soapui.support.resolver.ImportInterfaceResolver;
 import com.eviware.soapui.support.resolver.RemoveTestStepResolver;
 import com.eviware.soapui.support.resolver.ResolveContext;
 import com.eviware.soapui.support.resolver.ResolveContext.PathToResolve;
 import com.eviware.soapui.support.types.StringToStringsMap;
-import com.google.common.io.Files;
 import org.apache.log4j.Logger;
 import org.apache.xmlbeans.SchemaType;
 import org.apache.xmlbeans.XmlString;
@@ -74,12 +69,6 @@ import javax.swing.*;
 import javax.xml.namespace.QName;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -97,21 +86,13 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 {
     private final static Logger log = Logger.getLogger( WsdlTestRequestStep.class );
 	private RequestStepConfig requestStepConfig;
-    private WsdlRequestConfig wsdlRequestConfig;
 	private WsdlTestRequest testRequest;
 	private WsdlOperation wsdlOperation;
 	private final InternalProjectListener projectListener = new InternalProjectListener();
 	private final InternalInterfaceListener interfaceListener = new InternalInterfaceListener();
 	private WsdlSubmit<WsdlRequest> submit;
 
-    private String requestRootPath;
-    private String requestExternalFilePath;
-
-    private Boolean composeWithProjectName;
-    private Boolean composeWithTestSuiteName;
-    private Boolean composeWithTestCaseName;
-    private Boolean composeWithTestStepName;
-    private ExternalFilenameBuildModeConfig.Enum externalFilenameBuildMode = ExternalFilenameBuildModeConfig.NONE;
+    private TestRequestStepInExternalFileSupport testRequestStepInExternalFileSupport;
 
     public WsdlTestRequestStep( WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest )
 	{
@@ -135,13 +116,13 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 				initTestRequest( config, forLoadTest );
 			}
 
-            initExternalFilenameSupport();
+            testRequestStepInExternalFileSupport = new TestRequestStepInExternalFileSupport(this, testRequest, requestStepConfig, getSettings());
+            testRequestStepInExternalFileSupport.initExternalFilenameSupport();
 		}
 		else
 		{
 			requestStepConfig = ( RequestStepConfig )getConfig().addNewConfig().changeType( RequestStepConfig.type );
 		}
-
 
 		// init properties
 		if( testRequest != null )
@@ -149,21 +130,6 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 			initRequestProperties();
 		}
 	}
-
-    private void initExternalFilenameSupport() {
-        wsdlRequestConfig = requestStepConfig.getRequest();
-        externalFilenameBuildMode = wsdlRequestConfig.getExternalFilenameBuildMode();
-        composeWithProjectName = wsdlRequestConfig.isSetComposeWithProjectName() ? wsdlRequestConfig.getComposeWithProjectName() : false;
-        composeWithTestSuiteName = wsdlRequestConfig.isSetComposeWithTestSuiteName() ? wsdlRequestConfig.getComposeWithTestSuiteName() : false;
-        composeWithTestCaseName = wsdlRequestConfig.isSetComposeWithTestCaseName() ? wsdlRequestConfig.getComposeWithTestCaseName() : false;
-        composeWithTestStepName = wsdlRequestConfig.isSetComposeWithTestStepName() ? wsdlRequestConfig.getComposeWithTestStepName() : false;
-        if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
-            requestExternalFilePath = wsdlRequestConfig.isSetExternalFilename() ? computeExternalFilePathFromConfig() : "new-request.xml";
-        } else {
-            requestExternalFilePath = null;
-        }
-    }
-
 
     private void initRequestProperties()
 	{
@@ -273,7 +239,8 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
 		WsdlTestRequestStep result = ( WsdlTestRequestStep )targetTestCase.addTestStep( config );
 		testRequest.copyAttachmentsTo( result.getTestRequest() );
-        requestExternalFilePath = computeExternalFilePathFromConfig();
+
+        // TODO (marcpa) : should we do something for the testRequestStepInExternalFileSupport ?
 
         return result;
 	}
@@ -349,7 +316,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 		requestStepConfig = ( RequestStepConfig )config.getConfig().changeType( RequestStepConfig.type );
 		testRequest.updateConfig( requestStepConfig.getRequest() );
 
-        requestExternalFilePath = computeExternalFilePathFromConfig();
+        // TODO (marcpa) : should we do something for the testRequestStepInExternalFileSupport ?
 
     }
 
@@ -581,38 +548,6 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 	{
 		return testRequest;
 	}
-
-    public Boolean getComposeWithProjectName() {
-        return composeWithProjectName;
-    }
-
-    public void setComposeWithProjectName(Boolean composeWithProjectName) {
-        this.composeWithProjectName = composeWithProjectName;
-    }
-
-    public Boolean getComposeWithTestStepName() {
-        return composeWithTestStepName;
-    }
-
-    public void setComposeWithTestStepName(Boolean composeWithTestStepName) {
-        this.composeWithTestStepName = composeWithTestStepName;
-    }
-
-    public Boolean getComposeWithTestSuiteName() {
-        return composeWithTestSuiteName;
-    }
-
-    public void setComposeWithTestSuiteName(Boolean composeWithTestSuiteName) {
-        this.composeWithTestSuiteName = composeWithTestSuiteName;
-    }
-
-    public Boolean getComposeWithTestCaseName() {
-        return composeWithTestCaseName;
-    }
-
-    public void setComposeWithTestCaseName(Boolean composeWithTestCaseName) {
-        this.composeWithTestCaseName = composeWithTestCaseName;
-    }
 
     public class InternalProjectListener extends ProjectListenerAdapter
 	{
@@ -928,171 +863,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 		}
 	}
 
-    /**
-     * Update config with current requestExternalFilePath.  If config already have a 'file' element equals to
-     * this.requestExternalFilePath, no change to config is made and false is returned, otherwise config is updated
-     * and true is returned.
-     *
-     * @return true if the config have been updated, false otherwise.
-     */
-    public boolean updateConfigWithExternalFilePath() {
-        if (!getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
-            return false;
-        }
-
-        if (requestExternalFilePath == null || requestExternalFilePath.isEmpty()) {
-            return false;
-        }
-
-        String currentFileValue = wsdlRequestConfig.getExternalFilename();
-        if (currentFileValue != null && currentFileValue.equals(requestExternalFilePath)) {
-            return false;
-        }
-
-        wsdlRequestConfig.setExternalFilename(requestExternalFilePath);
-        SoapUI.log.info("set file element of wsdl request to '" + requestExternalFilePath + "'");
-        return true;
-    }
-
-    private String computeExternalFilePathFromConfig() {
-
-
-        String pathname = wsdlRequestConfig.getExternalFilename();
-
-        if (pathname != null) {
-            requestExternalFilePath = pathname;
-            StringBuffer pathBuffer = new StringBuffer();
-            if (!requestExternalFilePath.startsWith("/")) {
-                // is relative
-                if (requestRootPath == null) {
-                    requestRootPath = new File(((Project)this.getTestCase().getParent().getParent()).getPath()).getParent();
-                }
-                pathBuffer.append(requestRootPath).append(System.getProperty("file.separator")).append(requestExternalFilePath);
-            } else {
-                // is absolute path
-                pathBuffer.append(requestExternalFilePath);
-            }
-
-            if (testRequest != null) {
-                testRequest.setRequestContent(readFile(pathBuffer.toString()));
-            }
-        }
-        return pathname;
-    }
-
-    private String readFile(String path) {
-        File f = new File(path);
-        if (f.exists()) {
-            SoapUI.log.info("Reading file '" + path + "'...");
-            try {
-                StringBuilder sBuilder = new StringBuilder();
-                String line;
-                BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
-                while ((line = bufferedReader.readLine()) != null) {
-                    sBuilder.append(line + "\n");
-                }
-                SoapUI.log.info(sBuilder.toString());
-                return sBuilder.toString();
-            } catch (FileNotFoundException fnfe) {
-                fnfe.printStackTrace();
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            }
-        } else {
-            SoapUI.log.info("File with path " + path + " does not exists");
-            SoapUI.log.info("  current working directory is " + System.getProperty("user.dir"));
-        }
-        return "";
-    }
-
-    public void saveToExternalFile() {
-        if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
-            saveToExternalFile(false, true);
-        }
-    }
-
-    public void saveToExternalFile(Boolean configChanged, Boolean forceSave) {
-        if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
-            if (this.requestExternalFilePath != null) {
-                SoapUI.log.info("*** this step has an externalFilePath : '" + this.requestExternalFilePath + "'");
-
-                // true when config is being changed in this method, i.e. if user chooses another file to save to
-                boolean localConfigChanged = false;
-                File file = new File( requestExternalFilePath );
-                boolean originalFileExists = file.exists();
-                if ( originalFileExists && configChanged && !UISupport.confirm("File [" + file.getName() + "] exists, overwrite?",
-                        "Overwrite File?") ) {
-                    file = UISupport.getFileDialogs().saveAs( this, "Save test step external file " + getName(), ".xml", "XML Files (*.xml)",
-                            new File( requestExternalFilePath ).getAbsoluteFile() );
-                    if (file != null) {
-                        requestExternalFilePath = file.getAbsolutePath();
-                        localConfigChanged = updateConfigWithExternalFilePath();
-                    } else {
-                        localConfigChanged = false;
-                    }
-                }
-                if ((localConfigChanged || (!originalFileExists && configChanged) || forceSave) && saveStepToFile()) {
-                    SoapUI.log.info("step '" + getName() + "' saved to " + requestExternalFilePath);
-                }
-            }
-        }
-    }
-
-    private boolean saveStepToFile() {
-        if (this.requestExternalFilePath == null) {
-            return false;
-        }
-        StringBuffer pathBuffer = new StringBuffer();
-        // TODO (marcpa) : use a portable way to do this (maybe create a File and check isAbsolutePath() ?
-        if (!requestExternalFilePath.startsWith( System.getProperty("file.separator")) ) {
-            // is relative
-            if (requestRootPath == null) {
-                requestRootPath = ".";
-            }
-            pathBuffer.append(requestRootPath).append(System.getProperty("file.separator")).append(requestExternalFilePath);
-        } else {
-            // is absolute path
-            pathBuffer.append(requestExternalFilePath);
-        }
-
-        File f = new File(pathBuffer.toString());
-        try {
-            if (! f.exists()) {
-                File parent = f.getParentFile();
-                if (! parent.exists()) {
-                    parent.mkdirs();
-                }
-                f.createNewFile();
-            }
-            Files.write(testRequest.getRequestContent(), f, Charset.forName("UTF-8"));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
-    }
-
-    public String getRequestExternalFilePath() {
-        return requestExternalFilePath;
-    }
-
-    public void setRequestExternalFilePath(String requestExternalFilePath) {
-        this.requestExternalFilePath = requestExternalFilePath;
-    }
-
-    public String getRequestRootPath() {
-        return requestRootPath;
-    }
-
-    public void setRequestRootPath(String requestRootPath) {
-        this.requestRootPath = requestRootPath;
-    }
-
-    public ExternalFilenameBuildModeConfig.Enum getExternalFilenameBuildMode() {
-        return externalFilenameBuildMode;
-    }
-
-    public void setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.Enum externalFilenameBuildMode) {
-        this.externalFilenameBuildMode = externalFilenameBuildMode;
+    public TestRequestStepInExternalFileSupport getTestRequestStepInExternalFileSupport() {
+        return testRequestStepInExternalFileSupport;
     }
 }

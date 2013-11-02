@@ -208,10 +208,10 @@ public abstract class AbstractSoapUIDesktop implements SoapUIDesktop
                         SoapUI.log.info("  testStep.class : " + testStep.getClass().getSimpleName());
                         if (testStep instanceof WsdlGroovyScriptTestStep) {
                             WsdlGroovyScriptTestStep step = (WsdlGroovyScriptTestStep) testStep;
-                            step.saveToExternalFile();
+                            step.getTestRequestStepInExternalFileSupport().saveToExternalFile();
                         } else if (testStep instanceof WsdlTestRequestStep) {
                             WsdlTestRequestStep step = (WsdlTestRequestStep) testStep;
-                            step.saveToExternalFile();
+                            step.getTestRequestStepInExternalFileSupport().saveToExternalFile();
                         }
                     }
                 }

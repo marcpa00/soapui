@@ -66,7 +66,7 @@ public interface UISettings
     @Setting( name = "Save step content in external file and in project file", description = "when saving a step content in external file, also keep a copy of the value in the project XML file", type = SettingType.BOOLEAN)
     public final static String ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE = UISettings.class.getSimpleName() + "@alsoKeepInProjectWhenStepInExternalFile";
 
-    @Setting( name = "Convert to step in external file", description = "utomatically convert steps to use an external file for content", type = SettingType.BOOLEAN)
+    @Setting( name = "Convert to step in external file", description = "Automatically convert steps to use an external file for content", type = SettingType.BOOLEAN)
     public final static String AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE = UISettings.class.getSimpleName() + "@autoConvertStepToUseExternalFile";
 
 	public static final String DESKTOP_TYPE = UISettings.class.getSimpleName() + "@desktop-type";

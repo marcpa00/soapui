@@ -53,14 +53,15 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
             dialog = ADialogBuilder.buildDialog( Form.class );
         }
 
-        String rootPath = request.getTestStep().getRequestRootPath();
-        if ( rootPath == null || rootPath.isEmpty() ) {
-            rootPath = request.getTestCase().getTestSuite().getProject().getPath();
-            if (rootPath != null && rootPath.endsWith(".xml")) {
-                rootPath = rootPath.replaceAll(".xml", ".resources");
-            } else {
-                rootPath = rootPath + ".resources";
-            }
+        String rootPath = request.getTestCase().getTestSuite().getProject().getPath();
+        if (rootPath == null || rootPath.isEmpty()) {
+            // TODO (marcpa) : is this the right thing to do ?
+            rootPath = System.getProperty("user.dir");
+        }
+        if (rootPath != null && rootPath.endsWith(".xml")) {
+            rootPath = rootPath.replaceAll(".xml", ".resources");
+        } else {
+            rootPath = rootPath + ".resources";
         }
 
         // Initialize flags to default values
@@ -146,7 +147,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
 
         // change testRequestStep with values from dialog
         if (! dialog.getBooleanValue( Form.USE_EXTERNAL_STEP_FILE )) {
-            testRequestStep.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
+            testRequestStep.getTestRequestStepInExternalFileSupport().setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
             if (request.getSettings().getBoolean(UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE)) {
                 wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
             }
@@ -157,18 +158,18 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
             wsdlRequestConfig.getRequest().setStringValue(request.getRequestContent());
         } else {
             if (dialog.getBooleanValue( Form.USE_AUTOMATIC_FILENAME )) {
-                testRequestStep.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                testRequestStep.getTestRequestStepInExternalFileSupport().setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
                 wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
                 if (wsdlRequestConfig.isSetComposeWithProjectName()) { wsdlRequestConfig.unsetComposeWithProjectName(); }
                 if (wsdlRequestConfig.isSetComposeWithTestSuiteName()) { wsdlRequestConfig.unsetComposeWithTestSuiteName(); }
                 if (wsdlRequestConfig.isSetComposeWithTestCaseName() ) { wsdlRequestConfig.unsetComposeWithTestCaseName(); }
                 if (wsdlRequestConfig.isSetComposeWithTestStepName() ) { wsdlRequestConfig.unsetComposeWithTestStepName(); }
             } else if (dialog.getBooleanValue( Form.USE_COMPOSED_FILENAME )) {
-                testRequestStep.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.COMPOSED);
-                testRequestStep.setComposeWithProjectName( dialog.getBooleanValue( Form.USE_PROJECT_NAME ) );
-                testRequestStep.setComposeWithTestSuiteName( dialog.getBooleanValue( Form.USE_TEST_SUITE_NAME ) );
-                testRequestStep.setComposeWithTestCaseName( dialog.getBooleanValue( Form.USE_TEST_CASE_NAME ) );
-                testRequestStep.setComposeWithTestStepName( dialog.getBooleanValue( Form.USE_TEST_STEP_NAME ) );
+                testRequestStep.getTestRequestStepInExternalFileSupport().setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.COMPOSED);
+                testRequestStep.getTestRequestStepInExternalFileSupport().setComposeWithProjectName( dialog.getBooleanValue( Form.USE_PROJECT_NAME ) );
+                testRequestStep.getTestRequestStepInExternalFileSupport().setComposeWithTestSuiteName( dialog.getBooleanValue( Form.USE_TEST_SUITE_NAME ) );
+                testRequestStep.getTestRequestStepInExternalFileSupport().setComposeWithTestCaseName( dialog.getBooleanValue( Form.USE_TEST_CASE_NAME ) );
+                testRequestStep.getTestRequestStepInExternalFileSupport().setComposeWithTestStepName( dialog.getBooleanValue( Form.USE_TEST_STEP_NAME ) );
 
                 wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.COMPOSED);
                 wsdlRequestConfig.setComposeWithProjectName( dialog.getBooleanValue( Form.USE_PROJECT_NAME ) );
@@ -176,16 +177,16 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
                 wsdlRequestConfig.setComposeWithTestCaseName( dialog.getBooleanValue( Form.USE_TEST_CASE_NAME ) );
                 wsdlRequestConfig.setComposeWithTestStepName( dialog.getBooleanValue( Form.USE_TEST_STEP_NAME ) );
             } else if (dialog.getBooleanValue( Form.USE_MANUAL_FILENAME )) {
-                testRequestStep.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.MANUAL);
+                testRequestStep.getTestRequestStepInExternalFileSupport().setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.MANUAL);
                 wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.MANUAL);
                 if (wsdlRequestConfig.isSetComposeWithProjectName()) { wsdlRequestConfig.unsetComposeWithProjectName(); }
                 if (wsdlRequestConfig.isSetComposeWithTestSuiteName()) { wsdlRequestConfig.unsetComposeWithTestSuiteName(); }
                 if (wsdlRequestConfig.isSetComposeWithTestCaseName() ) { wsdlRequestConfig.unsetComposeWithTestCaseName(); }
                 if (wsdlRequestConfig.isSetComposeWithTestStepName() ) { wsdlRequestConfig.unsetComposeWithTestStepName(); }
             }
-            testRequestStep.setRequestExternalFilePath( dialog.getValue( Form.FILENAME ) );
+            testRequestStep.getTestRequestStepInExternalFileSupport().setStepExternalFilePath( dialog.getValue( Form.FILENAME ) );
             wsdlRequestConfig.setExternalFilename( dialog.getValue( Form.FILENAME ) );
-            testRequestStep.saveToExternalFile(testRequestStep.updateConfigWithExternalFilePath(), false);
+            testRequestStep.getTestRequestStepInExternalFileSupport().saveToExternalFile(testRequestStep.getTestRequestStepInExternalFileSupport().updateConfigWithExternalFilePath(), false);
         }
 
 
@@ -251,7 +252,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<WsdlTestRe
     }
 
     private String buildManualFilename(WsdlTestRequest request) {
-        String manualFilename = request.getTestStep().getRequestExternalFilePath();
+        String manualFilename = request.getTestStep().getTestRequestStepInExternalFileSupport().getStepExternalFilePath();
         if (manualFilename == null || manualFilename.isEmpty()) {
             manualFilename = request.getName() + "-request.xml";
         }
