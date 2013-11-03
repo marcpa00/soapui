@@ -65,6 +65,11 @@ import java.nio.charset.Charset;
  * </p>
  */
 public class TestRequestStepInExternalFileSupport {
+    static private final String DEFAULT_STEP_FILENAME = "new-testStep";
+    static private final String DEFAULT_SUFFIX = ".txt";
+    static private final String WSDL_REQUEST_SUFFIX = "-request.xml";
+    static private final String GROOVY_SCRIPT_SUFFIX = ".groovy";
+
     private WsdlRequestConfig wsdlRequestConfig;
     private TestStepConfig testStepConfig;
     private XmlBeansSettingsImpl settings;
@@ -74,7 +79,7 @@ public class TestRequestStepInExternalFileSupport {
     private String stepContent;
 
     private String requestRootPath;
-    private String stepExternalFilePath;
+    private String externalFilename;
 
     private Boolean composeWithProjectName;
 
@@ -82,6 +87,11 @@ public class TestRequestStepInExternalFileSupport {
     private Boolean composeWithTestCaseName;
     private Boolean composeWithTestStepName;
     private ExternalFilenameBuildModeConfig.Enum externalFilenameBuildMode = ExternalFilenameBuildModeConfig.NONE;
+    private String alternateFilenameForContent;
+
+    private TestRequestStepInExternalFileSupport() {
+        // prevent instantiation without required field values
+    }
 
     /**
      * Constructor for WsdlTest based steps.
@@ -115,119 +125,97 @@ public class TestRequestStepInExternalFileSupport {
     }
 
     public void initExternalFilenameSupport() {
+        if (wsdlRequestConfig != null) {
+            initExternalFilenameSupportForWsdlRequest();
+        } else if (testStepConfig != null) {
+            initExternalFilenameSupportForScript();
+        } else {
+            SoapUI.log.error("TestRequestStepInExternalFileSupport : initExternalFilenameSupport() called but we have no config to work on.");
+            return;
+        }
+
+    }
+
+    private void initExternalFilenameSupportForWsdlRequest() {
+        if (wsdlRequestConfig.isSetExternalFilename()) {
+            // start with both filename values being what is in the config
+            this.externalFilename = wsdlRequestConfig.getExternalFilename();
+            this.alternateFilenameForContent = wsdlRequestConfig.getExternalFilename();
+        }
+
+        if (! wsdlRequestConfig.isSetExternalFilenameBuildMode()) {
+            boolean autoConvert = getSettings().getBoolean(UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE);
+            wsdlRequestConfig.setExternalFilenameBuildMode(autoConvert ? ExternalFilenameBuildModeConfig.AUTO : ExternalFilenameBuildModeConfig.NONE);
+        }
         externalFilenameBuildMode = wsdlRequestConfig.getExternalFilenameBuildMode();
+
         composeWithProjectName = wsdlRequestConfig.isSetComposeWithProjectName() ? wsdlRequestConfig.getComposeWithProjectName() : false;
         composeWithTestSuiteName = wsdlRequestConfig.isSetComposeWithTestSuiteName() ? wsdlRequestConfig.getComposeWithTestSuiteName() : false;
         composeWithTestCaseName = wsdlRequestConfig.isSetComposeWithTestCaseName() ? wsdlRequestConfig.getComposeWithTestCaseName() : false;
         composeWithTestStepName = wsdlRequestConfig.isSetComposeWithTestStepName() ? wsdlRequestConfig.getComposeWithTestStepName() : false;
 
-        if ((externalFilenameBuildMode == ExternalFilenameBuildModeConfig.AUTO || externalFilenameBuildMode == ExternalFilenameBuildModeConfig.COMPOSED)
-                && wsdlRequestConfig.isSetExternalFilename()
-                && ! autoComputedFile().exists() && ! externalFile().exists() && ! getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE)
-                || (getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_STEP_IN_EXTERNAL_FILE ) && wsdlRequestConfig.getRequest().isNil())) {
-            // Step content initially empty
-
-            // instruct @externalFilename value to be set to computed filename at save time
-
-            // save file name target is autocomputed filename
+        if (testRequest != null) {
+            stepContent = testRequest.getRequestContent();
         }
 
-        if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
-            stepExternalFilePath = wsdlRequestConfig.isSetExternalFilename() ? computeExternalFilePathFromConfig() : "new-request.xml";
-        } else {
-            stepExternalFilePath = null;
+        if (externalFilenameBuildMode != ExternalFilenameBuildModeConfig.NONE) {
+            // this will adjust externalFilename
+            buildExternalFilenameAccordingToMode();
+            loadStepContent();
         }
-
-        stepContent = testRequest.getRequestContent();
+        wsdlRequestConfig.setExternalFilename(externalFilename);
     }
 
-    public void initExternalFilenameSupportForScript() {
+
+    private void initExternalFilenameSupportForScript() {
+
+        // A groovy script test step does not have a specific XmlBean class generated for, it is an XSD anyType and
+        // needs to be parsed with basic XmlObject / XmlCursor api via XmlObjectConfigurationReader...
+        XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( testStepConfig.getConfig() );
+        String configExternalFilename = reader.readString("script/@externalFilename", null);
+        String configExternalFilenameBuildMode = reader.readString("script/@externalFilenameBuildMode", null);
+        String configComposeWithProjectName = reader.readString("script/@composeWithProjectName", "false");
+        String configComposeWithTestSuiteName = reader.readString("script/@composeWithTestSuiteName", "false");
+        String configComposeWithTestCaseName = reader.readString("script/@composeWithTestCaseName", "false");
+        String configComposeWithTestStepName = reader.readString("script/@composeWithTestStepName", "true");
+        String configContent = reader.readString("script", null);
+
+        // ... however, we can create an instance of the XmlBeans generated class ScriptConfig and populate it ourselves
         ScriptConfig scriptConfig = ScriptConfig.Factory.newInstance();
 
-        XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( testStepConfig.getConfig() );
-
-        String externalFilename = reader.readString("script/@externalFilename", null);
-        String externalFilenameBuildMode = reader.readString("script/@externalFilenameBuildMode", null);
-        String composeWithProjectName = reader.readString("script/@composeWithProjectName", "false");
-        String composeWithTestSuiteName = reader.readString("script/@composeWithTestSuiteName", "false");
-        String composeWithTestCaseName = reader.readString("script/@composeWithTestCaseName", "false");
-        String composeWithTestStepName = reader.readString("script/@composeWithTestSuiteName", "true");
-
-        SoapUI.log.info("script/@externalFilename : " + externalFilename);
-
-        if (externalFilenameBuildMode != null) {
-            scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.Enum.forString(externalFilenameBuildMode));
-        }
-        if (externalFilename == null || externalFilename.isEmpty()) {
-            String projectName, testSuiteName, testCaseName, testStepName;
-            String sep = System.getProperty("file.separator");
-            projectName = this.testStep.getTestCase().getTestSuite().getProject().getName();
-            testSuiteName = this.testStep.getTestCase().getTestSuite().getName();
-            testCaseName = this.testStep.getTestCase().getName();
-            testStepName = this.testStep.getName();
-            if (externalFilenameBuildMode == null || externalFilenameBuildMode.isEmpty()) {
-                externalFilenameBuildMode = ExternalFilenameBuildModeConfig.NONE.toString();
-                scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
-            }
-            if (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.AUTO) {
-                StringBuilder stringBuilder = new StringBuilder(projectName).append(sep)
-                        .append(testSuiteName).append(sep)
-                        .append(testCaseName).append(sep)
-                        .append(testStepName).append(".groovy");
-                externalFilename = stringBuilder.toString();
-            } else if (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED) {
-                scriptConfig.setComposeWithProjectName(Boolean.parseBoolean(composeWithProjectName));
-                scriptConfig.setComposeWithTestSuiteName(Boolean.parseBoolean(composeWithTestSuiteName));
-                scriptConfig.setComposeWithTestCaseName(Boolean.parseBoolean(composeWithTestCaseName));
-                scriptConfig.setComposeWithTestStepName(Boolean.parseBoolean(composeWithTestStepName));
-
-                StringBuilder stringBuilder = new StringBuilder();
-                if (scriptConfig.getComposeWithProjectName()) {
-                    stringBuilder.append(projectName);
-                }
-                if (scriptConfig.getComposeWithTestSuiteName()) {
-                    stringBuilder.append(testSuiteName);
-                }
-                if (scriptConfig.getComposeWithTestCaseName()) {
-                    stringBuilder.append(testCaseName);
-                }
-                if (scriptConfig.getComposeWithTestStepName()) {
-                    stringBuilder.append(testStepName);
-                }
-                if (stringBuilder.length() == 0) {
-                    stringBuilder.append("new-script");
-                }
-                stringBuilder.append(".groovy");
-                externalFilename = stringBuilder.toString();
-            } else if (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.MANUAL) {
-                // MANUAL but attribute externalFilename was not specified or empty : set it to a default name
-                externalFilename = "new-script.groovy";
-            }
+        if (configExternalFilenameBuildMode == null) {
+            boolean autoConvert = getSettings().getBoolean(UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE);
+            scriptConfig.setExternalFilenameBuildMode(autoConvert ? ExternalFilenameBuildModeConfig.AUTO : ExternalFilenameBuildModeConfig.NONE);
         } else {
-            if (externalFilenameBuildMode == null || externalFilenameBuildMode.isEmpty()) {
-                externalFilenameBuildMode = ExternalFilenameBuildModeConfig.MANUAL.toString();
-                scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.MANUAL);
-            }
+            scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.Enum.forString(configExternalFilenameBuildMode));
+        }
+        if (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED) {
+            scriptConfig.setComposeWithProjectName(Boolean.parseBoolean(configComposeWithProjectName));
+            scriptConfig.setComposeWithTestSuiteName(Boolean.parseBoolean(configComposeWithTestSuiteName));
+            scriptConfig.setComposeWithTestCaseName(Boolean.parseBoolean(configComposeWithTestCaseName));
+            scriptConfig.setComposeWithTestStepName(Boolean.parseBoolean(configComposeWithTestStepName));
         }
 
-        if (externalFilename != null) {
-            scriptConfig.setExternalFilename(externalFilename);
-            stepExternalFilePath = externalFilename;
-            StringBuffer pathBuffer = new StringBuffer();
-            if (!stepExternalFilePath.startsWith("/")) {
-                // is relative
-                if (requestRootPath == null) {
-                    requestRootPath = ".";
-                }
-                pathBuffer.append(requestRootPath).append(System.getProperty("file.separator")).append(stepExternalFilePath);
-            } else {
-                // is absolute path
-                pathBuffer.append(stepExternalFilePath);
-            }
+        // here scriptConfig represents the script test step config with step in external file support added (if
+        // it was already in config or if auto conversion is set in global settings).
+        externalFilenameBuildMode = scriptConfig.getExternalFilenameBuildMode();
+        stepContent = configContent;
+        composeWithProjectName = scriptConfig.isSetComposeWithProjectName() ? scriptConfig.getComposeWithProjectName() : false;
+        composeWithTestSuiteName = scriptConfig.isSetComposeWithTestSuiteName() ? scriptConfig.getComposeWithTestSuiteName() : false;
+        composeWithTestCaseName = scriptConfig.isSetComposeWithTestCaseName() ? scriptConfig.getComposeWithTestCaseName() : false;
+        composeWithTestStepName = scriptConfig.isSetComposeWithTestStepName() ? scriptConfig.getComposeWithTestStepName() : false;
 
-            stepContent = readFile(pathBuffer.toString());
+
+        if (scriptConfig.getExternalFilenameBuildMode() != ExternalFilenameBuildModeConfig.NONE) {
+            this.externalFilename = scriptConfig.getExternalFilename();
+            this.alternateFilenameForContent = configExternalFilename;
+            // this will adjust externalFilename
+            buildExternalFilenameAccordingToMode();
+            loadStepContent();
         }
+        scriptConfig.setStringValue(stepContent);
 
+        // finally, regenerate the element in XML project document
         XmlCursor scriptCursor = testStepConfig.getConfig().newCursor();
         if (scriptCursor.toChild(new QName("", "script"))) {
             scriptCursor.getObject().set(scriptConfig);
@@ -238,13 +226,261 @@ public class TestRequestStepInExternalFileSupport {
         scriptCursor.dispose();
     }
 
-    private File autoComputedFile() {
-        return new File(computeExternalFilePathFromConfig());
+    private void buildExternalFilenameAccordingToMode() {
+        // build mode is either AUTO, COMPOSED, MANUAL or NONE, but only the first two requires adjustment.
+        if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.NONE || externalFilenameBuildMode == ExternalFilenameBuildModeConfig.MANUAL) {
+            return;
+        }
+
+        String projectName, testSuiteName, testCaseName, testStepName;
+        String sep = System.getProperty("file.separator");
+        projectName = this.testStep.getTestCase().getTestSuite().getProject().getName();
+        testSuiteName = this.testStep.getTestCase().getTestSuite().getName();
+        testCaseName = this.testStep.getTestCase().getName();
+        testStepName = this.testStep.getName();
+        StringBuilder stringBuilder = new StringBuilder();
+
+        if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.AUTO) {
+            stringBuilder.append(projectName).append(sep)
+                    .append(testSuiteName).append(sep)
+                    .append(testCaseName).append(sep)
+                    .append(testStepName);
+        } else if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.COMPOSED) {
+            if (composeWithProjectName)   { stringBuilder.append(projectName);   }
+            if (composeWithTestSuiteName) { stringBuilder.append(testSuiteName); }
+            if (composeWithTestCaseName)  { stringBuilder.append(testCaseName);  }
+            if (composeWithTestStepName)  { stringBuilder.append(testStepName);  }
+            if (stringBuilder.length() == 0) { stringBuilder.append(DEFAULT_STEP_FILENAME); }
+        }
+
+        if (wsdlRequestConfig != null) {
+            stringBuilder.append(WSDL_REQUEST_SUFFIX);
+        } else if (testStepConfig != null) {
+            stringBuilder.append(GROOVY_SCRIPT_SUFFIX);
+        } else {
+            SoapUI.log.error("TestRequestStepInExternalFileSupport : buildExternalFilenameAccordingToMode() called but we don't know which config to use : this is a bug.");
+            return;
+        }
+        setExternalFilename(stringBuilder.toString());
     }
 
-    private File externalFile() {
-        return new File(".");
+    /**
+     * Load content from external file into this step.
+     *
+     * Use this.externalFilename to check if a File of that name exists and load the content from it.
+     * If no such file is found, use this.alternateFilenameForContent and try to load content from it.  If this fails
+     * also, content will be empty.
+     *
+     * In any case, when this.externalFilename has a non-null, non-empty value at entry, it will have the same value
+     * at exit.  If it was null or empty, it will be set to the default filename value.
+     */
+    private void loadStepContent() {
+        if (externalFilename == null || externalFilename.isEmpty()) {
+            externalFilename = DEFAULT_STEP_FILENAME;
+            if (wsdlRequestConfig != null) {
+                externalFilename = externalFilename + WSDL_REQUEST_SUFFIX;
+            } else if (testStepConfig != null) {
+                externalFilename = externalFilename + GROOVY_SCRIPT_SUFFIX;
+            } else {
+                externalFilename = externalFilename + DEFAULT_SUFFIX;
+            }
+        }
+
+        File contentFile = new File(toAbsolutePath(externalFilename));
+        if (! contentFile.exists()) {
+            if (stepContent == null) {
+                contentFile = new File(toAbsolutePath(alternateFilenameForContent));
+                if (! contentFile.exists()) {
+                    if (stepContent == null) {
+                        SoapUI.log.info("Step content set to empty string in TestRequestStepInExternalFileSupport.loadStepContent().");
+                        stepContent = "";
+                        return;
+                    }
+                } else {
+                    if (stepContent == null) {
+                        stepContent = readFile(contentFile);
+                    }
+                }
+            }
+        } else {
+            stepContent = readFile(contentFile);
+        }
     }
+
+    private String toAbsolutePath(String filename) {
+        StringBuffer pathBuffer = new StringBuffer(filename);
+        if (!pathBuffer.toString().startsWith("/")) {
+            // is relative, prepend project's parent dir
+            pathBuffer.insert(0, System.getProperty("file.separator")).insert(0, new File(((Project) this.testStep.getTestCase().getParent().getParent()).getPath()).getParent());
+        }
+        return pathBuffer.toString();
+    }
+
+    /**
+     * Update config with current externalFilename.  If config already have a 'file' element equals to
+     * this.externalFilename, no change to config is made and false is returned, otherwise config is updated
+     * and true is returned.
+     *
+     * @return true if the config have been updated, false otherwise.
+     */
+    public boolean updateConfigWithExternalFilePath() {
+        if (!getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
+            return false;
+        }
+
+        if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.NONE) {
+            return false;
+        }
+
+        if (externalFilename == null || externalFilename.isEmpty()) {
+            return false;
+        }
+
+        String currentFilename;
+
+        if (wsdlRequestConfig != null) {
+            currentFilename = wsdlRequestConfig.getExternalFilename();
+            if (currentFilename != null && currentFilename.equals(externalFilename)) {
+                return false;
+            }
+            wsdlRequestConfig.setExternalFilename(externalFilename);
+        } else if (testStepConfig != null) {
+            XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( testStepConfig.getConfig() );
+            currentFilename = reader.readString("script/@externalFilename", null);
+            if (currentFilename != null && currentFilename.equals(externalFilename)) {
+                return false;
+            }
+            XmlCursor cursor = testStepConfig.getConfig().newCursor();
+            cursor.setAttributeText(new QName("", "@externalFilename"), externalFilename);
+            cursor.dispose();
+        }
+        SoapUI.log.info("set file element of wsdl request to '" + externalFilename + "'");
+        return true;
+    }
+
+
+    private String readFile(File f) {
+        if (f.exists()) {
+            SoapUI.log.info("Reading file '" + f.getAbsolutePath() + "'...");
+            try {
+                StringBuilder sBuilder = new StringBuilder();
+                String line;
+                BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
+                while ((line = bufferedReader.readLine()) != null) {
+                    sBuilder.append(line + "\n");
+                }
+                SoapUI.log.info(sBuilder.toString());
+                return sBuilder.toString();
+            } catch (FileNotFoundException fnfe) {
+                fnfe.printStackTrace();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        } else {
+            SoapUI.log.info("File with path " + f.getAbsolutePath() + " does not exists");
+            SoapUI.log.info("  current working directory is " + System.getProperty("user.dir"));
+        }
+        return "";
+    }
+
+    public void saveToExternalFile() {
+        if (externalFilename != null && getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
+            saveToExternalFile(false, true);
+        }
+    }
+
+    public void saveToExternalFile(Boolean configChanged, Boolean forceSave) {
+        if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
+            if (this.externalFilename != null) {
+                SoapUI.log.info("*** this step has an externalFilePath : '" + this.externalFilename + "'");
+
+                // true when config is being changed in this method, i.e. if user chooses another file to save to
+                boolean localConfigChanged = false;
+                File file = new File(externalFilename);
+                boolean originalFileExists = file.exists();
+                if ( originalFileExists && configChanged && !UISupport.confirm("File [" + file.getName() + "] exists, overwrite?",
+                        "Overwrite File?") ) {
+                    file = UISupport.getFileDialogs().saveAs( this, "Save test step external file " + this.testStep.getName(), ".xml", "XML Files (*.xml)",
+                            new File(externalFilename).getAbsoluteFile() );
+                    if (file != null) {
+                        externalFilename = file.getAbsolutePath();
+                        localConfigChanged = updateConfigWithExternalFilePath();
+                    } else {
+                        localConfigChanged = false;
+                    }
+                }
+                if ((localConfigChanged || (!originalFileExists && configChanged) || forceSave) && saveStepToFile()) {
+                    SoapUI.log.info("step '" + this.testStep.getName() + "' saved to " + externalFilename);
+                }
+            }
+        }
+    }
+
+    private boolean saveStepToFile() {
+        if (this.externalFilename == null) {
+            return false;
+        }
+        StringBuffer pathBuffer = new StringBuffer();
+        // TODO (marcpa) : use a portable way to do this (maybe create a File and check isAbsolutePath() ?
+        if (!externalFilename.startsWith( System.getProperty("file.separator")) ) {
+            // is relative
+            if (requestRootPath == null) {
+                requestRootPath = ".";
+            }
+            pathBuffer.append(requestRootPath).append(System.getProperty("file.separator")).append(externalFilename);
+        } else {
+            // is absolute path
+            pathBuffer.append(externalFilename);
+        }
+
+        File f = new File(pathBuffer.toString());
+        try {
+            if (! f.exists()) {
+                File parent = f.getParentFile();
+                if (! parent.exists()) {
+                    parent.mkdirs();
+                }
+                f.createNewFile();
+            }
+            Files.write(stepContent, f, Charset.forName("UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public String getExternalFilename() {
+        return externalFilename;
+    }
+
+    public void setExternalFilename(String externalFilename) {
+        this.externalFilename = externalFilename;
+    }
+
+    public String getRequestRootPath() {
+        return requestRootPath;
+    }
+
+    public void setRequestRootPath(String requestRootPath) {
+        this.requestRootPath = requestRootPath;
+    }
+
+    public ExternalFilenameBuildModeConfig.Enum getExternalFilenameBuildMode() {
+        return externalFilenameBuildMode;
+    }
+
+    public void setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.Enum externalFilenameBuildMode) {
+        this.externalFilenameBuildMode = externalFilenameBuildMode;
+    }
+    public String getStepContent() {
+        return stepContent;
+    }
+
+    public void setStepContent(String stepContent) {
+        this.stepContent = stepContent;
+    }
+
     public Boolean getComposeWithProjectName() {
         return composeWithProjectName;
     }
@@ -276,181 +512,5 @@ public class TestRequestStepInExternalFileSupport {
     public void setComposeWithTestCaseName(Boolean composeWithTestCaseName) {
         this.composeWithTestCaseName = composeWithTestCaseName;
     }
-
-    /**
-     * Update config with current stepExternalFilePath.  If config already have a 'file' element equals to
-     * this.stepExternalFilePath, no change to config is made and false is returned, otherwise config is updated
-     * and true is returned.
-     *
-     * @return true if the config have been updated, false otherwise.
-     */
-    public boolean updateConfigWithExternalFilePath() {
-        if (!getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
-            return false;
-        }
-
-        if (stepExternalFilePath == null || stepExternalFilePath.isEmpty()) {
-            return false;
-        }
-
-        String currentFileValue = wsdlRequestConfig.getExternalFilename();
-        if (currentFileValue != null && currentFileValue.equals(stepExternalFilePath)) {
-            return false;
-        }
-
-        wsdlRequestConfig.setExternalFilename(stepExternalFilePath);
-        SoapUI.log.info("set file element of wsdl request to '" + stepExternalFilePath + "'");
-        return true;
-    }
-
-    private String computeExternalFilePathFromConfig() {
-
-
-        String pathname = wsdlRequestConfig.getExternalFilename();
-
-        if (pathname != null) {
-            stepExternalFilePath = pathname;
-            StringBuffer pathBuffer = new StringBuffer();
-            if (!stepExternalFilePath.startsWith("/")) {
-                // is relative
-                if (requestRootPath == null) {
-                    requestRootPath = new File(((Project)this.testStep.getTestCase().getParent().getParent()).getPath()).getParent();
-                }
-                pathBuffer.append(requestRootPath).append(System.getProperty("file.separator")).append(stepExternalFilePath);
-            } else {
-                // is absolute path
-                pathBuffer.append(stepExternalFilePath);
-            }
-
-            if (this.testRequest != null) {
-                testRequest.setRequestContent(readFile(pathBuffer.toString()));
-            }
-        }
-        return pathname;
-    }
-
-    private String readFile(String path) {
-        File f = new File(path);
-        if (f.exists()) {
-            SoapUI.log.info("Reading file '" + path + "'...");
-            try {
-                StringBuilder sBuilder = new StringBuilder();
-                String line;
-                BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
-                while ((line = bufferedReader.readLine()) != null) {
-                    sBuilder.append(line + "\n");
-                }
-                SoapUI.log.info(sBuilder.toString());
-                return sBuilder.toString();
-            } catch (FileNotFoundException fnfe) {
-                fnfe.printStackTrace();
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            }
-        } else {
-            SoapUI.log.info("File with path " + path + " does not exists");
-            SoapUI.log.info("  current working directory is " + System.getProperty("user.dir"));
-        }
-        return "";
-    }
-
-    public void saveToExternalFile() {
-        if (stepExternalFilePath != null && getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
-            saveToExternalFile(false, true);
-        }
-    }
-
-    public void saveToExternalFile(Boolean configChanged, Boolean forceSave) {
-        if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
-            if (this.stepExternalFilePath != null) {
-                SoapUI.log.info("*** this step has an externalFilePath : '" + this.stepExternalFilePath + "'");
-
-                // true when config is being changed in this method, i.e. if user chooses another file to save to
-                boolean localConfigChanged = false;
-                File file = new File(stepExternalFilePath);
-                boolean originalFileExists = file.exists();
-                if ( originalFileExists && configChanged && !UISupport.confirm("File [" + file.getName() + "] exists, overwrite?",
-                        "Overwrite File?") ) {
-                    file = UISupport.getFileDialogs().saveAs( this, "Save test step external file " + this.testStep.getName(), ".xml", "XML Files (*.xml)",
-                            new File(stepExternalFilePath).getAbsoluteFile() );
-                    if (file != null) {
-                        stepExternalFilePath = file.getAbsolutePath();
-                        localConfigChanged = updateConfigWithExternalFilePath();
-                    } else {
-                        localConfigChanged = false;
-                    }
-                }
-                if ((localConfigChanged || (!originalFileExists && configChanged) || forceSave) && saveStepToFile()) {
-                    SoapUI.log.info("step '" + this.testStep.getName() + "' saved to " + stepExternalFilePath);
-                }
-            }
-        }
-    }
-
-    private boolean saveStepToFile() {
-        if (this.stepExternalFilePath == null) {
-            return false;
-        }
-        StringBuffer pathBuffer = new StringBuffer();
-        // TODO (marcpa) : use a portable way to do this (maybe create a File and check isAbsolutePath() ?
-        if (!stepExternalFilePath.startsWith( System.getProperty("file.separator")) ) {
-            // is relative
-            if (requestRootPath == null) {
-                requestRootPath = ".";
-            }
-            pathBuffer.append(requestRootPath).append(System.getProperty("file.separator")).append(stepExternalFilePath);
-        } else {
-            // is absolute path
-            pathBuffer.append(stepExternalFilePath);
-        }
-
-        File f = new File(pathBuffer.toString());
-        try {
-            if (! f.exists()) {
-                File parent = f.getParentFile();
-                if (! parent.exists()) {
-                    parent.mkdirs();
-                }
-                f.createNewFile();
-            }
-            Files.write(stepContent, f, Charset.forName("UTF-8"));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
-    }
-
-    public String getStepExternalFilePath() {
-        return stepExternalFilePath;
-    }
-
-    public void setStepExternalFilePath(String stepExternalFilePath) {
-        this.stepExternalFilePath = stepExternalFilePath;
-    }
-
-    public String getRequestRootPath() {
-        return requestRootPath;
-    }
-
-    public void setRequestRootPath(String requestRootPath) {
-        this.requestRootPath = requestRootPath;
-    }
-
-    public ExternalFilenameBuildModeConfig.Enum getExternalFilenameBuildMode() {
-        return externalFilenameBuildMode;
-    }
-
-    public void setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.Enum externalFilenameBuildMode) {
-        this.externalFilenameBuildMode = externalFilenameBuildMode;
-    }
-    public String getStepContent() {
-        return stepContent;
-    }
-
-    public void setStepContent(String stepContent) {
-        this.stepContent = stepContent;
-    }
-
 
 }

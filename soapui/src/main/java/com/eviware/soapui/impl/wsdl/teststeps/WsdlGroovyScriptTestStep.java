@@ -127,7 +127,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
             SoapUI.log.info("In WsdlGroovyScriptTestStep.readConfig() : got script content from 'script' element.");
         } else {
             testRequestStepInExternalFileSupport = new TestRequestStepInExternalFileSupport(this, config, getSettings());
-            testRequestStepInExternalFileSupport.initExternalFilenameSupportForScript();
+            testRequestStepInExternalFileSupport.initExternalFilenameSupport();
             scriptText = testRequestStepInExternalFileSupport.getStepContent();
         }
     }
