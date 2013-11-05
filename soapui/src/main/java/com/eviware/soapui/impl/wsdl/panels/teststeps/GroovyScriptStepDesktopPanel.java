@@ -12,30 +12,9 @@
 
 package com.eviware.soapui.impl.wsdl.panels.teststeps;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.ListModel;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.support.actions.ShowOnlineHelpAction;
+import com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction;
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext;
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunner;
 import com.eviware.soapui.impl.wsdl.panels.support.TestRunComponentEnabler;
@@ -49,6 +28,7 @@ import com.eviware.soapui.model.settings.Settings;
 import com.eviware.soapui.model.settings.SettingsListener;
 import com.eviware.soapui.support.ListDataChangeListener;
 import com.eviware.soapui.support.UISupport;
+import com.eviware.soapui.support.action.swing.SwingActionDelegate;
 import com.eviware.soapui.support.components.JComponentInspector;
 import com.eviware.soapui.support.components.JEditorStatusBarWithProgress;
 import com.eviware.soapui.support.components.JInspectorPanel;
@@ -56,6 +36,18 @@ import com.eviware.soapui.support.components.JInspectorPanelFactory;
 import com.eviware.soapui.support.components.JXToolBar;
 import com.eviware.soapui.support.log.JLogList;
 import com.eviware.soapui.ui.support.ModelItemDesktopPanel;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * DesktopPanel for WsdlGroovyTestSteps
@@ -160,7 +152,10 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
 	{
 		JXToolBar toolBar = UISupport.createToolbar();
 		JButton runButton = UISupport.createToolbarButton( runAction );
+        JButton configureExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
+                ConfigureExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep, null, "/options.gif" ), true );
 		toolBar.add( runButton );
+        toolBar.add( configureExternalFileButton );
 		toolBar.add( Box.createHorizontalGlue() );
 		JLabel label = new JLabel( "<html>Script is invoked with <code>log</code>, <code>context</code> "
 				+ "and <code>testRunner</code> variables</html>" );
@@ -172,6 +167,7 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
 		toolBar.add( UISupport.createToolbarButton( new ShowOnlineHelpAction( HelpUrls.GROOVYSTEPEDITOR_HELP_URL ) ) );
 
 		componentEnabler.add( runButton );
+        componentEnabler.add( configureExternalFileButton );
 
 		return toolBar;
 	}
