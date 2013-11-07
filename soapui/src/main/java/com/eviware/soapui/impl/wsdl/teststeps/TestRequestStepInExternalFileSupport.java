@@ -2,25 +2,32 @@ package com.eviware.soapui.impl.wsdl.teststeps;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.ExternalFilenameBuildModeConfig;
+import com.eviware.soapui.config.ModelItemConfig;
 import com.eviware.soapui.config.RequestStepConfig;
 import com.eviware.soapui.config.ScriptConfig;
 import com.eviware.soapui.config.TestStepConfig;
 import com.eviware.soapui.config.WsdlRequestConfig;
 import com.eviware.soapui.impl.settings.XmlBeansSettingsImpl;
+import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.project.Project;
+import com.eviware.soapui.model.testsuite.TestCase;
+import com.eviware.soapui.model.testsuite.TestStep;
 import com.eviware.soapui.settings.UISettings;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
 import com.google.common.io.Files;
 import org.apache.xmlbeans.XmlCursor;
 
+import javax.swing.*;
 import javax.xml.namespace.QName;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.List;
 
 /**
  * Class for supporting step request content in external file : store the actual content of a request used in a test
@@ -64,14 +71,21 @@ import java.nio.charset.Charset;
  * To change this template use File | Settings | File Templates.
  * </p>
  */
-public class TestRequestStepInExternalFileSupport {
+public class TestRequestStepInExternalFileSupport implements ModelItem {
     static private final String DEFAULT_STEP_FILENAME = "new-testStep";
     static private final String DEFAULT_SUFFIX = ".txt";
     static private final String WSDL_REQUEST_SUFFIX = "-request.xml";
     static private final String GROOVY_SCRIPT_SUFFIX = ".groovy";
 
+    // for the WsldRequest personnality
     private WsdlRequestConfig wsdlRequestConfig;
+
+    // for the GroovyTestStep personnality
     private TestStepConfig testStepConfig;
+
+    private ScriptConfig scriptConfig;
+
+
     private XmlBeansSettingsImpl settings;
     private WsdlTestStep testStep;
     private WsdlTestRequest testRequest;
@@ -120,10 +134,6 @@ public class TestRequestStepInExternalFileSupport {
         this.settings = settings;
     }
 
-    public XmlBeansSettingsImpl getSettings() {
-        return this.settings;
-    }
-
     public void initExternalFilenameSupport() {
         if (wsdlRequestConfig != null) {
             initExternalFilenameSupportForWsdlRequest();
@@ -160,7 +170,7 @@ public class TestRequestStepInExternalFileSupport {
 
         if (externalFilenameBuildMode != ExternalFilenameBuildModeConfig.NONE) {
             // this will adjust externalFilename
-            buildExternalFilenameAccordingToMode();
+            buildExternalFilenameForCurrentMode();
             loadStepContent();
         }
         wsdlRequestConfig.setExternalFilename(externalFilename);
@@ -181,7 +191,7 @@ public class TestRequestStepInExternalFileSupport {
         String configContent = reader.readString("script", null);
 
         // ... however, we can create an instance of the XmlBeans generated class ScriptConfig and populate it ourselves
-        ScriptConfig scriptConfig = ScriptConfig.Factory.newInstance();
+        scriptConfig = ScriptConfig.Factory.newInstance();
 
         if (configExternalFilenameBuildMode == null) {
             boolean autoConvert = getSettings().getBoolean(UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE);
@@ -210,7 +220,7 @@ public class TestRequestStepInExternalFileSupport {
             this.externalFilename = scriptConfig.getExternalFilename();
             this.alternateFilenameForContent = configExternalFilename;
             // this will adjust externalFilename
-            buildExternalFilenameAccordingToMode();
+            buildExternalFilenameForCurrentMode();
             loadStepContent();
         }
         scriptConfig.setStringValue(stepContent);
@@ -219,17 +229,17 @@ public class TestRequestStepInExternalFileSupport {
         XmlCursor scriptCursor = testStepConfig.getConfig().newCursor();
         if (scriptCursor.toChild(new QName("", "script"))) {
             scriptCursor.getObject().set(scriptConfig);
-            SoapUI.log.info("In WsdlGroovyScriptTestStep.readConfig() : replaced the script child element with compute script config.");
+            SoapUI.log.info("In TestRequestStepInExternalFileSupport : replaced the script child element with compute script config.");
         } else {
-            SoapUI.log.info("In WsdlGroovyScriptTestStep.readConfig() : no script child element found, weird...");
+            SoapUI.log.info("In TestRequestStepInExternalFileSupport : no script child element found, weird...");
         }
         scriptCursor.dispose();
     }
 
-    private void buildExternalFilenameAccordingToMode() {
-        // build mode is either AUTO, COMPOSED, MANUAL or NONE, but only the first two requires adjustment.
-        if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.NONE || externalFilenameBuildMode == ExternalFilenameBuildModeConfig.MANUAL) {
-            return;
+    public String buildExternalFilenameForMode(ExternalFilenameBuildModeConfig.Enum externalFilenameBuildMode) {
+
+        if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.MANUAL) {
+            return externalFilename;
         }
 
         String projectName, testSuiteName, testCaseName, testStepName;
@@ -246,22 +256,42 @@ public class TestRequestStepInExternalFileSupport {
                     .append(testCaseName).append(sep)
                     .append(testStepName);
         } else if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.COMPOSED) {
-            if (composeWithProjectName)   { stringBuilder.append(projectName);   }
-            if (composeWithTestSuiteName) { stringBuilder.append(testSuiteName); }
-            if (composeWithTestCaseName)  { stringBuilder.append(testCaseName);  }
-            if (composeWithTestStepName)  { stringBuilder.append(testStepName);  }
-            if (stringBuilder.length() == 0) { stringBuilder.append(DEFAULT_STEP_FILENAME); }
+            if (composeWithProjectName)   { stringBuilder.append(projectName).append(sep);   }
+            if (composeWithTestSuiteName) { stringBuilder.append(testSuiteName).append(sep); }
+            if (composeWithTestCaseName)  { stringBuilder.append(testCaseName).append(sep);  }
+            if (composeWithTestStepName)  { stringBuilder.append(testStepName).append(sep);  }
         }
+        return finishBuildExternalFilename(stringBuilder);
+    }
 
+    public String finishBuildExternalFilename(StringBuilder stringBuilder) {
+        String sep = System.getProperty("file.separator");
+        if (stringBuilder.length() == 0) {
+            stringBuilder.append(DEFAULT_STEP_FILENAME);
+        } else {
+            // remove the trailing slash
+            if (sep.equals(stringBuilder.charAt(stringBuilder.length()-1))) {
+                stringBuilder.deleteCharAt(stringBuilder.length()-1);
+            }
+        }
         if (wsdlRequestConfig != null) {
             stringBuilder.append(WSDL_REQUEST_SUFFIX);
         } else if (testStepConfig != null) {
             stringBuilder.append(GROOVY_SCRIPT_SUFFIX);
         } else {
-            SoapUI.log.error("TestRequestStepInExternalFileSupport : buildExternalFilenameAccordingToMode() called but we don't know which config to use : this is a bug.");
+            SoapUI.log.error("TestRequestStepInExternalFileSupport : buildExternalFilenameForCurrentMode() called but we don't know which config to use : this is a bug.");
+            return null;
+        }
+        return stringBuilder.toString();
+    }
+
+    private void buildExternalFilenameForCurrentMode() {
+        // build mode is either AUTO, COMPOSED, MANUAL or NONE, but only the first two requires adjustment.
+        if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.NONE || externalFilenameBuildMode == ExternalFilenameBuildModeConfig.MANUAL) {
             return;
         }
-        setExternalFilename(stringBuilder.toString());
+
+        setExternalFilename(buildExternalFilenameForMode(externalFilenameBuildMode));
     }
 
     /**
@@ -351,11 +381,92 @@ public class TestRequestStepInExternalFileSupport {
                 return false;
             }
             XmlCursor cursor = testStepConfig.getConfig().newCursor();
-            cursor.setAttributeText(new QName("", "@externalFilename"), externalFilename);
+            if (cursor.toChild("script")) {
+                cursor.setAttributeText(new QName("", "externalFilename"), externalFilename);
+            } else {
+                SoapUI.log.error("could not get to 'script' element while trying to set the externalFileName attribute for step '" + getName() + "'");
+            }
             cursor.dispose();
         }
         SoapUI.log.info("set file element of wsdl request to '" + externalFilename + "'");
         return true;
+    }
+
+    /**
+     * Update config object, either wsdlRequestConfig or scriptConfig, to reflect current state
+     *
+     */
+    public void updateConfig() {
+        // TODO (marcpa) : these two blocks of code are so similar, there must be a way to refactor this.
+        if (wsdlRequestConfig != null) {
+            if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.NONE) {
+                if (getSettings().getBoolean(UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE)) {
+                    wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
+                }
+                if (wsdlRequestConfig.isSetComposeWithProjectName()) { wsdlRequestConfig.unsetComposeWithProjectName(); }
+                if (wsdlRequestConfig.isSetComposeWithTestSuiteName()) { wsdlRequestConfig.unsetComposeWithTestSuiteName(); }
+                if (wsdlRequestConfig.isSetComposeWithTestCaseName() ) { wsdlRequestConfig.unsetComposeWithTestCaseName(); }
+                if (wsdlRequestConfig.isSetComposeWithTestStepName() ) { wsdlRequestConfig.unsetComposeWithTestStepName(); }
+                wsdlRequestConfig.getRequest().setStringValue(stepContent);
+            } else {
+                if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.AUTO) {
+                    wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                    if (wsdlRequestConfig.isSetComposeWithProjectName()) { wsdlRequestConfig.unsetComposeWithProjectName(); }
+                    if (wsdlRequestConfig.isSetComposeWithTestSuiteName()) { wsdlRequestConfig.unsetComposeWithTestSuiteName(); }
+                    if (wsdlRequestConfig.isSetComposeWithTestCaseName() ) { wsdlRequestConfig.unsetComposeWithTestCaseName(); }
+                    if (wsdlRequestConfig.isSetComposeWithTestStepName() ) { wsdlRequestConfig.unsetComposeWithTestStepName(); }
+                } else if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.COMPOSED) {
+                    wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.COMPOSED);
+                    wsdlRequestConfig.setComposeWithProjectName( composeWithProjectName );
+                    wsdlRequestConfig.setComposeWithTestSuiteName( composeWithTestSuiteName );
+                    wsdlRequestConfig.setComposeWithTestCaseName( composeWithTestCaseName );
+                    wsdlRequestConfig.setComposeWithTestStepName( composeWithTestStepName );
+                } else if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.MANUAL) {
+                    wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.MANUAL);
+                    if (wsdlRequestConfig.isSetComposeWithProjectName()) { wsdlRequestConfig.unsetComposeWithProjectName(); }
+                    if (wsdlRequestConfig.isSetComposeWithTestSuiteName()) { wsdlRequestConfig.unsetComposeWithTestSuiteName(); }
+                    if (wsdlRequestConfig.isSetComposeWithTestCaseName() ) { wsdlRequestConfig.unsetComposeWithTestCaseName(); }
+                    if (wsdlRequestConfig.isSetComposeWithTestStepName() ) { wsdlRequestConfig.unsetComposeWithTestStepName(); }
+                }
+                wsdlRequestConfig.setExternalFilename( externalFilename );
+            }
+
+        } else if (scriptConfig != null) {
+            if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.NONE) {
+                if (getSettings().getBoolean(UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE)) {
+                    scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.NONE);
+                }
+                if (scriptConfig.isSetComposeWithProjectName()) { scriptConfig.unsetComposeWithProjectName(); }
+                if (scriptConfig.isSetComposeWithTestSuiteName()) { scriptConfig.unsetComposeWithTestSuiteName(); }
+                if (scriptConfig.isSetComposeWithTestCaseName() ) { scriptConfig.unsetComposeWithTestCaseName(); }
+                if (scriptConfig.isSetComposeWithTestStepName() ) { scriptConfig.unsetComposeWithTestStepName(); }
+                scriptConfig.setStringValue(stepContent);
+            } else {
+                if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.AUTO) {
+                    scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                    if (scriptConfig.isSetComposeWithProjectName()) { scriptConfig.unsetComposeWithProjectName(); }
+                    if (scriptConfig.isSetComposeWithTestSuiteName()) { scriptConfig.unsetComposeWithTestSuiteName(); }
+                    if (scriptConfig.isSetComposeWithTestCaseName() ) { scriptConfig.unsetComposeWithTestCaseName(); }
+                    if (scriptConfig.isSetComposeWithTestStepName() ) { scriptConfig.unsetComposeWithTestStepName(); }
+                } else if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.COMPOSED) {
+                    scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.COMPOSED);
+                    scriptConfig.setComposeWithProjectName( composeWithProjectName );
+                    scriptConfig.setComposeWithTestSuiteName( composeWithTestSuiteName );
+                    scriptConfig.setComposeWithTestCaseName( composeWithTestCaseName );
+                    scriptConfig.setComposeWithTestStepName( composeWithTestStepName );
+                } else if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.MANUAL) {
+                    scriptConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.MANUAL);
+                    if (scriptConfig.isSetComposeWithProjectName()) { scriptConfig.unsetComposeWithProjectName(); }
+                    if (scriptConfig.isSetComposeWithTestSuiteName()) { scriptConfig.unsetComposeWithTestSuiteName(); }
+                    if (scriptConfig.isSetComposeWithTestCaseName() ) { scriptConfig.unsetComposeWithTestCaseName(); }
+                    if (scriptConfig.isSetComposeWithTestStepName() ) { scriptConfig.unsetComposeWithTestStepName(); }
+                }
+                scriptConfig.setExternalFilename( externalFilename );
+            }
+        }
+        else {
+            SoapUI.log.error("Update Config called but we have no config to work on ?");
+        }
     }
 
 
@@ -513,4 +624,112 @@ public class TestRequestStepInExternalFileSupport {
         this.composeWithTestCaseName = composeWithTestCaseName;
     }
 
+    public TestStep getTestStep() {
+        return testStep;
+    }
+
+    public TestCase getTestCase() {
+        if (testStep == null) {
+            return null;
+        }
+
+        return testStep.getTestCase();
+    }
+
+    public String getRequestContent() {
+        return stepContent;
+    }
+
+    public ModelItemConfig getConfig() {
+        if (wsdlRequestConfig != null) {
+            return wsdlRequestConfig;
+        }
+        if (testStepConfig != null) {
+            return testStepConfig;
+        }
+        return null;
+    }
+
+    // Delegate ModelItem methods to testStep
+    @Override
+    public String getName() {
+        if (testStep == null) {
+            return null;
+        }
+        return testStep.getName();
+    }
+
+    @Override
+    public String getId() {
+        if (testStep == null) {
+            return null;
+        }
+        return testStep.getId();
+    }
+
+    @Override
+    public ImageIcon getIcon() {
+        if (testStep == null) {
+            return null;
+        }
+        return testStep.getIcon();
+    }
+
+    @Override
+    public String getDescription() {
+        if (testStep == null) {
+            return null;
+        }
+        return testStep.getDescription();
+    }
+
+    public XmlBeansSettingsImpl getSettings() {
+        if (testStep == null) {
+            return null;
+        }
+        return this.settings;
+    }
+
+    @Override
+    public List<? extends ModelItem> getChildren() {
+        if (testStep == null) {
+            return null;
+        }
+        return testStep.getChildren();
+    }
+
+    @Override
+    public ModelItem getParent() {
+        if (testStep == null) {
+            return null;
+        }
+
+        return testStep.getParent();
+    }
+
+    @Override
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+    // END of delegation to testStep
+
+
+    public ScriptConfig getScriptConfig() {
+        return scriptConfig;
+    }
 }

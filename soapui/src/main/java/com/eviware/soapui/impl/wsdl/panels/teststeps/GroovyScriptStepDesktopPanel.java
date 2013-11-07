@@ -153,7 +153,7 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
 		JXToolBar toolBar = UISupport.createToolbar();
 		JButton runButton = UISupport.createToolbarButton( runAction );
         JButton configureExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
-                ConfigureExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep, null, "/options.gif" ), true );
+                ConfigureExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep.getTestRequestStepInExternalFileSupport(), null, "/options.gif" ), true );
 		toolBar.add( runButton );
         toolBar.add( configureExternalFileButton );
 		toolBar.add( Box.createHorizontalGlue() );
