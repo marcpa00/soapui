@@ -20,6 +20,7 @@ import org.apache.xmlbeans.XmlCursor;
 
 import javax.swing.*;
 import javax.xml.namespace.QName;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
@@ -71,7 +72,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  * </p>
  */
-public class TestRequestStepInExternalFileSupport implements ModelItem {
+public class TestRequestStepInExternalFileSupport implements ModelItem, PropertyChangeListener  {
     static private final String DEFAULT_STEP_FILENAME = "new-testStep";
     static private final String DEFAULT_SUFFIX = ".txt";
     static private final String WSDL_REQUEST_SUFFIX = "-request.xml";
@@ -120,6 +121,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem {
         this.testRequest = wsdlTestRequest;
         this.wsdlRequestConfig = requestStepConfig.getRequest();
         this.settings = settings;
+
+        addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
     }
 
     /**
@@ -132,7 +135,11 @@ public class TestRequestStepInExternalFileSupport implements ModelItem {
         this.testStep = wsdlTestStep;
         this.testStepConfig = testStepConfig;
         this.settings = settings;
+
+        addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
     }
+
+
 
     public void initExternalFilenameSupport() {
         if (wsdlRequestConfig != null) {
@@ -708,27 +715,35 @@ public class TestRequestStepInExternalFileSupport implements ModelItem {
 
     @Override
     public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        testStep.addPropertyChangeListener(propertyName, listener);
+
     }
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener listener) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        testStep.addPropertyChangeListener(listener);
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener listener) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        testStep.removePropertyChangeListener(listener);
     }
 
     @Override
     public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        testStep.removePropertyChangeListener(propertyName, listener);
     }
     // END of delegation to testStep
 
 
     public ScriptConfig getScriptConfig() {
         return scriptConfig;
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
+        if (propertyChangeEvent.getPropertyName().equals(ModelItem.NAME_PROPERTY)) {
+            buildExternalFilenameForCurrentMode();
+        }
     }
 }
