@@ -465,10 +465,9 @@ public class TestRequestStepInExternalFileSupport implements ModelItem {
             }
         }
         else {
-            SoapUI.log.error("Update Config called but we have no config to work on ?");
+            SoapUI.log.error("updateConfig called but we have no config to work on ?");
         }
     }
-
 
     private String readFile(File f) {
         if (f.exists()) {
@@ -503,7 +502,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem {
     public void saveToExternalFile(Boolean configChanged, Boolean forceSave) {
         if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
             if (this.externalFilename != null) {
-                SoapUI.log.info("*** this step has an externalFilePath : '" + this.externalFilename + "'");
+                SoapUI.log.info("saveToExternalFile(configChanged:" + configChanged + ", forceSave:" + forceSave + "), externalFilename : '" + this.externalFilename + "'");
 
                 // true when config is being changed in this method, i.e. if user chooses another file to save to
                 boolean localConfigChanged = false;

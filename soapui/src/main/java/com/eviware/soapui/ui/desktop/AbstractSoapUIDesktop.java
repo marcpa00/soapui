@@ -204,8 +204,8 @@ public abstract class AbstractSoapUIDesktop implements SoapUIDesktop
             for (TestSuite testSuite : project.getTestSuiteList()) {
                 for (TestCase testCase : testSuite.getTestCaseList()) {
                     for (TestStep testStep : testCase.getTestStepList()) {
-                        SoapUI.log.info("checking test step '"+ testStep.getName() + "' for external file attribute...");
-                        SoapUI.log.info("  testStep.class : " + testStep.getClass().getSimpleName());
+                        SoapUI.log.info("beforeSave() : checking test step '"+ testStep.getName() + "' for external file attribute...");
+                        SoapUI.log.info("beforeSave() :    testStep.class : " + testStep.getClass().getSimpleName());
                         if (testStep instanceof WsdlGroovyScriptTestStep) {
                             WsdlGroovyScriptTestStep step = (WsdlGroovyScriptTestStep) testStep;
                             step.getTestRequestStepInExternalFileSupport().saveToExternalFile();
