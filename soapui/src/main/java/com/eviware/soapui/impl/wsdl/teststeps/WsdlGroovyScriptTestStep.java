@@ -248,6 +248,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 		String oldScript = this.scriptText;
 		this.scriptText = scriptText;
 		scriptEngine.setScript( scriptText );
+        testRequestStepInExternalFileSupport.setStepContent(scriptText);
 		saveScript( getConfig() );
 
 		notifyPropertyChanged( "script", oldScript, scriptText );

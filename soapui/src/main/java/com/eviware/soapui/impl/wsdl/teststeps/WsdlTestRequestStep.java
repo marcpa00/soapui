@@ -371,6 +371,10 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 			{
 				delegatePropertyChange( "Endpoint", event );
 			}
+
+            if ( event.getPropertyName().equals( "request" )) {
+                testRequestStepInExternalFileSupport.setStepContent( (String) event.getNewValue() );
+            }
 		}
 
 		if( event.getSource() == wsdlOperation )
