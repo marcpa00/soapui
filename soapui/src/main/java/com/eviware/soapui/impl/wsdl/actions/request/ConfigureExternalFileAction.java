@@ -33,22 +33,25 @@ import com.eviware.x.form.support.AForm;
 import com.eviware.x.impl.swing.AbstractSwingXFormField;
 import com.eviware.x.impl.swing.JTextFieldFormField;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 
 public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
 {
 	public static final String SOAPUI_ACTION_ID = "ConfigureExternalFileAction";
 	private XFormDialog dialog;
     private ComposedFilenameObject composedFilenameObject;
+    private TestRequestStepInExternalFileSupport testRequestStepInExternalFileSupport = null;
 
-	public ConfigureExternalFileAction()
+    public ConfigureExternalFileAction()
 	{
 		super( "Configure external file settings for step", "Specify which file to load, if content should be saved to external file and how to name the file." );
 	}
 
 	public void perform( ModelItem modelItem, Object param )
 	{
-        TestRequestStepInExternalFileSupport testRequestStepInExternalFileSupport = null;
 
         if (modelItem instanceof TestRequestStepInExternalFileSupport) {
             testRequestStepInExternalFileSupport = (TestRequestStepInExternalFileSupport) modelItem;
@@ -56,25 +59,14 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
             testRequestStepInExternalFileSupport = ((WsdlTestRequest)modelItem).getTestStep().getTestRequestStepInExternalFileSupport();
         }
         if (testRequestStepInExternalFileSupport != null) {
-            configureExternalFile(testRequestStepInExternalFileSupport);
+            configureExternalFile();
         }
 	}
 
-	protected boolean configureExternalFile( TestRequestStepInExternalFileSupport testRequestStepInExternalFileSupport )
+	protected boolean configureExternalFile()
 	{
         if( dialog == null ) {
             dialog = ADialogBuilder.buildDialog( Form.class );
-        }
-
-        String rootPath = testRequestStepInExternalFileSupport.getTestCase().getTestSuite().getProject().getPath();
-        if (rootPath == null || rootPath.isEmpty()) {
-            // TODO (marcpa) : is this the right thing to do ?
-            rootPath = System.getProperty("user.dir");
-        }
-        if (rootPath != null && rootPath.endsWith(".xml")) {
-            rootPath = rootPath.replaceAll(".xml", ".resources");
-        } else {
-            rootPath = rootPath + ".resources";
         }
 
         // Initialize flags to default values
@@ -98,7 +90,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
 
         composedFilenameObject = new ComposedFilenameObject(externalStepFileSelector, useProjectName, useTestSuiteName, useTestCaseName, useTestStepName, modelItemConfig).invoke();
 
-        dialog.setValue( Form.ROOT_PATH, rootPath );
+        dialog.setValue( Form.SUMMARY,  buildSummary() );
         dialog.setBooleanValue(Form.USE_EXTERNAL_STEP_FILE, useExternalStepFile);
 
         dialog.setBooleanValue( Form.USE_PROJECT_NAME, composedFilenameObject.getUseProjectName() );
@@ -156,13 +148,36 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
             } else if (dialog.getBooleanValue( Form.USE_MANUAL_FILENAME )) {
                 testRequestStepInExternalFileSupport.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.MANUAL);
             }
-            testRequestStepInExternalFileSupport.setExternalFilename(dialog.getValue(Form.FILENAME));
+            testRequestStepInExternalFileSupport.setExternalFilename( dialog.getValue( Form.FILENAME ) );
             testRequestStepInExternalFileSupport.updateConfig();
             testRequestStepInExternalFileSupport.saveToExternalFile(testRequestStepInExternalFileSupport.updateConfigWithExternalFilePath(), false);
         }
 
 		return true;
 	}
+
+    private String buildSummary() {
+        String sep = System.getProperty("file.separator");
+        String currentFilename = dialog.getValue( Form.FILENAME );
+        if (currentFilename == null || currentFilename.isEmpty() ) {
+            currentFilename = testRequestStepInExternalFileSupport.getExternalFilename();
+        }
+        StringBuilder summary = new StringBuilder("Root path for relative path names : ");
+        summary.append("\n   ");
+        summary.append(testRequestStepInExternalFileSupport.getExternalFileRootPath()).append(sep);
+        summary.append("\n");
+        summary.append("Effective external filename : ");
+        summary.append("\n   ");
+        summary.append( currentFilename );
+        summary.append("\n");
+        File f = new File(testRequestStepInExternalFileSupport.getExternalFileRootPath() + sep + currentFilename);
+        if (f.exists()) {
+            summary.append("File exists (").append(f.length()).append(" bytes), last modified on ").append(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date(f.lastModified())));
+        } else {
+            summary.append("File does not exists yet.");
+        }
+        return summary.toString();
+    }
 
     private void setupFieldsStateAndVisibility(Boolean useExternalStepFile, Boolean useAutomaticFilename, Boolean useComposedFilname, Boolean useManualFilename) {
         // by default, fields are enabled : need to disable them according to flag USE_EXTERNAL_STEP_FILE
@@ -181,7 +196,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
             dialog.getFormField( Form.COMPOSED_FILENAME ).setEnabled( false );
             dialog.getFormField( Form.MANUAL_FILENAME ).setEnabled( false );
 
-            dialog.getFormField( Form.ROOT_PATH ).setEnabled( false );
+            dialog.getFormField( Form.SUMMARY ).setEnabled( false );
         } else {
             if ( useAutomaticFilename ) {
                 dialog.getFormField( Form.USE_PROJECT_NAME ).setEnabled( false );
@@ -228,7 +243,6 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         {
             public void valueChanged( XFormField sourceField, String newValue, String oldValue )
             {
-                dialog.getFormField( Form.ROOT_PATH ).setEnabled( Boolean.valueOf( newValue ) );
 
                 dialog.getFormField( Form.USE_AUTOMATIC_FILENAME).setEnabled( Boolean.valueOf(newValue));
                 dialog.getFormField( Form.USE_COMPOSED_FILENAME).setEnabled( Boolean.valueOf(newValue));
@@ -254,6 +268,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
 
                     dialog.getFormField( Form.MANUAL_FILENAME).setEnabled( dialog.getBooleanValue( Form.USE_MANUAL_FILENAME) ) ;
                 }
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         } );
 
@@ -297,7 +312,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
                         dialog.setValue( Form.FILENAME, dialog.getValue( Form.MANUAL_FILENAME ));
                     }
                 }
-
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         });
 
@@ -340,6 +355,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
                         dialog.setValue( Form.FILENAME, dialog.getValue( Form.MANUAL_FILENAME ));
                     }
                 }
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         });
 
@@ -382,6 +398,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
                         dialog.setValue( Form.FILENAME, dialog.getValue( Form.MANUAL_FILENAME ));
                     }
                 }
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         });
 
@@ -392,6 +409,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
                 String composedFilename = composedFilenameObject.build();
                 dialog.setValue( Form.COMPOSED_FILENAME, composedFilename );
                 dialog.setValue( Form.FILENAME, composedFilename );
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         });
         dialog.getFormField( Form.USE_TEST_SUITE_NAME ).addFormFieldListener( new XFormFieldListener() {
@@ -401,6 +419,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
                 String composedFilename = composedFilenameObject.build();
                 dialog.setValue( Form.COMPOSED_FILENAME, composedFilename );
                 dialog.setValue( Form.FILENAME, composedFilename );
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         });
         dialog.getFormField( Form.USE_TEST_CASE_NAME ).addFormFieldListener( new XFormFieldListener() {
@@ -410,6 +429,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
                 String composedFilename = composedFilenameObject.build();
                 dialog.setValue( Form.COMPOSED_FILENAME, composedFilename );
                 dialog.setValue( Form.FILENAME, composedFilename );
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         });
         dialog.getFormField( Form.USE_TEST_STEP_NAME ).addFormFieldListener( new XFormFieldListener() {
@@ -419,24 +439,28 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
                 String composedFilename = composedFilenameObject.build();
                 dialog.setValue( Form.COMPOSED_FILENAME, composedFilename );
                 dialog.setValue( Form.FILENAME, composedFilename );
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         });
         dialog.getFormField( Form.AUTOMATIC_FILENAME ).addFormFieldListener( new XFormFieldListener() {
             @Override
             public void valueChanged(XFormField sourceField, String newValue, String oldValue) {
                 dialog.setValue( Form.FILENAME, newValue );
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         });
         dialog.getFormField( Form.COMPOSED_FILENAME ).addFormFieldListener( new XFormFieldListener() {
             @Override
             public void valueChanged(XFormField sourceField, String newValue, String oldValue) {
                 dialog.setValue( Form.FILENAME, newValue );
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         });
         dialog.getFormField( Form.MANUAL_FILENAME ).addFormFieldListener( new XFormFieldListener() {
             @Override
             public void valueChanged(XFormField sourceField, String newValue, String oldValue) {
                 dialog.setValue( Form.FILENAME, newValue );
+                dialog.setValue( Form.SUMMARY,  buildSummary() );
             }
         });
     }
@@ -449,16 +473,8 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         @AField( name = "Use External Step File", description = "Use an external file to store the request content of this step.", type = AFieldType.BOOLEAN )
         public final static String USE_EXTERNAL_STEP_FILE = "Use External Step File";
 
-        @AField( name = "top-separator", description = "", type = AFieldType.SEPARATOR)
-        public final static String SEPARATOR_AT_TOP = "top-separator";
-
-        @AField( name = "Root Path", description = "", type = AFieldType.LABEL)
-        public final static String ROOT_PATH_LABEL = "Root Path";
-        @AField( name = "###Root Path", description = "Path from where to resolve relative file names.", type = AFieldType.FOLDER )
-		public final static String ROOT_PATH = "###Root Path";
-
-        @AField( name = "bottom-separator-1", description = "", type = AFieldType.SEPARATOR )
-        public final static String SEPARATOR_AT_BOTTOM_1 = "bottom-separator-1";
+        @AField( name = "separator-1", description = "", type = AFieldType.SEPARATOR)
+        public final static String SEPARATOR_1 = "separator-1";
 
         public final static String USE_AUTOMATIC_FILENAME_LABEL = "Use a filename automatically computed based on the path of step in project" ;
         public final static String USE_COMPOSED_FILENAME_LABEL = "Compose file with selected parts";
@@ -472,8 +488,8 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         @AField( name = "###result-of-expansion-value", description = "Filename where to read and save step content, automatically computed from the path of step in project.", type = AFieldType.STRING)
         public final static String AUTOMATIC_FILENAME = "###result-of-expansion-value";
 
-        @AField( name = "bottom-separator-2", description = "", type = AFieldType.SEPARATOR )
-        public final static String SEPARATOR_AT_BOTTOM_2 = "bottom-separator-2";
+        @AField( name = "separator-2", description = "", type = AFieldType.SEPARATOR )
+        public final static String SEPARATOR_2 = "separator-2";
 
         @AField( name = "###" + USE_COMPOSED_FILENAME_LABEL, description = USE_COMPOSED_FILENAME_LABEL, type = AFieldType.BOOLEAN )
         public final static String USE_COMPOSED_FILENAME = "###" + USE_COMPOSED_FILENAME_LABEL;
@@ -504,19 +520,29 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         @AField( name = "###result-of-composition-value", description = "Filename where to read and save step content, automatically computed from the path of step in project.", type = AFieldType.STRING)
         public final static String COMPOSED_FILENAME = "###result-of-composition-value";
 
-        @AField( name = "bottom-separator-3", description = "", type = AFieldType.SEPARATOR )
-        public final static String SEPARATOR_AT_BOTTOM_3 = "bottom-separator-3";
+        @AField( name = "separator-3", description = "", type = AFieldType.SEPARATOR )
+        public final static String SEPARATOR_3 = "separator-3";
 
         @AField( name = "###" + USE_MANUAL_FILENAME_LABEL, description = USE_MANUAL_FILENAME_LABEL, type = AFieldType.BOOLEAN )
         public final static String USE_MANUAL_FILENAME = "###" + USE_MANUAL_FILENAME_LABEL;
 
         // no label for this field because it feels redundant since the checkbox above clearly states what this is for
-        @AField( name = "###manual-filename", description = "Explicit filename where to read and save step content.  Absolute path or relative to 'Root Path' above.", type = AFieldType.FILE)
+        @AField( name = "###manual-filename", description = "Explicit filename where to read and save step content.  Absolute path or relative to 'Root Path'.", type = AFieldType.FILE)
 		public final static String MANUAL_FILENAME = "###manual-filename";
 
         @AField( name = "###filename", description = "")
         public final static String FILENAME = "###filename";
-	}
+
+        @AField( name = "separator-4", description = "", type = AFieldType.SEPARATOR )
+        public final static String SEPARATOR_4 = "separator-4";
+
+        @AField( name = "External filename summary", description = "", type = AFieldType.LABEL)
+        public final static String SUMMARY_LABEL = "External filename summary";
+        @AField( name = "###Summary", description = "Final result of external filename specification.", type = AFieldType.INFORMATION )
+        public final static String SUMMARY = "###Summary";
+
+
+    }
 
     private class ComposedFilenameObject {
         private ExternalStepFileSelector externalStepFileSelector;

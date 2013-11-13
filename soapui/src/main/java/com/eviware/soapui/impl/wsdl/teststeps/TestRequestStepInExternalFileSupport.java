@@ -93,7 +93,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
 
     private String stepContent;
 
-    private String requestRootPath;
+    private String externalFileRootPath;
     private String externalFilename;
 
     private Boolean composeWithProjectName;
@@ -142,6 +142,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
 
 
     public void initExternalFilenameSupport() {
+
+        initExternalFileRootPath();
         if (wsdlRequestConfig != null) {
             initExternalFilenameSupportForWsdlRequest();
         } else if (testStepConfig != null) {
@@ -149,6 +151,22 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         } else {
             SoapUI.log.error("TestRequestStepInExternalFileSupport : initExternalFilenameSupport() called but we have no config to work on.");
             return;
+        }
+
+    }
+
+    public void initExternalFileRootPath() {
+
+        if (externalFileRootPath == null || externalFileRootPath.isEmpty()) {
+            externalFileRootPath = getTestStep().getTestCase().getTestSuite().getProject().getPath();
+            if (externalFileRootPath == null || externalFileRootPath.isEmpty()) {
+                externalFileRootPath = System.getProperty("user.dir");
+            }
+        }
+        if (externalFileRootPath != null && externalFileRootPath.endsWith(".xml")) {
+            externalFileRootPath = externalFileRootPath.replaceAll(".xml", ".resources");
+        } else {
+            externalFileRootPath = externalFileRootPath + ".resources";
         }
 
     }
@@ -541,10 +559,10 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         // TODO (marcpa) : use a portable way to do this (maybe create a File and check isAbsolutePath() ?
         if (!externalFilename.startsWith( System.getProperty("file.separator")) ) {
             // is relative
-            if (requestRootPath == null) {
-                requestRootPath = ".";
+            if (externalFileRootPath == null) {
+                initExternalFileRootPath();
             }
-            pathBuffer.append(requestRootPath).append(System.getProperty("file.separator")).append(externalFilename);
+            pathBuffer.append(externalFileRootPath).append(System.getProperty("file.separator")).append(externalFilename);
         } else {
             // is absolute path
             pathBuffer.append(externalFilename);
@@ -567,6 +585,44 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         return true;
     }
 
+    private void renameExternalFile(String original, String target) {
+        File originalFile = new File(original);
+        File targetFile = new File(target);
+
+        if (originalFile.exists() && ! targetFile.exists()) {
+            // it is safe to simply rename the file
+            originalFile.renameTo(targetFile);
+        } else if (originalFile.exists() && targetFile.exists()) {
+            if (UISupport.confirm("File [" + targetFile.getName() + "] exists, overwrite?", "Overwrite File?") ) {
+                originalFile.renameTo(targetFile);
+            } else {
+                String extensionForFileType, fileTypeDescription;
+                if (wsdlRequestConfig != null) {
+                    extensionForFileType = ".xml";
+                    fileTypeDescription = "XML Files (*.xml)";
+                } else if (testStepConfig != null) {
+                    extensionForFileType = ".groovy";
+                    fileTypeDescription = "Groovy Files (*.groovy)";
+                } else {
+                    extensionForFileType = "*";
+                    fileTypeDescription = "Any File";
+                }
+                targetFile = UISupport.getFileDialogs().saveAs( this, "Save test step external file " + this.testStep.getName(), extensionForFileType, fileTypeDescription,
+                        new File(targetFile.getAbsolutePath()) );
+                if (targetFile != null) {
+                    originalFile.renameTo(targetFile);
+                    if (! targetFile.getName().equals(originalFile.getName())) {
+                        // renaming the new name of the file : need to change the step's name also
+                        String stepName = targetFile.getName().replaceAll(extensionForFileType, "");
+                        testStep.setName(stepName);
+                        buildExternalFilenameForCurrentMode();
+                    }
+                }
+            }
+        }
+        // if original file does not exist, then target file will be created at save time.
+    }
+
     public String getExternalFilename() {
         return externalFilename;
     }
@@ -575,12 +631,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         this.externalFilename = externalFilename;
     }
 
-    public String getRequestRootPath() {
-        return requestRootPath;
-    }
-
-    public void setRequestRootPath(String requestRootPath) {
-        this.requestRootPath = requestRootPath;
+    public String getExternalFileRootPath() {
+        return externalFileRootPath;
     }
 
     public ExternalFilenameBuildModeConfig.Enum getExternalFilenameBuildMode() {
@@ -743,7 +795,13 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
     @Override
     public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
         if (propertyChangeEvent.getPropertyName().equals(ModelItem.NAME_PROPERTY)) {
+            String originalFilename = externalFilename;
             buildExternalFilenameForCurrentMode();
+            String targetFilename = externalFilename;
+            if (targetFilename != null && ! targetFilename.equals(originalFilename)) {
+                // name of file where to save test step content changed, also rename the physical file
+                renameExternalFile(originalFilename, targetFilename);
+            }
         }
     }
 }
