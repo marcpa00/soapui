@@ -157,7 +157,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
 	}
 
     private String buildSummary() {
-        String sep = System.getProperty("file.separator");
+        String sep = File.separator;
         String currentFilename = dialog.getValue( Form.FILENAME );
         if (currentFilename == null || currentFilename.isEmpty() ) {
             currentFilename = testRequestStepInExternalFileSupport.getExternalFilename();
@@ -631,16 +631,22 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
             StringBuilder stringBuilder = new StringBuilder();
 
             if (dialog.getBooleanValue( Form.USE_PROJECT_NAME )) {
-                stringBuilder.append("/").append( dialog.getValue(Form.PROJECT_NAME) );
+                stringBuilder.append(File.separator).append( dialog.getValue(Form.PROJECT_NAME) );
             }
             if (dialog.getBooleanValue( Form.USE_TEST_SUITE_NAME )) {
-                stringBuilder.append("/").append( dialog.getValue( Form.TEST_SUITE_NAME ) );
+                stringBuilder.append(File.separator).append(dialog.getValue(Form.TEST_SUITE_NAME));
             }
             if (dialog.getBooleanValue( Form.USE_TEST_CASE_NAME )) {
-                stringBuilder.append("/").append(  dialog.getValue( Form.TEST_CASE_NAME ) );
+                stringBuilder.append(File.separator).append(dialog.getValue(Form.TEST_CASE_NAME));
             }
             if (dialog.getBooleanValue( Form.USE_TEST_STEP_NAME )) {
-                stringBuilder.append("/").append(  dialog.getValue( Form.TEST_STEP_NAME ) );
+                stringBuilder.append(File.separator).append(dialog.getValue(Form.TEST_STEP_NAME));
+            } else {
+                // no step name, get the default step name.
+                stringBuilder.append(File.separator).append( TestRequestStepInExternalFileSupport.DEFAULT_STEP_FILENAME );
+            }
+            if (stringBuilder.charAt(0) == File.separatorChar) {
+                stringBuilder.deleteCharAt(0);
             }
             return externalStepFileSelector.testRequestStepInExternalFileSupport.finishBuildExternalFilename(stringBuilder);
         }

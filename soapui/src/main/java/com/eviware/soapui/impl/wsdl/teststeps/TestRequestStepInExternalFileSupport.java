@@ -73,7 +73,7 @@ import java.util.List;
  * </p>
  */
 public class TestRequestStepInExternalFileSupport implements ModelItem, PropertyChangeListener  {
-    static private final String DEFAULT_STEP_FILENAME = "new-testStep";
+    static public final String DEFAULT_STEP_FILENAME = "new-testStep";
     static private final String DEFAULT_SUFFIX = ".txt";
     static private final String WSDL_REQUEST_SUFFIX = "-request.xml";
     static private final String GROOVY_SCRIPT_SUFFIX = ".groovy";
@@ -254,9 +254,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         XmlCursor scriptCursor = testStepConfig.getConfig().newCursor();
         if (scriptCursor.toChild(new QName("", "script"))) {
             scriptCursor.getObject().set(scriptConfig);
-            SoapUI.log.info("In TestRequestStepInExternalFileSupport : replaced the script child element with compute script config.");
         } else {
-            SoapUI.log.info("In TestRequestStepInExternalFileSupport : no script child element found, weird...");
+            SoapUI.log.debug("Step " + getName() + " have no script child element, this could be a bug...");
         }
         scriptCursor.dispose();
     }
@@ -290,12 +289,11 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
     }
 
     public String finishBuildExternalFilename(StringBuilder stringBuilder) {
-        String sep = System.getProperty("file.separator");
         if (stringBuilder.length() == 0) {
             stringBuilder.append(DEFAULT_STEP_FILENAME);
         } else {
             // remove the trailing slash
-            if (sep.equals(stringBuilder.charAt(stringBuilder.length()-1))) {
+            if (File.separatorChar == stringBuilder.charAt(stringBuilder.length()-1)) {
                 stringBuilder.deleteCharAt(stringBuilder.length()-1);
             }
         }
@@ -347,7 +345,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                 contentFile = new File(toAbsolutePath(alternateFilenameForContent));
                 if (! contentFile.exists()) {
                     if (stepContent == null) {
-                        SoapUI.log.info("Step content set to empty string in TestRequestStepInExternalFileSupport.loadStepContent().");
+                        SoapUI.log.debug("Step (" + getName() + ") content set to empty string in TestRequestStepInExternalFileSupport.loadStepContent().");
                         stepContent = "";
                         return;
                     }
@@ -413,7 +411,6 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
             }
             cursor.dispose();
         }
-        SoapUI.log.info("set file element of wsdl request to '" + externalFilename + "'");
         return true;
     }
 
@@ -496,7 +493,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
 
     private String readFile(File f) {
         if (f.exists()) {
-            SoapUI.log.info("Reading file '" + f.getAbsolutePath() + "'...");
+            SoapUI.log.debug("Reading file '" + f.getAbsolutePath() + "'...");
             try {
                 StringBuilder sBuilder = new StringBuilder();
                 String line;
@@ -512,8 +509,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                 ioe.printStackTrace();
             }
         } else {
-            SoapUI.log.info("File with path " + f.getAbsolutePath() + " does not exists");
-            SoapUI.log.info("  current working directory is " + System.getProperty("user.dir"));
+            SoapUI.log.debug("File with path " + f.getAbsolutePath() + " does not exists");
+            SoapUI.log.debug("  current working directory is " + System.getProperty("user.dir"));
         }
         return "";
     }
@@ -527,7 +524,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
     public void saveToExternalFile(Boolean configChanged, Boolean forceSave) {
         if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
             if (this.externalFilename != null) {
-                SoapUI.log.info("saveToExternalFile(configChanged:" + configChanged + ", forceSave:" + forceSave + "), externalFilename : '" + this.externalFilename + "'");
+                SoapUI.log.debug("saveToExternalFile(configChanged:" + configChanged + ", forceSave:" + forceSave + "), externalFilename : '" + this.externalFilename + "'");
 
                 // true when config is being changed in this method, i.e. if user chooses another file to save to
                 boolean localConfigChanged = false;
@@ -545,7 +542,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                     }
                 }
                 if ((localConfigChanged || (!originalFileExists && configChanged) || forceSave) && saveStepToFile()) {
-                    SoapUI.log.info("step '" + this.testStep.getName() + "' saved to " + externalFilename);
+                    SoapUI.log.debug("step '" + this.testStep.getName() + "' saved to " + externalFilename);
                 }
             }
         }
@@ -604,7 +601,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                     extensionForFileType = ".groovy";
                     fileTypeDescription = "Groovy Files (*.groovy)";
                 } else {
-                    extensionForFileType = "*";
+                    extensionForFileType = Character.toString('*');
                     fileTypeDescription = "Any File";
                 }
                 targetFile = UISupport.getFileDialogs().saveAs( this, "Save test step external file " + this.testStep.getName(), extensionForFileType, fileTypeDescription,

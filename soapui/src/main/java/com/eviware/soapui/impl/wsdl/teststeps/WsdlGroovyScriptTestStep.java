@@ -124,7 +124,6 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
         if (! getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
             XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( config.getConfig() );
             scriptText = reader.readString( "script", "" );
-            SoapUI.log.info("In WsdlGroovyScriptTestStep.readConfig() : got script content from 'script' element.");
         } else {
             testRequestStepInExternalFileSupport = new TestRequestStepInExternalFileSupport(this, config, getSettings());
             testRequestStepInExternalFileSupport.initExternalFilenameSupport();
@@ -168,10 +167,6 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 
 	public TestStepResult run( TestCaseRunner testRunner, TestCaseRunContext context )
 	{
-        SoapUI.log.info("*******");
-        SoapUI.log.info("*** In run() of WsdlGroovyScriptTestStep");
-        SoapUI.log.info("*******");
-
 		SoapUI.ensureGroovyLog();
 
 		WsdlTestStepResult result = new WsdlTestStepResult( this );

@@ -2280,16 +2280,21 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                     suffix = ".txt";
                 }
                 StringBuilder stringBuilder = new StringBuilder(testStepName).append(suffix);
+                // Build the path to step by going up the hierarchy until name of parent is null, i.e. up to the project
+                // We produce a relative path.
                 while (testStepCursor.toParent()) {
                     String name = testStepCursor.getAttributeText(new QName("", "name"));
                     if (name == null) {
-                        // TODO (marcpa) : use a config property having the root path for external files, (should probably defaults to the project's parent dir)
-                        stringBuilder.insert(0, "./");
+                        // project level reached, remove leading slash if present
+                        if (stringBuilder.charAt(0) == File.separatorChar) {
+                            stringBuilder.deleteCharAt(0);
+                        }
+                        break;
                     } else {
-                        stringBuilder.insert(0, "/").insert(0, name);
+                        stringBuilder.insert(0, File.separator).insert(0, name);
                     }
                 }
-                SoapUI.log.info("computed path : " + stringBuilder.toString());
+                SoapUI.log.debug("AUTO-CONVERT to step in external file : step " + testStepName + " will be stored in file with path '" + stringBuilder.toString() + "'.");
 
                 // AUTO-CONVERT : Add file element if not already there and set the externalFilenameBuildMode to AUTOMATIC (i.e. filename is made of path in project)
                 WsdlRequestConfig wsdlRequestConfig;
@@ -2303,7 +2308,6 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                     }
                     if (! beBackwardCompatible) {
                         wsdlRequestConfig.getRequest().setStringValue("");
-                        SoapUI.log.info("Test step is of type request and uses an external file to store content : cleared the in-memory content (avoids duplicates, but is backward incompatible.");
                     }
                 } else if (testStepType.equals("groovy")) {
 
@@ -2318,7 +2322,6 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                     }
                     if (! beBackwardCompatible) {
                         stepCursor.setTextValue("");
-                        SoapUI.log.info("Test step is of type groovy and uses an external file to store content : cleared the in-memory content (avoids duplicates, but is backward incompatible.");
                     }
                     stepCursor.dispose();
                 }
