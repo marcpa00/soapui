@@ -74,9 +74,9 @@ import java.util.List;
  */
 public class TestRequestStepInExternalFileSupport implements ModelItem, PropertyChangeListener  {
     static public final String DEFAULT_STEP_FILENAME = "new-testStep";
-    static private final String DEFAULT_SUFFIX = ".txt";
-    static private final String WSDL_REQUEST_SUFFIX = "-request.xml";
-    static private final String GROOVY_SCRIPT_SUFFIX = ".groovy";
+    static public final String DEFAULT_SUFFIX = ".txt";
+    static public final String WSDL_REQUEST_SUFFIX = "-request.xml";
+    static public final String GROOVY_SCRIPT_SUFFIX = ".groovy";
 
     // for the WsldRequest personnality
     private WsdlRequestConfig wsdlRequestConfig;
@@ -267,7 +267,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         }
 
         String projectName, testSuiteName, testCaseName, testStepName;
-        String sep = System.getProperty("file.separator");
+        String sep = File.separator;
         projectName = this.testStep.getTestCase().getTestSuite().getProject().getName();
         testSuiteName = this.testStep.getTestCase().getTestSuite().getName();
         testCaseName = this.testStep.getTestCase().getName();

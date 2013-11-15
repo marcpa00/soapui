@@ -41,6 +41,7 @@ import com.eviware.soapui.impl.wsdl.support.wsdl.UrlWsdlLoader;
 import com.eviware.soapui.impl.wsdl.support.wsdl.WsdlLoader;
 import com.eviware.soapui.impl.wsdl.support.wss.DefaultWssContainer;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlProjectRunner;
+import com.eviware.soapui.impl.wsdl.teststeps.TestRequestStepInExternalFileSupport;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.environment.DefaultEnvironment;
 import com.eviware.soapui.model.environment.Environment;
@@ -2271,15 +2272,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             }
 
             if (testStepType != null) {
-                String suffix;
-                if (testStepType.equals("request")) {
-                    suffix = "-request.xml";
-                } else if (testStepType.equals("groovy")) {
-                    suffix = ".groovy";
-                } else {
-                    suffix = ".txt";
-                }
-                StringBuilder stringBuilder = new StringBuilder(testStepName).append(suffix);
+                StringBuilder stringBuilder = new StringBuilder(testStepName);
                 // Build the path to step by going up the hierarchy until name of parent is null, i.e. up to the project
                 // We produce a relative path.
                 while (testStepCursor.toParent()) {
@@ -2294,15 +2287,18 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                         stringBuilder.insert(0, File.separator).insert(0, name);
                     }
                 }
-                SoapUI.log.debug("AUTO-CONVERT to step in external file : step " + testStepName + " will be stored in file with path '" + stringBuilder.toString() + "'.");
+                SoapUI.log.debug("AUTO-CONVERT to step in external file : step " + testStepName + " will be stored in an external file.");
 
                 // AUTO-CONVERT : Add file element if not already there and set the externalFilenameBuildMode to AUTOMATIC (i.e. filename is made of path in project)
                 WsdlRequestConfig wsdlRequestConfig;
                 if (testStepType.equals("request")) {
                     wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
 
-                    if (! wsdlRequestConfig.isSetExternalFilename()) {
-                        // step does not yet use a file element, add it
+                   if (! wsdlRequestConfig.isSetExternalFilename()) {
+                       stringBuilder.append(TestRequestStepInExternalFileSupport.WSDL_REQUEST_SUFFIX);
+                       SoapUI.log.debug("AUTO-CONVERT : saving to '" + stringBuilder.toString() + "'");
+
+                       // step does not yet use a file element, add it
                         wsdlRequestConfig.setExternalFilename(stringBuilder.toString());
                         wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
                     }
@@ -2311,6 +2307,8 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                     }
                 } else if (testStepType.equals("groovy")) {
 
+                    stringBuilder.append(TestRequestStepInExternalFileSupport.GROOVY_SCRIPT_SUFFIX);
+                    SoapUI.log.debug("AUTO-CONVERT : saving to '" + stringBuilder.toString() + "'");
                     XmlCursor stepCursor = xmlObject.newCursor();
 
                     QName qNameOfExternalFilename = new QName("", "externalFilename");
