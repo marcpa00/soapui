@@ -35,6 +35,7 @@ import com.eviware.soapui.support.xml.XmlObjectConfigurationBuilder;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
 import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlCursor;
+import org.apache.xmlbeans.XmlObject;
 
 import javax.swing.*;
 
@@ -69,8 +70,10 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 
 		if( config.getConfig() == null )
 		{
-			if( !forLoadTest )
+			if( !forLoadTest ) {
 				saveScript( config );
+                initTestRequestStepInExternalFile(config);
+            }
 		}
 		else
 		{
@@ -125,10 +128,14 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
             XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( config.getConfig() );
             scriptText = reader.readString( "script", "" );
         } else {
-            testRequestStepInExternalFileSupport = new TestRequestStepInExternalFileSupport(this, config, getSettings());
-            testRequestStepInExternalFileSupport.initExternalFilenameSupport();
-            scriptText = testRequestStepInExternalFileSupport.getStepContent();
+            initTestRequestStepInExternalFile(config);
         }
+    }
+
+    private void initTestRequestStepInExternalFile( TestStepConfig testStepConfig) {
+        testRequestStepInExternalFileSupport = new TestRequestStepInExternalFileSupport(this, testStepConfig, getSettings());
+        testRequestStepInExternalFileSupport.initExternalFilenameSupport();
+        scriptText = testRequestStepInExternalFileSupport.getStepContent();
     }
 
 	private void saveScript( TestStepConfig config )
@@ -137,8 +144,12 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 
             // XmlObjectConfigurationBuilder is providing a simpler API that manipulating XmlObject directly, but it wipes out attributes on 'script' element :
             // that is why we resort to bits and pieces instead when script exists already
-            XmlCursor cursor = config.getConfig().newCursor();
-            if (cursor.toFirstChild()) {
+            XmlObject scriptConfig = config.getConfig();
+            XmlCursor cursor = null;
+            if (scriptConfig != null) {
+                cursor = scriptConfig.newCursor();
+            }
+            if (cursor != null && cursor.toFirstChild()) {
                 cursor.setTextValue(scriptText);
                 cursor.dispose();
             } else {
