@@ -9,7 +9,6 @@ import com.eviware.soapui.config.TestStepConfig;
 import com.eviware.soapui.config.WsdlRequestConfig;
 import com.eviware.soapui.impl.settings.XmlBeansSettingsImpl;
 import com.eviware.soapui.model.ModelItem;
-import com.eviware.soapui.model.project.Project;
 import com.eviware.soapui.model.testsuite.TestCase;
 import com.eviware.soapui.model.testsuite.TestStep;
 import com.eviware.soapui.settings.UISettings;
@@ -144,6 +143,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
     public void initExternalFilenameSupport() {
 
         initExternalFileRootPath();
+        // TODO (marcpa00) : still not so sure about this, where we dispatch on wsdl or script config processing based on non-null state of 2 variables
+        //                   Consider using a marker field instead, like a stepConfigType, which could then be type checked, or a marker interface which could lead to polymorphism processing.
         if (wsdlRequestConfig != null) {
             initExternalFilenameSupportForWsdlRequest();
         } else if (testStepConfig != null) {
@@ -362,9 +363,9 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
 
     private String toAbsolutePath(String filename) {
         StringBuffer pathBuffer = new StringBuffer(filename);
-        if (!pathBuffer.toString().startsWith("/")) {
+        if (!pathBuffer.toString().startsWith(File.separator)) {
             // is relative, prepend project's parent dir
-            pathBuffer.insert(0, System.getProperty("file.separator")).insert(0, new File(((Project) this.testStep.getTestCase().getParent().getParent()).getPath()).getParent());
+            pathBuffer.insert(0, File.separator).insert(0, getExternalFileRootPath());
         }
         return pathBuffer.toString();
     }
