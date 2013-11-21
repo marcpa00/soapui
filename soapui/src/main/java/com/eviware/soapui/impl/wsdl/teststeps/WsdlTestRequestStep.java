@@ -55,6 +55,7 @@ import com.eviware.soapui.model.testsuite.TestStep;
 import com.eviware.soapui.model.testsuite.TestStepResult;
 import com.eviware.soapui.model.testsuite.TestStepResult.TestStepStatus;
 import com.eviware.soapui.security.Securable;
+import com.eviware.soapui.settings.UISettings;
 import com.eviware.soapui.support.resolver.ChangeOperationResolver;
 import com.eviware.soapui.support.resolver.ImportInterfaceResolver;
 import com.eviware.soapui.support.resolver.RemoveTestStepResolver;
@@ -118,6 +119,11 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
             testRequestStepInExternalFileSupport = new TestRequestStepInExternalFileSupport(this, testRequest, requestStepConfig, getSettings());
             testRequestStepInExternalFileSupport.initExternalFilenameSupport();
+            if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
+                requestStepConfig.getRequest().getRequest().setStringValue(testRequestStepInExternalFileSupport.getStepContent());
+                testRequest.setRequestContent(testRequestStepInExternalFileSupport.getStepContent());
+                testRequest.updateConfig( requestStepConfig.getRequest() );
+            }
 		}
 		else
 		{

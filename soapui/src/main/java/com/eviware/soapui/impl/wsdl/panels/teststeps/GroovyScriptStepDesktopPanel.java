@@ -74,6 +74,11 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
 	{
 		super( groovyStep );
 		this.groovyStep = groovyStep;
+        if (this.groovyStep.getTestRequestStepInExternalFileSupport() != null) {
+            if (this.groovyStep.getTestRequestStepInExternalFileSupport().maybeReloadStepContent()) {
+                this.groovyStep.setScript(this.groovyStep.getTestRequestStepInExternalFileSupport().getStepContent());
+            }
+        }
 		componentEnabler = new TestRunComponentEnabler( groovyStep.getTestCase() );
 
 		buildUI();

@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -94,6 +95,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
 
     private String externalFileRootPath;
     private String externalFilename;
+    private long lastLoadedFromExternalFile;
+    private long lastModified;
 
     private Boolean composeWithProjectName;
 
@@ -102,6 +105,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
     private Boolean composeWithTestStepName;
     private ExternalFilenameBuildModeConfig.Enum externalFilenameBuildMode = ExternalFilenameBuildModeConfig.NONE;
     private String alternateFilenameForContent;
+    private Boolean alwaysPreferContentFromProject = null;
 
     private TestRequestStepInExternalFileSupport() {
         // prevent instantiation without required field values
@@ -121,6 +125,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         this.wsdlRequestConfig = requestStepConfig.getRequest();
         this.settings = settings;
 
+        this.alwaysPreferContentFromProject = getTestCase().getTestSuite().getProject().getAlwaysPreferContentFromProject();
+
         addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
     }
 
@@ -134,6 +140,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         this.testStep = wsdlTestStep;
         this.testStepConfig = testStepConfig;
         this.settings = settings;
+
+        this.alwaysPreferContentFromProject = getTestCase().getTestSuite().getProject().getAlwaysPreferContentFromProject();
 
         addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
     }
@@ -190,14 +198,33 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         composeWithTestCaseName = wsdlRequestConfig.isSetComposeWithTestCaseName() ? wsdlRequestConfig.getComposeWithTestCaseName() : false;
         composeWithTestStepName = wsdlRequestConfig.isSetComposeWithTestStepName() ? wsdlRequestConfig.getComposeWithTestStepName() : false;
 
+        String contentFromProjectDocument = null;
         if (testRequest != null) {
-            stepContent = testRequest.getRequestContent();
+            contentFromProjectDocument = testRequest.getRequestContent();
         }
 
         if (externalFilenameBuildMode != ExternalFilenameBuildModeConfig.NONE) {
             // this will adjust externalFilename
             buildExternalFilenameForCurrentMode();
             loadStepContent();
+            if (contentFromProjectDocument != null && !contentFromProjectDocument.equals(stepContent)) {
+                // content from project document differs with content from external file : which one to use ?  Only the user can tell.
+
+                if (alwaysPreferContentFromProject == null) {
+                    int choice = UISupport.yesYesToAllOrNo("Step \n\n[" + getPathInProject() + "]\n\ncontent from project XML document is different than the content of external file.\n\nUse project content and ignore external file for this step ?",
+                            "Conflicting changes detected while loading project !");
+                    if (choice == 0 || choice == 1) {
+                        stepContent = contentFromProjectDocument;
+                        if (choice == 1) {
+                            alwaysPreferContentFromProject = Boolean.TRUE;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (alwaysPreferContentFromProject != null) {
+            getTestCase().getTestSuite().getProject().setAlwaysPreferContentFromProject(alwaysPreferContentFromProject);
         }
         wsdlRequestConfig.setExternalFilename(externalFilename);
     }
@@ -235,12 +262,13 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         // here scriptConfig represents the script test step config with step in external file support added (if
         // it was already in config or if auto conversion is set in global settings).
         externalFilenameBuildMode = scriptConfig.getExternalFilenameBuildMode();
-        stepContent = configContent;
         composeWithProjectName = scriptConfig.isSetComposeWithProjectName() ? scriptConfig.getComposeWithProjectName() : false;
         composeWithTestSuiteName = scriptConfig.isSetComposeWithTestSuiteName() ? scriptConfig.getComposeWithTestSuiteName() : false;
         composeWithTestCaseName = scriptConfig.isSetComposeWithTestCaseName() ? scriptConfig.getComposeWithTestCaseName() : false;
         composeWithTestStepName = scriptConfig.isSetComposeWithTestStepName() ? scriptConfig.getComposeWithTestStepName() : false;
 
+        String contentFromProjectDocument = null;
+        contentFromProjectDocument = configContent;
 
         if (scriptConfig.getExternalFilenameBuildMode() != ExternalFilenameBuildModeConfig.NONE) {
             this.externalFilename = scriptConfig.getExternalFilename();
@@ -248,6 +276,23 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
             // this will adjust externalFilename
             buildExternalFilenameForCurrentMode();
             loadStepContent();
+            if (contentFromProjectDocument != null && !contentFromProjectDocument.equals(stepContent)) {
+                // content from project document differs with content from external file : which one to use ?  Only the user can tell.
+
+                if (alwaysPreferContentFromProject == null) {
+                    int choice = UISupport.yesYesToAllOrNo("Step \n\n[" + getPathInProject() + "]\n\ncontent from project XML document is different than the content of external file.\n\nUse project content and ignore external file for this step ?",
+                            "Conflicting changes detected while loading project !");
+                    if (choice == 0 || choice == 1) {
+                        stepContent = contentFromProjectDocument;
+                        if (choice == 1) {
+                            alwaysPreferContentFromProject = Boolean.TRUE;
+                        }
+                    }
+                }
+            }
+        }
+        if (alwaysPreferContentFromProject != null) {
+            getTestCase().getTestSuite().getProject().setAlwaysPreferContentFromProject(alwaysPreferContentFromProject);
         }
         scriptConfig.setStringValue(stepContent);
 
@@ -316,6 +361,23 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         }
 
         setExternalFilename(buildExternalFilenameForMode(externalFilenameBuildMode));
+    }
+
+    /**
+     * Reload content from external file if it needs to be refreshed
+     *
+     * @return true if content was reloaded from file
+     */
+    public boolean maybeReloadStepContent() {
+        File contentFile = new File(toAbsolutePath(externalFilename));
+        if (contentFile.exists() && contentFile.lastModified() > lastModified) {
+            if( UISupport.confirm( "File for \n\n[" + getPathInProject() + "]\n\nhave been modified externally, reload ?",
+                    "Reload" ) ) {
+                loadStepContent();
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -503,6 +565,10 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                     sBuilder.append(line + "\n");
                 }
                 SoapUI.log.info(sBuilder.toString());
+
+                lastLoadedFromExternalFile = new Date().getTime();
+                lastModified = lastLoadedFromExternalFile;
+
                 return sBuilder.toString();
             } catch (FileNotFoundException fnfe) {
                 fnfe.printStackTrace();
@@ -516,13 +582,34 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         return "";
     }
 
-    public void saveToExternalFile() {
+    /**
+     * Save step content to external file.
+     * Returns TestRequestStepExternalFileSaveStatus.SAVED when it was saved successfuly and nothing has to be done
+     * by caller to get the latest content.
+     * Returns TestRequestStepExternalFileSaveStatus.NOT_SAVED when it could not be saved.
+     * Returns TestRequestStepExternalFileSaveStatus.RELOADED when content was reloaded from file instead of saved
+     * (usually under user's instruction in face of a conflict).
+     *
+     * @return one of the Enum value of TestRequestStepExternalFileSaveStatus
+     */
+    public TestRequestStepExternalFileSaveStatus saveToExternalFile() {
         if (externalFilename != null && getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
-            saveToExternalFile(false, true);
+            return saveToExternalFile(false, true);
         }
+        return TestRequestStepExternalFileSaveStatus.NOT_SAVED;
     }
 
-    public void saveToExternalFile(Boolean configChanged, Boolean forceSave) {
+    /**
+     * Save step content to external file.
+     * Returns TestRequestStepExternalFileSaveStatus.SAVED when it was saved successfuly and nothing has to be done
+     * by caller to get the latest content.
+     * Returns TestRequestStepExternalFileSaveStatus.NOT_SAVED when it could not be saved.
+     * Returns TestRequestStepExternalFileSaveStatus.RELOADED when content was reloaded from file instead of saved
+     * (usually under user's instruction in face of a conflict).
+     *
+     * @return one of the Enum value of TestRequestStepExternalFileSaveStatus
+     */
+    public TestRequestStepExternalFileSaveStatus saveToExternalFile(Boolean configChanged, Boolean forceSave) {
         if (getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
             if (this.externalFilename != null) {
                 SoapUI.log.debug("saveToExternalFile(configChanged:" + configChanged + ", forceSave:" + forceSave + "), externalFilename : '" + this.externalFilename + "'");
@@ -531,7 +618,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                 boolean localConfigChanged = false;
                 File file = new File(externalFilename);
                 boolean originalFileExists = file.exists();
-                if ( originalFileExists && configChanged && !UISupport.confirm("File [" + file.getName() + "] exists, overwrite?",
+                if ( originalFileExists && configChanged && !UISupport.confirm("File \n\n[" + file.getName() + "]\n\n exists, overwrite?",
                         "Overwrite File?") ) {
                     file = UISupport.getFileDialogs().saveAs( this, "Save test step external file " + this.testStep.getName(), ".xml", "XML Files (*.xml)",
                             new File(externalFilename).getAbsoluteFile() );
@@ -542,25 +629,44 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                         localConfigChanged = false;
                     }
                 }
-                if ((localConfigChanged || (!originalFileExists && configChanged) || forceSave) && saveStepToFile()) {
-                    SoapUI.log.debug("step '" + this.testStep.getName() + "' saved to " + externalFilename);
+                if ((localConfigChanged || (!originalFileExists && configChanged) || forceSave)) {
+                    TestRequestStepExternalFileSaveStatus saveStatus = saveStepToFile();
+                    if (saveStatus == TestRequestStepExternalFileSaveStatus.SAVED) {
+                        SoapUI.log.debug("step '" + this.testStep.getName() + "' saved to " + externalFilename);
+                    } else if (saveStatus == TestRequestStepExternalFileSaveStatus.NOT_SAVED) {
+                        SoapUI.log.debug("step '" + this.testStep.getName() + "' NOT saved to " + externalFilename);
+                    } else if (saveStatus == TestRequestStepExternalFileSaveStatus.RELOADED) {
+                        SoapUI.log.debug("step '" + this.testStep.getName() + "' was reloaded from external file '" + externalFilename + "' instead.");
+                    }
+                    return saveStatus;
                 }
             }
         }
+        return TestRequestStepExternalFileSaveStatus.NOT_SAVED;
     }
 
-    private boolean saveStepToFile() {
+    /**
+     * Save step content to external file.
+     * Returns TestRequestStepExternalFileSaveStatus.SAVED when it was saved successfuly and nothing has to be done
+     * by caller to get the latest content.
+     * Returns TestRequestStepExternalFileSaveStatus.NOT_SAVED when it could not be saved.
+     * Returns TestRequestStepExternalFileSaveStatus.RELOADED when content was reloaded from file instead of saved
+     * (usually under user's instruction in face of a conflict).
+     *
+     * @return one of the Enum value of TestRequestStepExternalFileSaveStatus
+     */
+    private TestRequestStepExternalFileSaveStatus saveStepToFile() {
         if (this.externalFilename == null) {
-            return false;
+            return TestRequestStepExternalFileSaveStatus.NOT_SAVED;
         }
         StringBuffer pathBuffer = new StringBuffer();
         // TODO (marcpa) : use a portable way to do this (maybe create a File and check isAbsolutePath() ?
-        if (!externalFilename.startsWith( System.getProperty("file.separator")) ) {
+        if (!externalFilename.startsWith( File.separator ) ) {
             // is relative
             if (externalFileRootPath == null) {
                 initExternalFileRootPath();
             }
-            pathBuffer.append(externalFileRootPath).append(System.getProperty("file.separator")).append(externalFilename);
+            pathBuffer.append(externalFileRootPath).append( File.separator ).append(externalFilename);
         } else {
             // is absolute path
             pathBuffer.append(externalFilename);
@@ -574,13 +680,27 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                     parent.mkdirs();
                 }
                 f.createNewFile();
+            } else if ( lastModified > lastLoadedFromExternalFile && f.lastModified() > lastLoadedFromExternalFile ) {
+                // both in-memory step and external file were modified since step content was loaded in project file : let user
+                // decide which one should win
+                if (! UISupport.confirm("Both step \n\n[" + getPathInProject() + "]\n\nand external file have been modified since external file content was loaded in project.\n  Overwrite file with in-memory step content ?",
+                        "Conflicting changes detected !")) {
+                    if (UISupport.confirm("Reload step content from external file, discarding unsaved changes to step \n\n[" + getPathInProject() + "] ?", "Resolve conflict with external file.")) {
+                        loadStepContent();
+                        return TestRequestStepExternalFileSaveStatus.RELOADED;
+                    } else {
+                        return TestRequestStepExternalFileSaveStatus.NOT_SAVED;
+                    }
+                }
             }
             Files.write(stepContent, f, Charset.forName("UTF-8"));
+            lastModified = f.lastModified();
+            lastLoadedFromExternalFile = lastModified;
         } catch (IOException e) {
             e.printStackTrace();
-            return false;
+            return TestRequestStepExternalFileSaveStatus.NOT_SAVED;
         }
-        return true;
+        return TestRequestStepExternalFileSaveStatus.SAVED;
     }
 
     private void renameExternalFile(String original, String target) {
@@ -609,6 +729,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                         new File(targetFile.getAbsolutePath()) );
                 if (targetFile != null) {
                     originalFile.renameTo(targetFile);
+                    lastModified = targetFile.lastModified();
+                    lastLoadedFromExternalFile = lastModified;
                     if (! targetFile.getName().equals(originalFile.getName())) {
                         // renaming the new name of the file : need to change the step's name also
                         String stepName = targetFile.getName().replaceAll(extensionForFileType, "");
@@ -645,6 +767,9 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
     }
 
     public void setStepContent(String stepContent) {
+        if (this.stepContent == null || (this.stepContent != null && ! this.stepContent.equals(stepContent))) {
+            this.lastModified = new Date().getTime();
+        }
         this.stepContent = stepContent;
     }
 
@@ -704,6 +829,19 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
             return testStepConfig;
         }
         return null;
+    }
+
+    public String getPathInProject() {
+        if (testStep == null) {
+            return null;
+        }
+        StringBuilder stringBuilder = new StringBuilder(testStep.getName());
+        ModelItem modelItem = this;
+        while (modelItem.getParent() != null) {
+            modelItem = modelItem.getParent();
+            stringBuilder.insert(0, "/").insert(0, modelItem.getName());
+        }
+        return stringBuilder.toString();
     }
 
     // Delegate ModelItem methods to testStep

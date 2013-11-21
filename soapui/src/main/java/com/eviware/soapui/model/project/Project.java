@@ -12,14 +12,14 @@
 
 package com.eviware.soapui.model.project;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.eviware.soapui.model.TestModelItem;
 import com.eviware.soapui.model.iface.Interface;
 import com.eviware.soapui.model.mock.MockService;
 import com.eviware.soapui.model.testsuite.TestSuite;
 import com.eviware.soapui.model.workspace.Workspace;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * A SoapUI project
@@ -92,5 +92,9 @@ public interface Project extends TestModelItem
 	public void inspect();
 
 	public int getIndexOfTestSuite( TestSuite testSuite );
+
+    public Boolean getAlwaysPreferContentFromProject();
+
+    public void setAlwaysPreferContentFromProject(Boolean alwaysPreferContentFromProject);
 
 }

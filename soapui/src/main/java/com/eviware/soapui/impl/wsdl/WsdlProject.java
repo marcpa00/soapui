@@ -137,6 +137,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 	private boolean remote;
 	private boolean open = true;
 	private boolean disabled;
+    public Boolean alwaysPreferContentFromProject = null;
 
 	private SoapUIScriptEngine afterLoadScriptEngine;
 	private SoapUIScriptEngine beforeSaveScriptEngine;
@@ -2327,4 +2328,11 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         }
     }
 
+    public Boolean getAlwaysPreferContentFromProject() {
+        return alwaysPreferContentFromProject;
+    }
+
+    public void setAlwaysPreferContentFromProject(Boolean alwaysPreferContentFromProject) {
+        this.alwaysPreferContentFromProject = alwaysPreferContentFromProject;
+    }
 }

@@ -13,6 +13,7 @@
 package com.eviware.soapui.ui.desktop;
 
 import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.impl.wsdl.teststeps.TestRequestStepExternalFileSaveStatus;
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlGroovyScriptTestStep;
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep;
 import com.eviware.soapui.model.ModelItem;
@@ -206,12 +207,19 @@ public abstract class AbstractSoapUIDesktop implements SoapUIDesktop
                     for (TestStep testStep : testCase.getTestStepList()) {
                         SoapUI.log.info("beforeSave() : checking test step '"+ testStep.getName() + "' for external file attribute...");
                         SoapUI.log.info("beforeSave() :    testStep.class : " + testStep.getClass().getSimpleName());
+                        TestRequestStepExternalFileSaveStatus saveStatus;
                         if (testStep instanceof WsdlGroovyScriptTestStep) {
                             WsdlGroovyScriptTestStep step = (WsdlGroovyScriptTestStep) testStep;
-                            step.getTestRequestStepInExternalFileSupport().saveToExternalFile();
+                            saveStatus = step.getTestRequestStepInExternalFileSupport().saveToExternalFile();
+                            if (saveStatus == TestRequestStepExternalFileSaveStatus.RELOADED) {
+                                step.setScript(step.getTestRequestStepInExternalFileSupport().getStepContent());
+                            }
                         } else if (testStep instanceof WsdlTestRequestStep) {
                             WsdlTestRequestStep step = (WsdlTestRequestStep) testStep;
-                            step.getTestRequestStepInExternalFileSupport().saveToExternalFile();
+                            saveStatus = step.getTestRequestStepInExternalFileSupport().saveToExternalFile();
+                            if (saveStatus == TestRequestStepExternalFileSaveStatus.RELOADED) {
+                                step.getTestRequest().setRequestContent(step.getTestRequestStepInExternalFileSupport().getRequestContent());
+                            }
                         }
                     }
                 }

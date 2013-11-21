@@ -12,13 +12,6 @@
 
 package com.eviware.soapui.impl.wsdl.panels.teststeps;
 
-import java.beans.PropertyChangeEvent;
-import java.util.Date;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.ListModel;
-
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.support.components.ModelItemXmlEditor;
 import com.eviware.soapui.impl.wsdl.panels.request.AbstractWsdlRequestDesktopPanel;
@@ -48,6 +41,10 @@ import com.eviware.soapui.support.components.JInspectorPanelFactory;
 import com.eviware.soapui.support.components.JXToolBar;
 import com.eviware.soapui.support.log.JLogList;
 
+import javax.swing.*;
+import java.beans.PropertyChangeEvent;
+import java.util.Date;
+
 /**
  * DesktopPanel for WsdlTestRequest. Essentially a copy of
  * WsdlRequestDesktopPanel with assertions.
@@ -71,6 +68,11 @@ public class WsdlTestRequestDesktopPanel extends AbstractWsdlRequestDesktopPanel
 	public WsdlTestRequestDesktopPanel( WsdlTestRequestStep requestStep )
 	{
 		super( requestStep, requestStep.getTestRequest() );
+        if (requestStep.getTestRequestStepInExternalFileSupport() != null) {
+            if (requestStep.getTestRequestStepInExternalFileSupport().maybeReloadStepContent()) {
+                requestStep.getTestRequest().setRequestContent(requestStep.getTestRequestStepInExternalFileSupport().getStepContent());
+            }
+        }
 
 		SoapUI.getTestMonitor().addTestMonitorListener( testMonitorListener );
 		setEnabled( !SoapUI.getTestMonitor().hasRunningTest( requestStep.getTestCase() ) );
