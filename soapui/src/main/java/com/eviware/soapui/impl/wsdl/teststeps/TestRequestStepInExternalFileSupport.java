@@ -704,8 +704,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
     }
 
     private void renameExternalFile(String original, String target) {
-        File originalFile = new File(original);
-        File targetFile = new File(target);
+        File originalFile = new File(toAbsolutePath(original));
+        File targetFile = new File(toAbsolutePath(target));
 
         if (originalFile.exists() && ! targetFile.exists()) {
             // it is safe to simply rename the file
@@ -935,6 +935,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
             buildExternalFilenameForCurrentMode();
             String targetFilename = externalFilename;
             if (targetFilename != null && ! targetFilename.equals(originalFilename)) {
+                updateConfigWithExternalFilePath();
                 // name of file where to save test step content changed, also rename the physical file
                 renameExternalFile(originalFilename, targetFilename);
             }
