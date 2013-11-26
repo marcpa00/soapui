@@ -106,6 +106,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
     private ExternalFilenameBuildModeConfig.Enum externalFilenameBuildMode = ExternalFilenameBuildModeConfig.NONE;
     private String alternateFilenameForContent;
     private Boolean alwaysPreferContentFromProject = null;
+    private Boolean alwaysPreferContentFromExternalFile = null;
 
     private TestRequestStepInExternalFileSupport() {
         // prevent instantiation without required field values
@@ -126,6 +127,13 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         this.settings = settings;
 
         this.alwaysPreferContentFromProject = getTestCase().getTestSuite().getProject().getAlwaysPreferContentFromProject();
+        this.alwaysPreferContentFromExternalFile = getTestCase().getTestSuite().getProject().getAlwaysPreferContentFromExternalFile();
+        if (this.alwaysPreferContentFromProject != null && this.alwaysPreferContentFromExternalFile != null
+                && this.alwaysPreferContentFromProject && this.alwaysPreferContentFromExternalFile) {
+            // conflict, prefer project
+            this.alwaysPreferContentFromExternalFile = Boolean.FALSE;
+            SoapUI.log.debug("Forcing alwaysPreferContentFromExternalFile to false.");
+        }
 
         addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
     }
@@ -142,6 +150,13 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         this.settings = settings;
 
         this.alwaysPreferContentFromProject = getTestCase().getTestSuite().getProject().getAlwaysPreferContentFromProject();
+        this.alwaysPreferContentFromExternalFile = getTestCase().getTestSuite().getProject().getAlwaysPreferContentFromExternalFile();
+        if (this.alwaysPreferContentFromProject != null && this.alwaysPreferContentFromExternalFile != null
+                && this.alwaysPreferContentFromProject && this.alwaysPreferContentFromExternalFile) {
+            // conflict, prefer project
+            this.alwaysPreferContentFromExternalFile = Boolean.FALSE;
+            SoapUI.log.debug("Forcing alwaysPreferContentFromExternalFile to false.");
+        }
 
         addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
     }
@@ -210,14 +225,25 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
             if (contentFromProjectDocument != null && !contentFromProjectDocument.equals(stepContent)) {
                 // content from project document differs with content from external file : which one to use ?  Only the user can tell.
 
-                if (alwaysPreferContentFromProject == null) {
-                    int choice = UISupport.yesYesToAllOrNo("Step \n\n[" + getPathInProject() + "]\n\ncontent from project XML document is different than the content of external file.\n\nUse project content and ignore external file for this step ?",
-                            "Conflicting changes detected while loading project !");
-                    if (choice == 0 || choice == 1) {
-                        stepContent = contentFromProjectDocument;
-                        if (choice == 1) {
-                            alwaysPreferContentFromProject = Boolean.TRUE;
+                if (stepContent == null || stepContent.isEmpty()) {
+                    stepContent = contentFromProjectDocument;
+                } else {
+
+                    if (alwaysPreferContentFromProject == null && alwaysPreferContentFromExternalFile == null) {
+                        int choice = UISupport.yesYesToAllNoNoToAll("Step \n\n[" + getPathInProject() + "]\n\ncontent from project document is different than the content of external file.\n\nUse project content and ignore external file for this step ?",
+                                "Conflicting changes detected while loading project !", "Yes, use project content for all", "No, use external file content for all");
+                        if (choice == 0 || choice == 1) {
+                            stepContent = contentFromProjectDocument;
+                            if (choice == 1) {
+                                alwaysPreferContentFromProject = Boolean.TRUE;
+                                alwaysPreferContentFromExternalFile = Boolean.FALSE;
+                            }
+                        } else if (choice == 3) {
+                            alwaysPreferContentFromProject = Boolean.FALSE;
+                            alwaysPreferContentFromExternalFile = Boolean.TRUE;
                         }
+                    } else if (alwaysPreferContentFromProject) {
+                        stepContent = contentFromProjectDocument;
                     }
                 }
             }
@@ -225,6 +251,9 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
 
         if (alwaysPreferContentFromProject != null) {
             getTestCase().getTestSuite().getProject().setAlwaysPreferContentFromProject(alwaysPreferContentFromProject);
+        }
+        if (alwaysPreferContentFromExternalFile != null) {
+            getTestCase().getTestSuite().getProject().setAlwaysPreferContentFromExternalFile(alwaysPreferContentFromExternalFile);
         }
         wsdlRequestConfig.setExternalFilename(externalFilename);
     }
@@ -277,22 +306,35 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
             buildExternalFilenameForCurrentMode();
             loadStepContent();
             if (contentFromProjectDocument != null && !contentFromProjectDocument.equals(stepContent)) {
-                // content from project document differs with content from external file : which one to use ?  Only the user can tell.
-
-                if (alwaysPreferContentFromProject == null) {
-                    int choice = UISupport.yesYesToAllOrNo("Step \n\n[" + getPathInProject() + "]\n\ncontent from project XML document is different than the content of external file.\n\nUse project content and ignore external file for this step ?",
-                            "Conflicting changes detected while loading project !");
-                    if (choice == 0 || choice == 1) {
-                        stepContent = contentFromProjectDocument;
-                        if (choice == 1) {
-                            alwaysPreferContentFromProject = Boolean.TRUE;
+                // content from project document differs with content from external file : which one to use ?
+                // use project content if external file does not exists yet or is empty, otherwise, ask user.
+                if (stepContent == null || stepContent.isEmpty()) {
+                    stepContent = contentFromProjectDocument;
+                } else {
+                    if (alwaysPreferContentFromProject == null && alwaysPreferContentFromExternalFile == null) {
+                        int choice = UISupport.yesYesToAllNoNoToAll("Step \n\n[" + getPathInProject() + "]\n\ncontent from (in memory) project document is different than the content of external file.\n\nUse project content and ignore external file for this step ?",
+                                "Conflicting changes detected while loading project !", "Yes, use project content for all", "No, use external file content for all");
+                        if (choice == 0 || choice == 1) {
+                            stepContent = contentFromProjectDocument;
+                            if (choice == 1) {
+                                alwaysPreferContentFromProject = Boolean.TRUE;
+                                alwaysPreferContentFromExternalFile = Boolean.FALSE;
+                            }
+                        } else if (choice == 3) {
+                            alwaysPreferContentFromProject = Boolean.FALSE;
+                            alwaysPreferContentFromExternalFile = Boolean.TRUE;
                         }
+                    } else if (alwaysPreferContentFromProject) {
+                        stepContent = contentFromProjectDocument;
                     }
                 }
             }
         }
         if (alwaysPreferContentFromProject != null) {
             getTestCase().getTestSuite().getProject().setAlwaysPreferContentFromProject(alwaysPreferContentFromProject);
+        }
+        if (alwaysPreferContentFromExternalFile != null) {
+            getTestCase().getTestSuite().getProject().setAlwaysPreferContentFromProject(alwaysPreferContentFromExternalFile);
         }
         scriptConfig.setStringValue(stepContent);
 
@@ -404,7 +446,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
 
         File contentFile = new File(toAbsolutePath(externalFilename));
         if (! contentFile.exists()) {
-            if (stepContent == null) {
+            if (stepContent == null && alternateFilenameForContent != null) {
                 contentFile = new File(toAbsolutePath(alternateFilenameForContent));
                 if (! contentFile.exists()) {
                     if (stepContent == null) {

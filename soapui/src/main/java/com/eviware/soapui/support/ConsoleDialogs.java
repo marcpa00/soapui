@@ -12,10 +12,10 @@
 
 package com.eviware.soapui.support;
 
-import java.awt.Dimension;
-
 import com.eviware.x.dialogs.XDialogs;
 import com.eviware.x.dialogs.XProgressDialog;
+
+import java.awt.*;
 
 public class ConsoleDialogs implements XDialogs
 {
@@ -100,4 +100,8 @@ public class ConsoleDialogs implements XDialogs
 		// TODO Auto-generated method stub
 		return 2;
 	}
+
+    public int yesYesToAllNoNoToAll( String question, String title, String yesToAllLabel, String noToAllLabel ) {
+        return 2;
+    }
 }

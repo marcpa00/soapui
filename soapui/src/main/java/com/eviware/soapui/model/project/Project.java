@@ -93,8 +93,11 @@ public interface Project extends TestModelItem
 
 	public int getIndexOfTestSuite( TestSuite testSuite );
 
-    public Boolean getAlwaysPreferContentFromProject();
+    Boolean getAlwaysPreferContentFromProject();
 
-    public void setAlwaysPreferContentFromProject(Boolean alwaysPreferContentFromProject);
+    void setAlwaysPreferContentFromProject(Boolean alwaysPreferContentFromProject);
 
+    Boolean getAlwaysPreferContentFromExternalFile();
+
+    void setAlwaysPreferContentFromExternalFile(Boolean alwaysPreferContentFromExternalFile);
 }

@@ -12,32 +12,18 @@
 
 package com.eviware.x.impl.swing;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JEditorPane;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
-import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
-
 import com.eviware.soapui.support.DefaultHyperlinkListener;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.components.ProgressDialog;
 import com.eviware.x.dialogs.XDialogs;
 import com.eviware.x.dialogs.XProgressDialog;
 import com.jgoodies.forms.factories.ButtonBarFactory;
+
+import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
 
 /**
  * 
@@ -115,6 +101,11 @@ public class SwingDialogs implements XDialogs
 		return JOptionPane.showOptionDialog( parent, question, title, 0, JOptionPane.QUESTION_MESSAGE, null, buttons,
 				buttons[0] );
 	}
+
+    public int yesYesToAllNoNoToAll( String question, String title, String yesToAllLabel, String noToAllLabel) {
+        String[] buttons = { "Yes", yesToAllLabel, "No", noToAllLabel };
+        return JOptionPane.showOptionDialog( parent, question, title, 0, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0] );
+    }
 
 	public XProgressDialog createProgressDialog( String label, int length, String initialValue, boolean canCancel )
 	{

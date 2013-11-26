@@ -138,6 +138,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 	private boolean open = true;
 	private boolean disabled;
     public Boolean alwaysPreferContentFromProject = null;
+    private Boolean alwaysPreferContentFromExternalFile = null;
 
 	private SoapUIScriptEngine afterLoadScriptEngine;
 	private SoapUIScriptEngine beforeSaveScriptEngine;
@@ -166,7 +167,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 
 	protected final static Logger log = Logger.getLogger( WsdlProject.class );
 
-	public WsdlProject() throws XmlException, IOException, SoapUIException
+    public WsdlProject() throws XmlException, IOException, SoapUIException
 	{
 		this( ( WorkspaceImpl )null );
 	}
@@ -2334,5 +2335,13 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 
     public void setAlwaysPreferContentFromProject(Boolean alwaysPreferContentFromProject) {
         this.alwaysPreferContentFromProject = alwaysPreferContentFromProject;
+    }
+
+    public Boolean getAlwaysPreferContentFromExternalFile() {
+        return alwaysPreferContentFromExternalFile;
+    }
+
+    public void setAlwaysPreferContentFromExternalFile(Boolean alwaysPreferContentFromExternalFile) {
+        this.alwaysPreferContentFromExternalFile = alwaysPreferContentFromExternalFile;
     }
 }
