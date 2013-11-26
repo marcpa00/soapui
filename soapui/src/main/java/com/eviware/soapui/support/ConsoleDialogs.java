@@ -98,4 +98,8 @@ public class ConsoleDialogs implements XDialogs {
         // TODO Auto-generated method stub
         return 2;
     }
+
+    public int yesYesToAllNoNoToAll( String question, String title, String yesToAllLabel, String noToAllLabel ) {
+        return 2;
+    }
 }

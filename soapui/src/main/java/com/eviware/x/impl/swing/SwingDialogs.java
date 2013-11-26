@@ -118,6 +118,11 @@ public class SwingDialogs implements XDialogs {
                 buttons[0]);
     }
 
+    public int yesYesToAllNoNoToAll(String question, String title, String yesToAllLabel, String noToAllLabel) {
+        String[] buttons = { "Yes", yesToAllLabel, "No", noToAllLabel };
+        return JOptionPane.showOptionDialog(parent, question, title, 0, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
+    }
+
     public XProgressDialog createProgressDialog(String label, int length, String initialValue, boolean canCancel) {
         return new ProgressDialog("Progress", label, length, initialValue, canCancel);
     }

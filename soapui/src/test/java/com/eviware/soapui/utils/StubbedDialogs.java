@@ -104,6 +104,11 @@ public class StubbedDialogs implements XDialogs {
 
     @Override
     public int yesYesToAllOrNo(String question, String title) {
+		return 0;
+	}
+
+    @Override
+    public int yesYesToAllNoNoToAll(String question, String title, String yesToAllLabel, String noToAllLabel) {
         return 0;
     }
 
