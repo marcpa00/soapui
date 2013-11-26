@@ -40,7 +40,9 @@ public interface XDialogs {
 
     int yesYesToAllOrNo(String question, String title);
 
-    String prompt(String question, String title, String value);
+    int yesYesToAllNoNoToAll(String question, String title, String yesToAllLabel, String noToAllLabel);
+
+	String prompt(String question, String title, String value);
 
     String prompt(String question, String title);
 
