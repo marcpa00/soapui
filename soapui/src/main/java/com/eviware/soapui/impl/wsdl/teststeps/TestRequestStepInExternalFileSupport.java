@@ -9,8 +9,11 @@ import com.eviware.soapui.config.TestStepConfig;
 import com.eviware.soapui.config.WsdlRequestConfig;
 import com.eviware.soapui.impl.settings.XmlBeansSettingsImpl;
 import com.eviware.soapui.model.ModelItem;
+import com.eviware.soapui.model.testsuite.LoadTest;
 import com.eviware.soapui.model.testsuite.TestCase;
 import com.eviware.soapui.model.testsuite.TestStep;
+import com.eviware.soapui.model.testsuite.TestSuiteListener;
+import com.eviware.soapui.security.SecurityTest;
 import com.eviware.soapui.settings.UISettings;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
@@ -72,7 +75,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  * </p>
  */
-public class TestRequestStepInExternalFileSupport implements ModelItem, PropertyChangeListener  {
+public class TestRequestStepInExternalFileSupport implements ModelItem, PropertyChangeListener, TestSuiteListener {
     static public final String DEFAULT_STEP_FILENAME = "new-testStep";
     static public final String DEFAULT_SUFFIX = ".txt";
     static public final String WSDL_REQUEST_SUFFIX = "-request.xml";
@@ -136,6 +139,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         }
 
         addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
+        this.testStep.getTestCase().getTestSuite().addTestSuiteListener(this);
     }
 
     /**
@@ -159,6 +163,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         }
 
         addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
+        this.testStep.getTestCase().getTestSuite().addTestSuiteListener(this);
     }
 
 
@@ -982,5 +987,61 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                 renameExternalFile(originalFilename, targetFilename);
             }
         }
+    }
+
+    @Override
+    public void testCaseAdded(TestCase testCase) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void testCaseRemoved(TestCase testCase) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void testCaseMoved(TestCase testCase, int index, int offset) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void loadTestAdded(LoadTest loadTest) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void loadTestRemoved(LoadTest loadTest) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void testStepAdded(TestStep testStep, int index) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void testStepRemoved(TestStep testStep, int index) {
+        if (testStep == getTestStep()) {
+            File file = new File(toAbsolutePath(externalFilename));
+            if (file.exists()) {
+                file.delete();
+            }
+        }
+
+    }
+
+    @Override
+    public void testStepMoved(TestStep testStep, int fromIndex, int offset) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void securityTestAdded(SecurityTest securityTest) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void securityTestRemoved(SecurityTest securityTest) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 }
