@@ -153,9 +153,19 @@ public class FileFormField extends AbstractSwingXFormField<JPanel> implements XF
 			{
                 File f = new File( value );
                 if ( ! f.isAbsolute() ) {
-                    f = f.getAbsoluteFile();
+                    if (currentDirectory != null) {
+                        f = new File( currentDirectory + File.separator + value );
+                    } else if (projectRoot != null) {
+                        f = new File( projectRoot + File.separator + value );
+                    } else {
+                        f = f.getAbsoluteFile();
+                    }
                 }
-                fileChooser.setSelectedFile( f );
+                if (f.exists()) {
+                    fileChooser.setSelectedFile(f);
+                } else {
+                    fileChooser.setCurrentDirectory( f.getParentFile() );
+                }
 			}
 			else if( currentDirectory != null )
 			{
