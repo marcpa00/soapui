@@ -305,7 +305,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         contentFromProjectDocument = configContent;
 
         if (scriptConfig.getExternalFilenameBuildMode() != ExternalFilenameBuildModeConfig.NONE) {
-            this.externalFilename = scriptConfig.getExternalFilename();
+            this.externalFilename = configExternalFilename;
             this.alternateFilenameForContent = configExternalFilename;
             // this will adjust externalFilename
             buildExternalFilenameForCurrentMode();
@@ -594,10 +594,35 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                     if (scriptConfig.isSetComposeWithTestStepName() ) { scriptConfig.unsetComposeWithTestStepName(); }
                 }
                 scriptConfig.setExternalFilename( externalFilename );
+                updateTestStepConfig(scriptConfig);
             }
         }
         else {
             SoapUI.log.error("updateConfig called but we have no config to work on ?");
+        }
+    }
+
+    private void updateTestStepConfig(ScriptConfig scriptConfig) {
+        XmlCursor cursor = testStepConfig.getConfig().newCursor();
+        if (cursor.toChild("script")) {
+            cursor.setAttributeText(new QName("", "externalFilenameBuildMode"), externalFilenameBuildMode.toString());
+            if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.COMPOSED) {
+                if (scriptConfig.isSetComposeWithProjectName()) {
+                    cursor.setAttributeText(new QName("", "composeWithProjectName"), Boolean.toString(scriptConfig.getComposeWithProjectName()));
+                }
+                if (scriptConfig.isSetComposeWithTestSuiteName()) {
+                    cursor.setAttributeText(new QName("", "composeWithTestSuiteName"), Boolean.toString(scriptConfig.getComposeWithTestSuiteName()));
+                }
+                if (scriptConfig.isSetComposeWithTestCaseName()) {
+                    cursor.setAttributeText(new QName("", "composeWithTestCaseName"), Boolean.toString(scriptConfig.getComposeWithTestCaseName()));
+                }
+                if (scriptConfig.isSetComposeWithTestStepName()) {
+                    cursor.setAttributeText(new QName("", "composeWithTestStepName"), Boolean.toString(scriptConfig.getComposeWithTestStepName()));
+                }
+            }
+            cursor.setAttributeText(new QName("", "externalFilename"), externalFilename);
+            cursor.insertChars(stepContent);
+            cursor.dispose();
         }
     }
 
