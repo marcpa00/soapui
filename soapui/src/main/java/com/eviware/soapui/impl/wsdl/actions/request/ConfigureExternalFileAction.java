@@ -31,6 +31,7 @@ import com.eviware.x.form.support.AField;
 import com.eviware.x.form.support.AField.AFieldType;
 import com.eviware.x.form.support.AForm;
 import com.eviware.x.impl.swing.AbstractSwingXFormField;
+import com.eviware.x.impl.swing.FileFormField;
 import com.eviware.x.impl.swing.JTextFieldFormField;
 
 import java.io.File;
@@ -110,6 +111,8 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         dialog.setValue( Form.AUTOMATIC_FILENAME, automaticFilename );
         dialog.setValue( Form.COMPOSED_FILENAME, composedFilename );
         dialog.setValue( Form.MANUAL_FILENAME, manualFilename );
+        FileFormField fileFormField = (FileFormField) dialog.getFormField( Form.MANUAL_FILENAME );
+        fileFormField.setProperty( FileFormField.CURRENT_DIRECTORY, testRequestStepInExternalFileSupport.getExternalFileRootPath() );
 
         dialog.setBooleanValue( Form.USE_AUTOMATIC_FILENAME, useAutomaticFilename );
         dialog.setBooleanValue( Form.USE_COMPOSED_FILENAME, useComposedFilname );
@@ -170,7 +173,10 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         summary.append("\n   ");
         summary.append( currentFilename );
         summary.append("\n");
-        File f = new File(testRequestStepInExternalFileSupport.getExternalFileRootPath() + sep + currentFilename);
+        File f = new File(currentFilename);
+        if (! f.isAbsolute() ) {
+            f = new File(testRequestStepInExternalFileSupport.getExternalFileRootPath() + sep + currentFilename);
+        }
         if (f.exists()) {
             summary.append("File exists (").append(f.length()).append(" bytes), last modified on ").append(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date(f.lastModified())));
         } else {
