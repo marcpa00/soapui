@@ -73,7 +73,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         // Initialize flags to default values
         Boolean useExternalStepFile = testRequestStepInExternalFileSupport.getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE);
         Boolean useAutomaticFilename = true;
-        Boolean useComposedFilname = false;
+        Boolean useComposedFilename = false;
         Boolean useManualFilename = false;
         Boolean useProjectName = false;
         Boolean useTestSuiteName = true;
@@ -86,7 +86,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         ExternalStepFileSelector externalStepFileSelector = new ExternalStepFileSelector(testRequestStepInExternalFileSupport, modelItemConfig).invoke();
         useExternalStepFile = externalStepFileSelector.getUseExternalStepFile();
         useAutomaticFilename = externalStepFileSelector.getUseAutomaticFilename();
-        useComposedFilname = externalStepFileSelector.getUseComposedFilname();
+        useComposedFilename = externalStepFileSelector.getUseComposedFilename();
         useManualFilename = externalStepFileSelector.getUseManualFilename();
 
         composedFilenameObject = new ComposedFilenameObject(externalStepFileSelector, useProjectName, useTestSuiteName, useTestCaseName, useTestStepName, modelItemConfig).invoke();
@@ -115,15 +115,15 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         fileFormField.setProperty( FileFormField.CURRENT_DIRECTORY, testRequestStepInExternalFileSupport.getExternalFileRootPath() );
 
         dialog.setBooleanValue( Form.USE_AUTOMATIC_FILENAME, useAutomaticFilename );
-        dialog.setBooleanValue( Form.USE_COMPOSED_FILENAME, useComposedFilname );
+        dialog.setBooleanValue( Form.USE_COMPOSED_FILENAME, useComposedFilename );
         dialog.setBooleanValue( Form.USE_MANUAL_FILENAME, useManualFilename );
 
-        setupFieldsStateAndVisibility(useExternalStepFile, useAutomaticFilename, useComposedFilname, useManualFilename);
+        setupFieldsStateAndVisibility(useExternalStepFile, useAutomaticFilename, useComposedFilename, useManualFilename);
 
         if (useExternalStepFile) {
             if (useAutomaticFilename) {
                 dialog.setValue( Form.FILENAME, automaticFilename );
-            } else if (useComposedFilname) {
+            } else if (useComposedFilename) {
                 dialog.setValue( Form.FILENAME, composedFilename );
             } else if (useManualFilename) {
                 dialog.setValue( Form.FILENAME, manualFilename );
@@ -131,6 +131,11 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         }
 
         setupListeners();
+
+        String previousFilename = dialog.getValue( Form.FILENAME );
+        if (previousFilename == null) {
+            previousFilename = "";
+        }
 
 		if( !dialog.show() )
 			return false;
@@ -151,9 +156,17 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
             } else if (dialog.getBooleanValue( Form.USE_MANUAL_FILENAME )) {
                 testRequestStepInExternalFileSupport.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.MANUAL);
             }
-            testRequestStepInExternalFileSupport.setExternalFilename( dialog.getValue( Form.FILENAME ) );
+
+            String newFilename = dialog.getValue( Form.FILENAME );
+            if ( previousFilename.equals( newFilename ) ) {
+                testRequestStepInExternalFileSupport.maybeReloadStepContent();
+            } else {
+                testRequestStepInExternalFileSupport.setExternalFilename( newFilename );
+                testRequestStepInExternalFileSupport.loadStepContent();
+            }
             testRequestStepInExternalFileSupport.updateConfig();
             testRequestStepInExternalFileSupport.saveToExternalFile(testRequestStepInExternalFileSupport.updateConfigWithExternalFilePath(), false);
+
         }
 
 		return true;
@@ -185,7 +198,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         return summary.toString();
     }
 
-    private void setupFieldsStateAndVisibility(Boolean useExternalStepFile, Boolean useAutomaticFilename, Boolean useComposedFilname, Boolean useManualFilename) {
+    private void setupFieldsStateAndVisibility(Boolean useExternalStepFile, Boolean useAutomaticFilename, Boolean useComposedFilename, Boolean useManualFilename) {
         // by default, fields are enabled : need to disable them according to flag USE_EXTERNAL_STEP_FILE
         if (useExternalStepFile == Boolean.FALSE) {
             // disable fields because USE_EXTERNAL_STEP_FILE is false
@@ -214,7 +227,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
                 dialog.getFormField( Form.MANUAL_FILENAME ).setEnabled( false );
             }
 
-            if ( useComposedFilname ) {
+            if ( useComposedFilename ) {
                 dialog.getFormField( Form.AUTOMATIC_FILENAME ).setEnabled( false );
                 dialog.getFormField( Form.MANUAL_FILENAME).setEnabled( false );
             }
@@ -664,7 +677,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         private ScriptConfig scriptConfig;
         private Boolean useExternalStepFile;
         private Boolean useAutomaticFilename;
-        private Boolean useComposedFilname;
+        private Boolean useComposedFilename;
         private Boolean useManualFilename;
 
         public ExternalStepFileSelector(TestRequestStepInExternalFileSupport testRequestStepInExternalFileSupport, ModelItemConfig modelItemConfig) {
@@ -685,8 +698,8 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
             return useAutomaticFilename;
         }
 
-        public Boolean getUseComposedFilname() {
-            return useComposedFilname;
+        public Boolean getUseComposedFilename() {
+            return useComposedFilename;
         }
 
         public Boolean getUseManualFilename() {
@@ -703,18 +716,18 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
                         // All out
                         useExternalStepFile = false;
                         useAutomaticFilename = false;
-                        useComposedFilname = false;
+                        useComposedFilename = false;
                         useManualFilename = false;
                     } else {
                         useExternalStepFile = true;
                         useAutomaticFilename = (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.AUTO);
-                        useComposedFilname = (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED);
+                        useComposedFilename = (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED);
                         useManualFilename = (wsdlRequestConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.MANUAL);
                     }
                 } else {
                     useExternalStepFile = false;
                     useAutomaticFilename = false;
-                    useComposedFilname = false;
+                    useComposedFilename = false;
                     useManualFilename = false;
                 }
             } else if (scriptConfig != null) {
@@ -726,24 +739,24 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
                         // All out
                         useExternalStepFile = false;
                         useAutomaticFilename = false;
-                        useComposedFilname = false;
+                        useComposedFilename = false;
                         useManualFilename = false;
                     } else {
                         useExternalStepFile = true;
                         useAutomaticFilename = (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.AUTO);
-                        useComposedFilname = (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED);
+                        useComposedFilename = (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.COMPOSED);
                         useManualFilename = (scriptConfig.getExternalFilenameBuildMode() == ExternalFilenameBuildModeConfig.MANUAL);
                     }
                 } else {
                     useExternalStepFile = false;
                     useAutomaticFilename = false;
-                    useComposedFilname = false;
+                    useComposedFilename = false;
                     useManualFilename = false;
                 }
             } else {
                 useExternalStepFile = false;
                 useAutomaticFilename = false;
-                useComposedFilname = false;
+                useComposedFilename = false;
                 useManualFilename = false;
             }
 
