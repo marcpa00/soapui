@@ -309,6 +309,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
             this.alternateFilenameForContent = configExternalFilename;
             // this will adjust externalFilename
             buildExternalFilenameForCurrentMode();
+            scriptConfig.setExternalFilename(this.externalFilename);
             loadStepContent();
             if (contentFromProjectDocument != null && !contentFromProjectDocument.equals(stepContent)) {
                 // content from project document differs with content from external file : which one to use ?
@@ -437,7 +438,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
      * In any case, when this.externalFilename has a non-null, non-empty value at entry, it will have the same value
      * at exit.  If it was null or empty, it will be set to the default filename value.
      */
-    private void loadStepContent() {
+    public void loadStepContent() {
         if (externalFilename == null || externalFilename.isEmpty()) {
             externalFilename = DEFAULT_STEP_FILENAME;
             if (wsdlRequestConfig != null) {
@@ -594,6 +595,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                     if (scriptConfig.isSetComposeWithTestStepName() ) { scriptConfig.unsetComposeWithTestStepName(); }
                 }
                 scriptConfig.setExternalFilename( externalFilename );
+                scriptConfig.setStringValue(stepContent);
                 updateTestStepConfig(scriptConfig);
             }
         }
@@ -621,6 +623,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                 }
             }
             cursor.setAttributeText(new QName("", "externalFilename"), externalFilename);
+            cursor.toFirstContentToken();
+            cursor.removeXml();
             cursor.insertChars(stepContent);
             cursor.dispose();
         }
