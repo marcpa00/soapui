@@ -23,6 +23,7 @@ import com.eviware.soapui.impl.wsdl.actions.request.CloneRequestAction;
 import com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction;
 import com.eviware.soapui.impl.wsdl.actions.request.CreateEmptyRequestAction;
 import com.eviware.soapui.impl.wsdl.actions.request.RecreateRequestAction;
+import com.eviware.soapui.impl.wsdl.actions.request.ReloadExternalFileAction;
 import com.eviware.soapui.impl.wsdl.panels.request.actions.WSIValidateRequestAction;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.iface.Request.SubmitException;
@@ -52,6 +53,7 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
 	private JButton createEmptyButton;
 	private JButton addToMockServiceButton;
     private JButton configureExternalFileButton;
+    private JButton reloadExternalFileButton;
 	private AbstractAction wsiValidateAction;
 
 	public AbstractWsdlRequestDesktopPanel( T modelItem, T2 request )
@@ -71,6 +73,8 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
 
         configureExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
                 ConfigureExternalFileAction.SOAPUI_ACTION_ID, request, null, "/options.gif" ), true );
+        reloadExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
+                ReloadExternalFileAction.SOAPUI_ACTION_ID, getModelItem(), null, "/arrow_refresh.png" ), true);
 
 		createEmptyButton = createActionButton( new CreateEmptyRequestAction( request ), true );
 
@@ -101,6 +105,7 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
 	protected void insertButtons( JXToolBar toolbar )
 	{
         toolbar.add( configureExternalFileButton );
+        toolbar.add( reloadExternalFileButton );
 		toolbar.add( addToMockServiceButton );
 		toolbar.add( recreateButton );
 		toolbar.add( createEmptyButton );
@@ -112,6 +117,7 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
 		super.setEnabled( enabled );
 
         configureExternalFileButton.setEnabled( enabled );
+        reloadExternalFileButton.setEnabled( enabled );
 		recreateButton.setEnabled( enabled );
 		createEmptyButton.setEnabled( enabled );
 		cloneButton.setEnabled( enabled );

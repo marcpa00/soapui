@@ -402,7 +402,11 @@
     <tns:action id="ConfigureExternalFileAction"
                 actionClass="com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction" />
 
-	<!-- Workspace Action Group -->
+    <tns:action id="ReloadExternalFileAction"
+                actionClass="com.eviware.soapui.impl.wsdl.actions.request.ReloadExternalFileAction" />
+
+
+    <!-- Workspace Action Group -->
 	<tns:actionGroup name="Workspace Actions" id="WorkspaceImplActions"
 		class="com.eviware.soapui.impl.actions.WorkspaceImplSoapUIActionGroup">
 		<tns:actionMapping actionId="NewWsdlProjectAction"
@@ -664,6 +668,7 @@
 			keyStroke="ENTER" />
         <tns:actionMapping actionId="SeperatorAction" />
         <tns:actionMapping actionId="ConfigureExternalFileAction"/>
+        <tns:actionMapping actionId="ReloadExternalFileAction"/>
         <tns:actionMapping actionId="SeperatorAction" />
 		<tns:actionMapping actionId="AddRequestToTestCaseAction"
 			keyStroke="menu alt A" iconPath="/addToTestCase.gif" />

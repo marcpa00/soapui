@@ -15,6 +15,7 @@ package com.eviware.soapui.impl.wsdl.panels.teststeps;
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.support.actions.ShowOnlineHelpAction;
 import com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction;
+import com.eviware.soapui.impl.wsdl.actions.request.ReloadExternalFileAction;
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext;
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunner;
 import com.eviware.soapui.impl.wsdl.panels.support.TestRunComponentEnabler;
@@ -159,8 +160,11 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
 		JButton runButton = UISupport.createToolbarButton( runAction );
         JButton configureExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
                 ConfigureExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep.getTestRequestStepInExternalFileSupport(), null, "/options.gif" ), true );
+        JButton reloadExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
+                ReloadExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep, null, "/arrow_refresh.png" ), true);
 		toolBar.add( runButton );
         toolBar.add( configureExternalFileButton );
+        toolBar.add( reloadExternalFileButton );
 		toolBar.add( Box.createHorizontalGlue() );
 		JLabel label = new JLabel( "<html>Script is invoked with <code>log</code>, <code>context</code> "
 				+ "and <code>testRunner</code> variables</html>" );
@@ -173,6 +177,7 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
 
 		componentEnabler.add( runButton );
         componentEnabler.add( configureExternalFileButton );
+        componentEnabler.add( reloadExternalFileButton );
 
 		return toolBar;
 	}

@@ -418,13 +418,26 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
      */
     public boolean maybeReloadStepContent() {
         File contentFile = new File(toAbsolutePath(externalFilename));
-        if (contentFile.exists() && contentFile.lastModified() > lastModified) {
-            if( UISupport.confirm( "File for \n\n[" + getPathInProject() + "]\n\nhave been modified externally, reload ?",
-                    "Reload" ) ) {
+        if (contentFile.exists() && lastModified > lastLoadedFromExternalFile && contentFile.lastModified() > lastModified) {
+            if( UISupport.confirm( "Step content for \n\n[" + getPathInProject() + "]\n\nmodified both in memory and in external file, reload ?",
+                    "Conflicting changes : reload from external file?" ) ) {
+                loadStepContent();
+                return true;
+            }
+        } else if (contentFile.exists() && contentFile.lastModified() > lastModified) {
+            if (lastModified <= lastLoadedFromExternalFile || UISupport.confirm( "File for \n\n[" + getPathInProject() + "]\n\nhave been modified externally, reload ?",
+                    "Confirm reload from external file?" ) ) {
+                loadStepContent();
+                return true;
+            }
+        } else if (contentFile.exists() && lastModified > lastLoadedFromExternalFile) {
+            if( UISupport.confirm( "Discard changes made for \n\n[" + getPathInProject() + "]\n\n and reload from external file?",
+                    "Confirm reload from external file?" ) ) {
                 loadStepContent();
                 return true;
             }
         }
+        SoapUI.log.debug("maybeReloadStepContent() : no change to reload.");
         return false;
     }
 
