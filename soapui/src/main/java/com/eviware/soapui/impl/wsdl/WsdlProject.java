@@ -2255,6 +2255,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             SoapUI.log.info("No testStep with a script or (wsdl)request found.");
         }
         for (XmlObject xmlObject : xmlObjects) {
+            boolean needsConversion = false;
             XmlCursor cursor = xmlObject.newCursor();
             XmlCursor testStepCursor = xmlObject.selectPath(conNameSpace + "$this/../..")[0].newCursor();
 
@@ -2271,6 +2272,8 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             if (externalFilenameBuildModeValue == null && ! getSettings().getBoolean(UISettings.AUTO_CONVERT_STEP_TO_USE_EXTERNAL_FILE)) {
                 // skip this step, it does not use external filename and we are not in auto-convert mode
                 continue;
+            } else if (externalFilenameBuildModeValue == null) {
+                needsConversion = true;
             }
 
             if (testStepType != null) {
@@ -2289,36 +2292,42 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                         stringBuilder.insert(0, File.separator).insert(0, name);
                     }
                 }
-                SoapUI.log.debug("AUTO-CONVERT to step in external file : step " + testStepName + " will be stored in an external file.");
+                if (needsConversion) {
+                    SoapUI.log.debug("AUTO-CONVERT to step in external file : step " + testStepName + " will be stored in an external file.");
+                }
 
-                // AUTO-CONVERT : Add file element if not already there and set the externalFilenameBuildMode to AUTOMATIC (i.e. filename is made of path in project)
                 WsdlRequestConfig wsdlRequestConfig;
                 if (testStepType.equals("request")) {
                     wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
 
                    if (! wsdlRequestConfig.isSetExternalFilename()) {
                        stringBuilder.append(TestRequestStepInExternalFileSupport.WSDL_REQUEST_SUFFIX);
-                       SoapUI.log.debug("AUTO-CONVERT : saving to '" + stringBuilder.toString() + "'");
+                       SoapUI.log.debug("   external filename is '" + stringBuilder.toString() + "'");
 
                        // step does not yet use a file element, add it
                         wsdlRequestConfig.setExternalFilename(stringBuilder.toString());
-                        wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                       if (needsConversion) {
+                           wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                       }
                     }
                     if (! beBackwardCompatible) {
                         wsdlRequestConfig.getRequest().setStringValue("");
                     }
                 } else if (testStepType.equals("groovy")) {
 
-                    stringBuilder.append(TestRequestStepInExternalFileSupport.GROOVY_SCRIPT_SUFFIX);
-                    SoapUI.log.debug("AUTO-CONVERT : saving to '" + stringBuilder.toString() + "'");
                     XmlCursor stepCursor = xmlObject.newCursor();
 
                     QName qNameOfExternalFilename = new QName("", "externalFilename");
                     QName qNameOfExternalFilenameBuildMode = new QName("", "externalFilenameBuildMode");
+
                     XmlObject externalFilenameAttribute = xmlObject.selectAttribute(qNameOfExternalFilename);
                     if (externalFilenameAttribute == null) {
+                        stringBuilder.append(TestRequestStepInExternalFileSupport.GROOVY_SCRIPT_SUFFIX);
+                        SoapUI.log.debug("    external filename '" + stringBuilder.toString() + "'");
                         stepCursor.setAttributeText(qNameOfExternalFilename, stringBuilder.toString());
-                        stepCursor.setAttributeText(qNameOfExternalFilenameBuildMode, ExternalFilenameBuildModeConfig.AUTO.toString());
+                        if (needsConversion) {
+                            stepCursor.setAttributeText(qNameOfExternalFilenameBuildMode, ExternalFilenameBuildModeConfig.AUTO.toString());
+                        }
                     }
                     if (! beBackwardCompatible) {
                         stepCursor.setTextValue("");
