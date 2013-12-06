@@ -15,6 +15,8 @@ import com.eviware.soapui.model.testsuite.TestStep;
 import com.eviware.soapui.model.testsuite.TestSuiteListener;
 import com.eviware.soapui.security.SecurityTest;
 import com.eviware.soapui.settings.UISettings;
+import com.eviware.soapui.support.InputStreamProcessingTemplate;
+import com.eviware.soapui.support.InputStreamProcessor;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
 import com.google.common.io.Files;
@@ -26,9 +28,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.List;
@@ -646,27 +648,39 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
     private String readFile(File f) {
         if (f.exists()) {
             SoapUI.log.debug("Reading file '" + f.getAbsolutePath() + "'...");
+            InputStreamProcessor processor = null;
             try {
-                StringBuilder sBuilder = new StringBuilder();
-                String line;
-                BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
-                while ((line = bufferedReader.readLine()) != null) {
-                    sBuilder.append(line + "\n");
-                }
-                SoapUI.log.info(sBuilder.toString());
+                processor = new InputStreamProcessor() {
+                    String fileContent;
 
-                lastLoadedFromExternalFile = new Date().getTime();
-                lastModified = lastLoadedFromExternalFile;
+                    @Override
+                    public String getResult() {
+                        return fileContent;
+                    }
 
-                return sBuilder.toString();
-            } catch (FileNotFoundException fnfe) {
-                fnfe.printStackTrace();
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
+                    @Override
+                    public void process(InputStream input) throws IOException {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(input, "UTF-8"));
+                        StringBuffer buf = new StringBuffer();
+                        int data = reader.read();
+                        while (data != -1) {
+                            buf.append((char) data);
+                            data = reader.read();
+                        }
+                        reader.close();
+                        fileContent = buf.toString();
+                    }
+                };
+
+                InputStreamProcessingTemplate.process(f.getAbsolutePath(), processor);
+            } catch (Exception e) {
+                SoapUI.logError(e);
             }
-        } else {
-            SoapUI.log.debug("File with path " + f.getAbsolutePath() + " does not exists");
-            SoapUI.log.debug("  current working directory is " + System.getProperty("user.dir"));
+            if (processor != null) {
+                return processor.getResult();
+            } else {
+                return "";
+            }
         }
         return "";
     }
