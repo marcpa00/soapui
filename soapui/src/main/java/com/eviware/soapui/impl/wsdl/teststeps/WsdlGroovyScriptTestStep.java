@@ -16,6 +16,7 @@ import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.ScriptConfig;
 import com.eviware.soapui.config.TestStepConfig;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
+import com.eviware.soapui.model.iface.Script;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansion;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContainer;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansionsResult;
@@ -80,7 +81,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 			readConfig( config );
  		}
 
-		addProperty( new DefaultTestStepProperty( "result", true, new DefaultTestStepProperty.PropertyHandlerAdapter()
+        addProperty( new DefaultTestStepProperty( Script.RESULT_PROPERTY, true, new DefaultTestStepProperty.PropertyHandlerAdapter()
 		{
 
 			public String getValue( DefaultTestStepProperty property )
@@ -89,7 +90,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 			}
 		}, this ) );
 
-		addProperty( new TestStepBeanProperty( "script", false, this, "script", this ) );
+		addProperty( new TestStepBeanProperty(Script.SCRIPT_PROPERTY, false, this, Script.SCRIPT_PROPERTY, this ) );
 
 		scriptEngine = SoapUIScriptEngineRegistry.create( this );
 		scriptEngine.setScript( getScript() );
@@ -126,7 +127,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 	{
         if (! getSettings().getBoolean(UISettings.STEP_IN_EXTERNAL_FILE)) {
             XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( config.getConfig() );
-            scriptText = reader.readString( "script", "" );
+            scriptText = reader.readString( Script.SCRIPT_PROPERTY, "" );
         } else {
             initTestRequestStepInExternalFile(config);
         }
@@ -154,7 +155,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
                 cursor.dispose();
             } else {
                 XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
-                builder.add( "script", scriptText );
+                builder.add( Script.SCRIPT_PROPERTY, scriptText );
                 config.setConfig( builder.finish() );
             }
 
@@ -173,7 +174,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 
 	public String getDefaultSourcePropertyName()
 	{
-		return "result";
+		return Script.RESULT_PROPERTY;
 	}
 
 	public TestStepResult run( TestCaseRunner testRunner, TestCaseRunContext context )
@@ -203,7 +204,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 					{
 						result.addMessage( "Script-result: " + scriptResult.toString() );
 						// FIXME The property should not me hard coded
-						firePropertyValueChanged( "result", null, String.valueOf( result ) );
+						firePropertyValueChanged( Script.RESULT_PROPERTY, null, String.valueOf( result ) );
 					}
 
 				}
@@ -257,7 +258,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
         testRequestStepInExternalFileSupport.setStepContent(scriptText);
 		saveScript( getConfig() );
 
-		notifyPropertyChanged( "script", oldScript, scriptText );
+		notifyPropertyChanged( Script.SCRIPT_PROPERTY, oldScript, scriptText );
 	}
 
 	@Override
@@ -271,7 +272,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 	{
 		PropertyExpansionsResult result = new PropertyExpansionsResult( this );
 
-		result.extractAndAddAll( "script" );
+		result.extractAndAddAll( Script.SCRIPT_PROPERTY );
 
 		return result.toArray();
 	}

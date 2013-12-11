@@ -9,6 +9,8 @@ import com.eviware.soapui.config.TestStepConfig;
 import com.eviware.soapui.config.WsdlRequestConfig;
 import com.eviware.soapui.impl.settings.XmlBeansSettingsImpl;
 import com.eviware.soapui.model.ModelItem;
+import com.eviware.soapui.model.iface.Request;
+import com.eviware.soapui.model.iface.Script;
 import com.eviware.soapui.model.testsuite.LoadTest;
 import com.eviware.soapui.model.testsuite.TestCase;
 import com.eviware.soapui.model.testsuite.TestStep;
@@ -141,7 +143,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         }
 
         addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
-        this.testStep.addPropertyChangeListener( "request", this);
+        this.testStep.addPropertyChangeListener( Request.REQUEST_PROPERTY, this);
         this.testStep.getTestCase().getTestSuite().addTestSuiteListener(this);
     }
 
@@ -166,7 +168,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         }
 
         addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
-        addPropertyChangeListener( "script", this);
+        addPropertyChangeListener( Script.SCRIPT_PROPERTY, this);
         this.testStep.getTestCase().getTestSuite().addTestSuiteListener(this);
     }
 
@@ -279,7 +281,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         String configComposeWithTestSuiteName = reader.readString("script/@composeWithTestSuiteName", "false");
         String configComposeWithTestCaseName = reader.readString("script/@composeWithTestCaseName", "false");
         String configComposeWithTestStepName = reader.readString("script/@composeWithTestStepName", "true");
-        String configContent = reader.readString("script", null);
+        String configContent = reader.readString(Script.SCRIPT_PROPERTY, null);
 
         // ... however, we can create an instance of the XmlBeans generated class ScriptConfig and populate it ourselves
         scriptConfig = ScriptConfig.Factory.newInstance();
@@ -350,7 +352,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
 
         // finally, regenerate the element in XML project document
         XmlCursor scriptCursor = testStepConfig.getConfig().newCursor();
-        if (scriptCursor.toChild(new QName("", "script"))) {
+        if (scriptCursor.toChild(new QName("", Script.SCRIPT_PROPERTY))) {
             scriptCursor.getObject().set(scriptConfig);
         } else {
             SoapUI.log.debug("Step " + getName() + " have no script child element, this could be a bug...");
@@ -532,7 +534,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                 return false;
             }
             XmlCursor cursor = testStepConfig.getConfig().newCursor();
-            if (cursor.toChild("script")) {
+            if (cursor.toChild(Script.SCRIPT_PROPERTY)) {
                 cursor.setAttributeText(new QName("", "externalFilename"), externalFilename);
             } else {
                 SoapUI.log.error("could not get to 'script' element while trying to set the externalFileName attribute for step '" + getName() + "'");
@@ -623,7 +625,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
 
     private void updateTestStepConfig(ScriptConfig scriptConfig) {
         XmlCursor cursor = testStepConfig.getConfig().newCursor();
-        if (cursor.toChild("script")) {
+        if (cursor.toChild(Script.SCRIPT_PROPERTY)) {
             cursor.setAttributeText(new QName("", "externalFilenameBuildMode"), externalFilenameBuildMode.toString());
             if (externalFilenameBuildMode == ExternalFilenameBuildModeConfig.COMPOSED) {
                 if (scriptConfig.isSetComposeWithProjectName()) {
@@ -1046,9 +1048,9 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                 // name of file where to save test step content changed, also rename the physical file
                 renameExternalFile(originalFilename, targetFilename);
             }
-        } else if (propertyChangeEvent.getPropertyName().equals("script")) {
+        } else if (propertyChangeEvent.getPropertyName().equals(Script.SCRIPT_PROPERTY)) {
             lastModified = new Date().getTime();
-        } else if (propertyChangeEvent.getSource() == testStep && propertyChangeEvent.getPropertyName().equals("request")) {
+        } else if (propertyChangeEvent.getSource() == testStep && propertyChangeEvent.getPropertyName().equals(Request.REQUEST_PROPERTY)) {
             lastModified = new Date().getTime();
         }
     }

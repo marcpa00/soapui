@@ -32,6 +32,7 @@ import com.eviware.soapui.impl.wsdl.teststeps.assertions.TestAssertionRegistry.A
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.iface.Interface;
 import com.eviware.soapui.model.iface.Operation;
+import com.eviware.soapui.model.iface.Request;
 import com.eviware.soapui.model.iface.Request.SubmitException;
 import com.eviware.soapui.model.iface.Submit;
 import com.eviware.soapui.model.project.Project;
@@ -378,7 +379,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 				delegatePropertyChange( "Endpoint", event );
 			}
 
-            if ( event.getPropertyName().equals( "request" )) {
+            if ( event.getPropertyName().equals( Request.REQUEST_PROPERTY )) {
                 testRequestStepInExternalFileSupport.setStepContent( (String) event.getNewValue() );
             }
 		}
