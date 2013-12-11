@@ -141,6 +141,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         }
 
         addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
+        this.testStep.addPropertyChangeListener( "request", this);
         this.testStep.getTestCase().getTestSuite().addTestSuiteListener(this);
     }
 
@@ -165,6 +166,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         }
 
         addPropertyChangeListener( ModelItem.NAME_PROPERTY, this);
+        addPropertyChangeListener( "script", this);
         this.testStep.getTestCase().getTestSuite().addTestSuiteListener(this);
     }
 
@@ -677,6 +679,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                 SoapUI.logError(e);
             }
             if (processor != null) {
+                lastLoadedFromExternalFile = new Date().getTime();
+                lastModified = f.lastModified();
                 return processor.getResult();
             } else {
                 return "";
@@ -1042,6 +1046,10 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                 // name of file where to save test step content changed, also rename the physical file
                 renameExternalFile(originalFilename, targetFilename);
             }
+        } else if (propertyChangeEvent.getPropertyName().equals("script")) {
+            lastModified = new Date().getTime();
+        } else if (propertyChangeEvent.getSource() == testStep && propertyChangeEvent.getPropertyName().equals("request")) {
+            lastModified = new Date().getTime();
         }
     }
 
