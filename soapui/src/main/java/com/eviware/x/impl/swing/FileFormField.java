@@ -164,7 +164,10 @@ public class FileFormField extends AbstractSwingXFormField<JPanel> implements XF
                 if (f.exists()) {
                     fileChooser.setSelectedFile(f);
                 } else {
-                    fileChooser.setCurrentDirectory( f.getParentFile() );
+                    while (! f.exists() ) {
+                        f = f.getParentFile();
+                    }
+                    fileChooser.setCurrentDirectory(f);
                 }
 			}
 			else if( currentDirectory != null )
