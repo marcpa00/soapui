@@ -163,6 +163,7 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
             } else {
                 testRequestStepInExternalFileSupport.setExternalFilename( newFilename );
                 testRequestStepInExternalFileSupport.loadStepContent();
+                testRequestStepInExternalFileSupport.updateTestStepContent();
             }
             testRequestStepInExternalFileSupport.updateConfig();
             testRequestStepInExternalFileSupport.saveToExternalFile(testRequestStepInExternalFileSupport.updateConfigWithExternalFilePath(), false);

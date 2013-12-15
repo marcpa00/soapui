@@ -649,6 +649,17 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         }
     }
 
+    public void updateTestStepContent() {
+        if (wsdlRequestConfig != null && testStep != null && testStep instanceof WsdlTestRequestStep) {
+            WsdlTestRequestStep wsdlTestRequestStep = (WsdlTestRequestStep) testStep;
+            wsdlTestRequestStep.getTestRequest().setRequestContent(stepContent);
+        }
+        if (scriptConfig != null && testStep != null && testStep instanceof WsdlGroovyScriptTestStep) {
+            WsdlGroovyScriptTestStep wsdlGroovyScriptTestStep = (WsdlGroovyScriptTestStep) testStep;
+            wsdlGroovyScriptTestStep.setScript(stepContent);
+        }
+    }
+
     private String readFile(File f) {
         if (f.exists()) {
             SoapUI.log.debug("Reading file '" + f.getAbsolutePath() + "'...");
