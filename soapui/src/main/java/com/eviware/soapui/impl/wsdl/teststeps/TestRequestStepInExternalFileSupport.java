@@ -258,6 +258,8 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                     }
                 }
             }
+        } else {
+            stepContent = contentFromProjectDocument;
         }
 
         if (alwaysPreferContentFromProject != null) {
@@ -266,7 +268,9 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
         if (alwaysPreferContentFromExternalFile != null) {
             getTestCase().getTestSuite().getProject().setAlwaysPreferContentFromExternalFile(alwaysPreferContentFromExternalFile);
         }
-        wsdlRequestConfig.setExternalFilename(externalFilename);
+        if (externalFilenameBuildMode != ExternalFilenameBuildModeConfig.NONE) {
+            wsdlRequestConfig.setExternalFilename(externalFilename);
+        }
     }
 
 
@@ -341,7 +345,10 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
                     }
                 }
             }
+        } else {
+            stepContent = contentFromProjectDocument;
         }
+
         if (alwaysPreferContentFromProject != null) {
             getTestCase().getTestSuite().getProject().setAlwaysPreferContentFromProject(alwaysPreferContentFromProject);
         }
@@ -423,6 +430,9 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
      * @return true if content was reloaded from file
      */
     public boolean maybeReloadStepContent() {
+        if (externalFilename == null) {
+            return false;
+        }
         File contentFile = new File(toAbsolutePath(externalFilename));
         if (contentFile.exists() && lastModified > lastLoadedFromExternalFile && contentFile.lastModified() > lastModified) {
             if( UISupport.confirm( "Step content for \n\n[" + getPathInProject() + "]\n\nmodified both in memory and in external file, reload ?",
@@ -1098,7 +1108,7 @@ public class TestRequestStepInExternalFileSupport implements ModelItem, Property
 
     @Override
     public void testStepRemoved(TestStep testStep, int index) {
-        if (testStep == getTestStep()) {
+        if (testStep == getTestStep() && externalFilename != null) {
             File file = new File(toAbsolutePath(externalFilename));
             if (file.exists()) {
                 file.delete();

@@ -179,24 +179,28 @@ public class ConfigureExternalFileAction extends AbstractSoapUIAction<ModelItem>
         if (currentFilename == null || currentFilename.isEmpty() ) {
             currentFilename = testRequestStepInExternalFileSupport.getExternalFilename();
         }
-        StringBuilder summary = new StringBuilder("Root path for relative path names : ");
-        summary.append("\n   ");
-        summary.append(testRequestStepInExternalFileSupport.getExternalFileRootPath()).append(sep);
-        summary.append("\n");
-        summary.append("Effective external filename : ");
-        summary.append("\n   ");
-        summary.append( currentFilename );
-        summary.append("\n");
-        File f = new File(currentFilename);
-        if (! f.isAbsolute() ) {
-            f = new File(testRequestStepInExternalFileSupport.getExternalFileRootPath() + sep + currentFilename);
-        }
-        if (f.exists()) {
-            summary.append("File exists (").append(f.length()).append(" bytes), last modified on ").append(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date(f.lastModified())));
+        if (currentFilename != null && ! currentFilename.isEmpty()) {
+            StringBuilder summary = new StringBuilder("Root path for relative path names : ");
+            summary.append("\n   ");
+            summary.append(testRequestStepInExternalFileSupport.getExternalFileRootPath()).append(sep);
+            summary.append("\n");
+            summary.append("Effective external filename : ");
+            summary.append("\n   ");
+            summary.append( currentFilename );
+            summary.append("\n");
+            File f = new File(currentFilename);
+            if (! f.isAbsolute() ) {
+                f = new File(testRequestStepInExternalFileSupport.getExternalFileRootPath() + sep + currentFilename);
+            }
+            if (f.exists()) {
+                summary.append("File exists (").append(f.length()).append(" bytes), last modified on ").append(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date(f.lastModified())));
+            } else {
+                summary.append("File does not exists yet.");
+            }
+            return summary.toString();
         } else {
-            summary.append("File does not exists yet.");
+            return "";
         }
-        return summary.toString();
     }
 
     private void setupFieldsStateAndVisibility(Boolean useExternalStepFile, Boolean useAutomaticFilename, Boolean useComposedFilename, Boolean useManualFilename) {
