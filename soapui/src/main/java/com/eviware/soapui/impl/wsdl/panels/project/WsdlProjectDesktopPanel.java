@@ -27,6 +27,7 @@ import com.eviware.soapui.impl.wsdl.WsdlProject;
 import com.eviware.soapui.impl.wsdl.panels.teststeps.support.AbstractGroovyEditorModel;
 import com.eviware.soapui.impl.wsdl.panels.teststeps.support.PropertyHolderTable;
 import com.eviware.soapui.impl.wsdl.support.HelpUrls;
+import com.eviware.soapui.impl.wsdl.teststeps.Script;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.iface.Interface;
 import com.eviware.soapui.model.mock.MockOperation;
@@ -297,11 +298,13 @@ public class WsdlProjectDesktopPanel extends ModelItemDesktopPanel<WsdlProject> 
 
     protected GroovyEditorComponent buildLoadScriptPanel() {
         loadScriptGroovyEditor = new GroovyEditorComponent(new LoadScriptGroovyEditorModel(), null);
+		getModelItem().addPropertyChangeListener( WsdlProject.AFTER_LOAD_SCRIPT_PROPERTY_RELOAD, loadScriptGroovyEditor );
         return loadScriptGroovyEditor;
     }
 
     protected GroovyEditorComponent buildSaveScriptPanel() {
         saveScriptGroovyEditor = new GroovyEditorComponent(new SaveScriptGroovyEditorModel(), null);
+		getModelItem().addPropertyChangeListener( WsdlProject.BEFORE_SAVE_SCRIPT_PROPERTY_RELOAD, saveScriptGroovyEditor );
         return saveScriptGroovyEditor;
     }
 

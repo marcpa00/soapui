@@ -1,4 +1,5 @@
 package com.eviware.soapui.support;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -7,6 +8,7 @@ import java.io.InputStream;
  * From http://tutorials.jenkov.com/java-exception-handling/exception-handling-templates.html
  */
 public interface InputStreamProcessor {
-    public void process(InputStream input) throws IOException;
-    public String getResult();
+	public void process(InputStream input) throws IOException;
+
+	public String getResult();
 }

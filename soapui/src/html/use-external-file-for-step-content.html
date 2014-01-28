@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Use external file for step content</title>
+</head>
+
+<body>
+<h1>Support for using an external file for a test step content</h1>
+
+This experimental feature adds an attribute, 'file', to request step
+XML schema (<code>soapui.xsd</code>) which
+contains the path to a file where the content of that step is stored.
+It is <emp>external</emp> in the sense that it is stored outside of
+the main soapui project XML file.
+<p>
+<i>Note: at the moment, this is only implemented for request steps of type "groovy script"
+and "wsdl request".</i>
+<h2>How it behave by default</h2>
+Completly externalizing test steps content from the soapui project XML
+file would be a breaking change in the project file format : these
+files would no longer be understood by versions of soapui not having
+this feature.  To prevent this situation, the default behvior is to
+keep the project file content backward compatible, at the expense of
+having a redundancy for the step's content.
+<p>
+When loading a project, the steps having a 'file' attribute will have
+their content populated from the physical file given in the value of
+the attribute.  The content present in the project XML document will
+be ignored and replaced by the file's content.  The user will see no
+difference at that point and will be able to open and edit the step as
+before. 
+<p>
+When saving a project, for the steps having a file attribute, the
+request content in the project XML document will be written to disk
+into the file named by the value of the attribute (file on disk will
+be overwritten).  The content value in the project file will be
+kept as is, thus there will be a duplication of the content, one
+instance in the project XML document saved to disk and another in the
+file named by the 'file' attribute.  This redundancy is needed to keep
+the project file format backward compatible and still have (some) of
+the benefits of externalizing the step's content.
+<h2>Feature activation</h2>
+An options popup dialog have been added to request step panel where
+one can activate the use of <i>external file step content</i>
+feature. By default, this is not enabled. (should be enabled globally
+through a global settings ?)
+<h3>Enabling the feature for new steps</h3>
+Enabling it on a new step and using the file selector to navigate to a file will set the 'file'
+attribute to the absolute pathname of the choosen file.
+<h3>Enabling the feature on existing steps</h3>
+Enabling it on an existing step will let the user choose a file where
+to save the step's current content and will set the 'file' attribute
+to the absolute pathname of that file.
+<h3>Other settings available from the options panel</h3>
+The options panel offers other possibilities for controlling the file
+name attribute value:
+<ul>
+  <li>configuring a root direcctory relative to which the file will be
+  located</li>
+  <li>auto-computing the file's path according to it's location in the
+  project structure</li>
+</ul>
+Using a root directory will make it possible to have a self-contained
+project setup that can be shared between users and machines, once that
+root directory value have been ajusted.  Letting sopui auto-compute
+the file's path, will ensure that changes to the the project structure
+will be reflected in the file pathname.  This is particularly useful
+when a test step is cloned as, otherwise, the external file would then
+be used by two distinct test steps which may come as a surprise to the
+user.
+<h2>Optional behavior</h2>
+To get full benefit of externalizing steps content, that is:
+<ul>
+  <li>having smaller project files (typically on the order of
+  50%)</li>
+  <li>changes in the XML project file reflecting structural
+  changes</li>
+  <li>changes to implementation of test steps is reflected by changes
+  to individual files</li>
+</ul>
+the backward-incompatible behavior can be selected through a general
+settings. (to be implemented)
+<p>
+These benefits are especially important when your sopaui projects are
+put under a version control system (svn, git, etc.) : XML project
+files then to grow pretty fat rapidly and diffs between revisions
+become meaningless because they become huge, mix changes made to the
+structure of projects (add suite, case or steps, properties changed by
+the author, properties changed by the test execution,endpoints
+configuration, etc) with changes made to the test step functionnality
+only.  Having the step content in separate file make it possible to
+see the actual changes made to a test step and thus follow its
+evolution in time.
+<p>
+When an organization approaches its test suites as another form of
+<emp>source code</emp>, it is a good thing to be able to break down
+the "all-or-nothing" nature of a sapui project XML file into many
+smaller, individually controllable, source code entities.
+<h3>How it behaves in the <i>backward-incompatible</i>
+configuration</h3>
+<p>
+<blockquote>There is no change in behavior compared to default.</blockquote>
+When loading a project, the steps having a 'file' attribute will have
+their content populated from the physical file given in the value of
+the attribute.  The content present in the project XML document will
+be ignored and replaced by the file's content.  The user will see no
+difference at that point and will be able to open and edit a step as
+before. 
+<p>
+<blockquote>Behavior is different from default : content is cleared
+from the project XML file.</blockquote>
+When saving a project, for the steps having a file attribute, the
+request content in the project XML document will be written to disk
+into the file named by the value of the attribute (file on disk will
+be overwritten).  The content value in the project file will be
+cleared : the project XML saved to disk will have an empty value for 
+elements having a 'file' attribute.
+<p>
+An options popup dialog have been added to request step panel where
+one can activate the use of <i>external file for step content</i>
+feature. In this mode, it is enabled by default for newly created steps.
+<h3>Enabling the feature on existing steps</h3>
+Enabling it on an existing step will let the user choose a file where
+to save the step's current content and will set the 'file' attribute
+to the absolute pathname of that file.
+<h3>Other settings available from the options panel</h3>
+The options panel offers other possibilities for controlling the file
+name attribute value:
+<ul>
+  <li>configuring a root direcctory relative to which the file will be
+  located</li>
+  <li>auto-computing the file's path according to it's location in the
+  project structure</li>
+</ul>
+<p>
+<h2>Auto-convert on load</h2>
+Another global settings (to be implemented) can select the
+<emp>auto-convert project file</emp> feature : as project files are
+read, each and every test step (of type groovy and wsld) will have a
+'file' attribute added.  This mode also selects the <i>root dir  for
+external files</i> and <i>auto-compute file name</i> features.  The
+value of <i>root dir for external file</i> will be made of the parent
+directory where the project file is located and a directory named
+after the project filename with '.xml' replaced by '.resources'.
+<hr>
+<address></address>
+<!-- hhmts start -->Last modified: Sun Oct 13 16:36:46 EDT 2013 <!-- hhmts end -->
+</body> </html>

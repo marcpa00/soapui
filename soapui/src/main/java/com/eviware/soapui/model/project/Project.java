@@ -119,4 +119,12 @@ public interface Project extends TestModelItem {
     public int getIndexOfTestSuite(TestSuite testSuite);
 
     OAuth2ProfileContainer getOAuth2ProfileContainer();
+    
+    Boolean getAlwaysPreferContentFromProject();
+
+    void setAlwaysPreferContentFromProject(Boolean alwaysPreferContentFromProject);
+
+    Boolean getAlwaysPreferContentFromExternalFile();
+
+    void setAlwaysPreferContentFromExternalFile(Boolean alwaysPreferContentFromExternalFile);
 }

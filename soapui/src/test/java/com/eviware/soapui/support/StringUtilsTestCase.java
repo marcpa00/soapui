@@ -56,6 +56,40 @@ public class StringUtilsTestCase {
     public void createsXmlNameForStringStartingWithDigit() throws Exception {
         assertThat(StringUtils.createXmlName("15"), is("_15"));
         assertThat(StringUtils.createXmlName("1pt"), is("_1pt"));
+	}
+
+	@Test
+	public void stringsEqualsWhenOnlyNewlineDifference() throws Exception
+	{
+		assertTrue( StringUtils.equalsIgnoringLineEndings( "1\r2", "1\n2" ) );
+		assertTrue( StringUtils.equalsIgnoringLineEndings( "1\r\n2", "1\n2" ) );
+		assertFalse( StringUtils.equalsIgnoringLineEndings( "1\n2", "1\n\n2" ) );
+		assertFalse( StringUtils.equalsIgnoringLineEndings( "1\n2", "12" ) );
     }
+
+	@Test
+	public void stringsContainsOnlyPlatformLineBreaksAfterNormalization() throws Exception
+	{
+		String result;
+		String stringWithCarriageReturnLinefeed = "abc\r\n123";
+		String stringWithLinefeed = "abc\n123";
+
+		String platformLineBreak = System.getProperty( "line.separator" );
+		String otherLineBreak;
+
+		if( platformLineBreak.equals( "\r\n" ) )
+		{
+			otherLineBreak = "\n";
+			result = StringUtils.stringNormalizeLineBreak( stringWithLinefeed );
+		}
+		else
+		{
+			otherLineBreak = "\r\n";
+			result = StringUtils.stringNormalizeLineBreak( stringWithCarriageReturnLinefeed );
+		}
+
+		assertTrue( result.contains( platformLineBreak ) );
+		assertTrue( ! result.contains( otherLineBreak ) );
+	}
 
 }

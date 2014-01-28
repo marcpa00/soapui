@@ -342,6 +342,7 @@ public abstract class WsdlMessageAssertion extends AbstractModelItem implements 
         String old = getName();
         assertionConfig.setName(name);
         notifyPropertyChanged(NAME_PROPERTY, old, name);
+		notifyPropertyChanged( TestAssertion.NAME_PROPERTY, old, name );
 
         String label = getLabel();
         if (!oldLabel.equals(label)) {

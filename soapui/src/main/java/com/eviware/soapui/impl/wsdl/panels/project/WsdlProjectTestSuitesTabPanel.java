@@ -20,12 +20,14 @@ import com.eviware.soapui.analytics.Analytics;
 import com.eviware.soapui.analytics.SoapUIActions;
 import com.eviware.soapui.impl.support.actions.ShowOnlineHelpAction;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
+import com.eviware.soapui.impl.wsdl.WsdlTestSuite;
 import com.eviware.soapui.impl.wsdl.actions.project.AddNewTestSuiteAction;
 import com.eviware.soapui.impl.wsdl.panels.support.MockProjectRunner;
 import com.eviware.soapui.impl.wsdl.panels.testcase.JTestRunLog;
 import com.eviware.soapui.impl.wsdl.panels.teststeps.support.AbstractGroovyEditorModel;
 import com.eviware.soapui.impl.wsdl.support.HelpUrls;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlProjectRunner;
+import com.eviware.soapui.impl.wsdl.teststeps.Script;
 import com.eviware.soapui.model.support.ProjectListenerAdapter;
 import com.eviware.soapui.model.testsuite.ProjectRunContext;
 import com.eviware.soapui.model.testsuite.ProjectRunListener;
@@ -198,11 +200,13 @@ public class WsdlProjectTestSuitesTabPanel extends JPanel {
 
     protected GroovyEditorComponent buildTearDownScriptPanel() {
         tearDownGroovyEditor = new GroovyEditorComponent(new TearDownScriptGroovyEditorModel(), HelpUrls.FUNCTIONAL_TESTING_TEARDOWN_SCRIPT);
+		project.addPropertyChangeListener( WsdlProject.AFTER_RUN_SCRIPT_PROPERTY_RELOAD,  tearDownGroovyEditor );
         return tearDownGroovyEditor;
     }
 
     protected GroovyEditorComponent buildSetupScriptPanel() {
         setupGroovyEditor = new GroovyEditorComponent(new SetupScriptGroovyEditorModel(), HelpUrls.FUNCTIONAL_TESTING_SETUP_SCRIPT);
+		project.addPropertyChangeListener( WsdlProject.BEFORE_RUN_SCRIPT_PROPERTY_RELOAD, setupGroovyEditor );
         return setupGroovyEditor;
     }
 

@@ -216,11 +216,13 @@ public class WsdlTestSuiteDesktopPanel extends KeySensitiveModelItemDesktopPanel
 
     protected GroovyEditorComponent buildTearDownScriptPanel() {
         tearDownGroovyEditor = new GroovyEditorComponent(new TearDownScriptGroovyEditorModel(), null);
+		getModelItem().addPropertyChangeListener( WsdlTestSuite.TEARDOWN_SCRIPT_PROPERTY_RELOAD, tearDownGroovyEditor );
         return tearDownGroovyEditor;
     }
 
     protected GroovyEditorComponent buildSetupScriptPanel() {
         setupGroovyEditor = new GroovyEditorComponent(new SetupScriptGroovyEditorModel(), null);
+		getModelItem().addPropertyChangeListener( WsdlTestSuite.SETUP_SCRIPT_PROPERTY_RELOAD, setupGroovyEditor );
         return setupGroovyEditor;
     }
 

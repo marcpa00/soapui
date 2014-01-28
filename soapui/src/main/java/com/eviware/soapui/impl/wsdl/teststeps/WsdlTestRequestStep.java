@@ -19,6 +19,7 @@ package com.eviware.soapui.impl.wsdl.teststeps;
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.RequestStepConfig;
 import com.eviware.soapui.config.TestStepConfig;
+import com.eviware.soapui.impl.support.ContentInExternalFileSupport;
 import com.eviware.soapui.impl.support.http.HttpRequestTestStep;
 import com.eviware.soapui.impl.wsdl.AbstractWsdlModelItem;
 import com.eviware.soapui.impl.wsdl.WsdlInterface;
@@ -36,6 +37,7 @@ import com.eviware.soapui.impl.wsdl.teststeps.assertions.TestAssertionRegistry.A
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.iface.Interface;
 import com.eviware.soapui.model.iface.Operation;
+import com.eviware.soapui.model.iface.Request;
 import com.eviware.soapui.model.iface.Request.SubmitException;
 import com.eviware.soapui.model.iface.Submit;
 import com.eviware.soapui.model.project.Project;
@@ -59,6 +61,7 @@ import com.eviware.soapui.model.testsuite.TestStep;
 import com.eviware.soapui.model.testsuite.TestStepResult;
 import com.eviware.soapui.model.testsuite.TestStepResult.TestStepStatus;
 import com.eviware.soapui.security.Securable;
+import com.eviware.soapui.settings.UISettings;
 import com.eviware.soapui.support.resolver.ChangeOperationResolver;
 import com.eviware.soapui.support.resolver.ImportInterfaceResolver;
 import com.eviware.soapui.support.resolver.RemoveTestStepResolver;
@@ -95,23 +98,41 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
     private final InternalInterfaceListener interfaceListener = new InternalInterfaceListener();
     private WsdlSubmit<WsdlRequest> submit;
 
-    public WsdlTestRequestStep(WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest) {
+	private ContentInExternalFileSupport contentInExternalFileSupport;
+
         super(testCase, config, true, forLoadTest);
+	public WsdlTestRequestStep( WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest )
+	{
+		super( testCase, config, true, forLoadTest );
 
         if (getConfig().getConfig() != null) {
             requestStepConfig = (RequestStepConfig) getConfig().getConfig().changeType(RequestStepConfig.type);
+		if( getConfig().getConfig() != null )
+		{
+			requestStepConfig = ( RequestStepConfig )getConfig().getConfig().changeType( RequestStepConfig.type );
 
-            wsdlOperation = findWsdlOperation();
-            if (wsdlOperation == null) {
-                log.error("Could not find operation [" + requestStepConfig.getOperation() + "] in interface ["
-                        + requestStepConfig.getInterface() + "] for test request [" + getName() + "] in TestCase ["
-                        + getTestCase().getTestSuite().getName() + "/" + getTestCase().getName() + "]");
-                // requestStepConfig.setRequest(null);
-                setDisabled(true);
-            } else {
-                initTestRequest(config, forLoadTest);
-            }
-        } else {
+			wsdlOperation = findWsdlOperation();
+			if( wsdlOperation == null )
+			{
+				log.error( "Could not find operation [" + requestStepConfig.getOperation() + "] in interface ["
+						+ requestStepConfig.getInterface() + "] for test request [" + getName() + "] in TestCase ["
+						+ getTestCase().getTestSuite().getName() + "/" + getTestCase().getName() + "]" );
+				// requestStepConfig.setRequest(null);
+				setDisabled( true );
+			}
+			else
+			{
+				initTestRequest( config, forLoadTest );
+				contentInExternalFileSupport = new ContentInExternalFileSupport( this, testRequest, requestStepConfig, getSettings() );
+				contentInExternalFileSupport.initExternalFilenameSupport();
+				if( getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) )
+				{
+					requestStepConfig.getRequest().getRequest().setStringValue( contentInExternalFileSupport.getContent() );
+					testRequest.setRequestContent( contentInExternalFileSupport.getContent() );
+					testRequest.updateConfig( requestStepConfig.getRequest() );
+				}
+			}
+
             requestStepConfig = (RequestStepConfig) getConfig().addNewConfig().changeType(RequestStepConfig.type);
         }
 
@@ -127,6 +148,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
         addProperty(new TestStepBeanProperty("Password", false, testRequest, "password", this, true));
         addProperty(new TestStepBeanProperty("Domain", false, testRequest, "domain", this, false));
         addProperty(new TestStepBeanProperty("AuthType", false, testRequest, "authType", this, true) {
+		{
 
             @Override
             public String getDefaultValue() {
@@ -322,6 +344,11 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
             } else if (event.getPropertyName().equals("endpoint")) {
                 delegatePropertyChange("Endpoint", event);
             }
+
+			if( event.getPropertyName().equals( Request.REQUEST_PROPERTY ) )
+			{
+				contentInExternalFileSupport.setContent( ( String )event.getNewValue() );
+			}
         }
 
         if (event.getSource() == wsdlOperation) {
@@ -732,6 +759,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
                         }
 
+			);
                     }
             );
         } else {
@@ -745,4 +773,8 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
         }
     }
 
+	public ContentInExternalFileSupport getContentInExternalFileSupport()
+	{
+		return contentInExternalFileSupport;
+	}
 }

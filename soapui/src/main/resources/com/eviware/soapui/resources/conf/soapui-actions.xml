@@ -80,6 +80,10 @@
                 actionClass="com.eviware.soapui.impl.wsdl.actions.project.ResolveProjectAction"/>
     <tns:action id="ImportTestSuite" actionClass="com.eviware.soapui.impl.wsdl.actions.project.ImportTestSuiteAction"/>
     <tns:action id="StarHermesJMS" actionClass="com.eviware.soapui.impl.wsdl.actions.project.StartHermesJMS"/>
+    <tns:action id="SaveProjectIncludingContentAction"
+                actionClass="com.eviware.soapui.impl.wsdl.actions.project.SaveProjectIncludingContentAction"/>
+    <tns:action id="SaveProjectAsIncludingContentAction"
+                actionClass="com.eviware.soapui.impl.wsdl.actions.project.SaveProjectAsIncludingContentAction"/>
 
     <!-- WsdlInterface Actions -->
     <tns:action id="WSToolsRegenerateJava2WsdlAction"
@@ -242,6 +246,10 @@
     <tns:action id="ChangeOperationAction"
                 actionClass="com.eviware.soapui.impl.wsdl.teststeps.actions.ChangeOperationAction"/>
     <tns:action id="SetWaitTimeAction" actionClass="com.eviware.soapui.impl.wsdl.teststeps.SetWaitTimeAction"/>
+    <tns:action id="ConfigureExternalFileAction"
+                actionClass="com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction" />
+    <tns:action id="ReloadExternalFileAction"
+                actionClass="com.eviware.soapui.impl.wsdl.actions.request.ReloadExternalFileAction" />
 
     <!-- WsdlMessageAssertion Actions -->
     <tns:action id="RenameAssertionAction"
@@ -433,6 +441,9 @@
         <tns:actionMapping actionId="SeperatorAction"/>
         <tns:actionMapping actionId="SaveProjectAction" keyStroke="menu S"/>
         <tns:actionMapping actionId="SaveProjectAsAction" keyStroke="menu shift S"/>
+        <tns:actionMapping actionId="SaveProjectIncludingContentAction"/>
+        <tns:actionMapping actionId="SaveProjectAsIncludingContentAction"/>
+
         <tns:actionMapping actionId="ExportProjectAction"/>
         <tns:actionMapping actionId="SeperatorAction"/>
         <tns:actionMapping actionId="ImportTestSuite"/>

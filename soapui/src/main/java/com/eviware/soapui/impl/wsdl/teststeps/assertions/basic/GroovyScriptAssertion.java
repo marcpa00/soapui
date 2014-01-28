@@ -16,6 +16,14 @@
 
 package com.eviware.soapui.impl.wsdl.teststeps.assertions.basic;
 
+import javax.xml.namespace.QName;
+import com.eviware.soapui.impl.support.ContentInExternalFileSupport;
+import com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction;
+import com.eviware.soapui.impl.wsdl.actions.request.ReloadExternalFileAction;
+import com.eviware.soapui.impl.wsdl.teststeps.*;
+import com.eviware.soapui.settings.UISettings;
+import com.eviware.soapui.support.action.swing.SwingActionDelegate;
+import org.apache.xmlbeans.XmlCursor;
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.TestAssertionConfig;
 import com.eviware.soapui.impl.rest.RestRequestInterface;
@@ -27,14 +35,6 @@ import com.eviware.soapui.impl.wsdl.panels.teststeps.support.AbstractGroovyEdito
 import com.eviware.soapui.impl.wsdl.panels.teststeps.support.GroovyEditor;
 import com.eviware.soapui.impl.wsdl.support.HelpUrls;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestRunContext;
-import com.eviware.soapui.impl.wsdl.teststeps.HttpResponseMessageExchange;
-import com.eviware.soapui.impl.wsdl.teststeps.HttpTestRequestStepInterface;
-import com.eviware.soapui.impl.wsdl.teststeps.RestResponseMessageExchange;
-import com.eviware.soapui.impl.wsdl.teststeps.RestTestRequestStepInterface;
-import com.eviware.soapui.impl.wsdl.teststeps.WsdlMessageAssertion;
-import com.eviware.soapui.impl.wsdl.teststeps.WsdlMockResponseTestStep;
-import com.eviware.soapui.impl.wsdl.teststeps.WsdlResponseMessageExchange;
-import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep;
 import com.eviware.soapui.impl.wsdl.teststeps.assertions.AbstractTestAssertionFactory;
 import com.eviware.soapui.model.TestPropertyHolder;
 import com.eviware.soapui.model.iface.MessageExchange;
@@ -80,6 +80,8 @@ import java.awt.event.MouseEvent;
  */
 
 public class GroovyScriptAssertion extends WsdlMessageAssertion implements RequestAssertion, ResponseAssertion {
+	public final static String GROOVY_ASSERTION_SCRIPT_PROPERTY = GroovyScriptAssertion.class.getName() + "@script";
+	public final static String GROOVY_ASSERTION_SCRIPT_PROPERTY_RELOAD = GROOVY_ASSERTION_SCRIPT_PROPERTY + "Reload";
     public static final String ID = "GroovyScriptAssertion";
     public static final String LABEL = "Script Assertion";
     public static final String DESCRIPTION = "Runs a custom script to perform arbitrary validations. Applicable to any Property.";
@@ -89,11 +91,32 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
     private GroovyScriptAssertionPanel groovyScriptAssertionPanel;
     private String oldScriptText;
 
-    public GroovyScriptAssertion(TestAssertionConfig assertionConfig, Assertable modelItem) {
-        super(assertionConfig, modelItem, true, true, true, false);
+	private ContentInExternalFileSupport contentInExternalFileSupport;
 
-        XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader(getConfiguration());
-        scriptText = reader.readString("scriptText", "");
+        super(assertionConfig, modelItem, true, true, true, false);
+	public GroovyScriptAssertion( TestAssertionConfig assertionConfig, Assertable modelItem )
+	{
+		super( assertionConfig, modelItem, true, true, true, false );
+
+		if( modelItem instanceof WsdlTestStep)
+		{
+			contentInExternalFileSupport = new ContentInExternalFileSupport( (WsdlTestStep)modelItem, this, assertionConfig, ( ( WsdlTestStep )modelItem ).getSettings() );
+			contentInExternalFileSupport.initExternalFilenameSupport();
+			if( getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) )
+			{
+				scriptText = contentInExternalFileSupport.getContent();
+			}
+			else
+			{
+				XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( getConfiguration() );
+				scriptText = reader.readString( "scriptText", "" );
+			}
+		}
+		else
+		{
+			XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( getConfiguration() );
+			scriptText = reader.readString( "scriptText", "" );
+		}
 
         scriptEngine = SoapUIScriptEngineRegistry.create(this);
         scriptEngine.setScript(scriptText);
@@ -138,6 +161,7 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
     public boolean configure() {
         if (dialog == null) {
             buildDialog();
+			this.addPropertyChangeListener( GROOVY_ASSERTION_SCRIPT_PROPERTY_RELOAD, groovyScriptAssertionPanel.editor );
         }
 
         oldScriptText = scriptText;
@@ -166,14 +190,36 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
         return builder.finish();
     }
 
-    public String getScriptText() {
+	protected XmlObject updateOrCreateConfiguration()
+	{
+		XmlObject configuration = getConfiguration();
+		if( configuration == null )
+		{
+			return createConfiguration();
+		}
+		XmlCursor cursor = configuration.newCursor();
+		String namespaceUri = cursor.namespaceForPrefix( "" );
+		QName scriptTextQName = new QName( namespaceUri, "scriptText" );
+		if( cursor.toChild( scriptTextQName ) )
+		{
+			cursor.setTextValue( scriptText );
+			return configuration;
+		}
+		else
+		{
+			return createConfiguration();
+		}
+	}
+
         return scriptText;
     }
 
     public void setScriptText(String scriptText) {
         this.scriptText = scriptText;
         scriptEngine.setScript(scriptText);
-        setConfiguration(createConfiguration());
+		setConfiguration( updateOrCreateConfiguration() );
+
+		notifyPropertyChanged( GROOVY_ASSERTION_SCRIPT_PROPERTY, oldScriptText, scriptText );
     }
 
     protected class GroovyScriptAssertionPanel extends JPanel {
@@ -261,7 +307,13 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
         private JComponent buildToolbar() {
             JXToolBar toolBar = UISupport.createToolbar();
             JButton runButton = UISupport.createToolbarButton(runAction);
+			JButton configureExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
+					ConfigureExternalFileAction.SOAPUI_ACTION_ID, getContentInExternalFileSupport(), null, "/options.gif" ), true );
+			JButton reloadExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
+					ReloadExternalFileAction.SOAPUI_ACTION_ID, getContentInExternalFileSupport(), null, "/arrow_refresh.png" ), true );
             toolBar.add(runButton);
+			toolBar.add( configureExternalFileButton );
+			toolBar.add( reloadExternalFileButton );
             toolBar.add(Box.createHorizontalGlue());
             JLabel label = new JLabel("<html>Script is invoked with <code>log</code>, <code>context</code> "
                     + "and <code>messageExchange</code> variables</html>");
@@ -350,6 +402,13 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
                 editor.requestFocusInWindow();
             }
         }
+	}
+
+	public static JButton createActionButton( Action action, boolean enabled )
+	{
+		JButton button = UISupport.createToolbarButton( action, enabled );
+		action.putValue( Action.NAME, null );
+		return button;
     }
 
     @Override
@@ -382,5 +441,15 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
             return new AssertionListEntry(GroovyScriptAssertion.ID, GroovyScriptAssertion.LABEL,
                     GroovyScriptAssertion.DESCRIPTION);
         }
+	}
+
+	public ContentInExternalFileSupport getContentInExternalFileSupport()
+	{
+		return contentInExternalFileSupport;
+	}
+
+	public void setContentInExternalFileSupport( ContentInExternalFileSupport contentInExternalFileSupport )
+	{
+		this.contentInExternalFileSupport = contentInExternalFileSupport;
     }
 }

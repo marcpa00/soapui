@@ -282,9 +282,19 @@
                 <xsd:attribute name="incomingWss" type="xsd:string"></xsd:attribute>
                 <xsd:attribute name="useWsAddressing" type="xsd:boolean"></xsd:attribute>
                 <xsd:attribute name="useWsReliableMessaging" type="xsd:boolean"></xsd:attribute>
+                <xsd:attribute name="externalFilenameBuildMode" type="tns:ExternalFilenameBuildMode"></xsd:attribute>
+                <xsd:attribute name="externalFilename" type="xsd:string"></xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
+
+    <xsd:simpleType name="ExternalFilenameBuildMode">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="AUTO"></xsd:enumeration>
+            <xsd:enumeration value="MANUAL"></xsd:enumeration>
+            <xsd:enumeration value="NONE"></xsd:enumeration>
+        </xsd:restriction>
+    </xsd:simpleType>
 
     <xsd:element name="soapui-project" type="tns:Project"></xsd:element>
 
@@ -977,6 +987,8 @@
                 <xsd:attribute name="language" type="xsd:string"></xsd:attribute>
                 <xsd:attribute name="id" type="xsd:string"></xsd:attribute>
                 <xsd:attribute name="disabled" type="xsd:boolean"></xsd:attribute>
+                <xsd:attribute name="externalFilenameBuildMode" type="tns:ExternalFilenameBuildMode"></xsd:attribute>
+                <xsd:attribute name="externalFilename" type="xsd:string"></xsd:attribute>
             </xsd:extension>
         </xsd:simpleContent>
     </xsd:complexType>

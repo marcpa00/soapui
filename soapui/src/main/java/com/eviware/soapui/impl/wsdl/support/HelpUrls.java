@@ -152,10 +152,10 @@ public interface HelpUrls {
     public static final String STEP_STATUS_LOAD_TEST_ASSERTION_HELP_URL = "http://www.soapui.org/Load-Testing/step-status-assertion.html";
     public static final String STEP_TPS_LOAD_TEST_ASSERTION_HELP_URL = "http://www.soapui.org/Load-Testing/step-tps-assertion.html";
 
-    public static final String TCPMON_HELP_URL = "http://ws.apache.org/commons/tcpmon/";
-    public static final String TESTCASEEDITOR_HELP_URL = "http://www.soapui.org/Functional-Testing/testcase-editor.html";
-    public static final String TESTCASEOPTIONS_HELP_URL = "http://www.soapui.org/Functional-Testing/testcase-options.html";
-    public static final String TESTREQUESTEDITOR_HELP_URL = "http://www.soapui.org/Functional-Testing/testrequest-editor.html";
+    // use external file for step content
+    public static final String USE_EXT_FILE_HELP_URL_ROOT = "http://github.com/marcpa00/soapui/tree/step-in-external-file/";
+    public static final String USE_EXT_FILE_FOR_STEP_HELP_URL = USE_EXT_FILE_HELP_URL_ROOT + "soapui/src/html/use-external-file-for-step-content.html";
+
     public static final String TESTRUNNER_HELP_URL = "http://www.soapui.org/Test-Automation/launch-testrunner.html";
     public static final String TESTSUITEEDITOR_HELP_URL = "http://www.soapui.org/Functional-Testing/testsuite-editor.html";
     public static final String TESTSUITELIST_HELP_URL = "http://www.soapui.org/Functional-Testing/project-testsuites-tab.html";

@@ -16,14 +16,6 @@
 
 package com.eviware.soapui.impl.wsdl.panels.request;
 
-import javax.swing.AbstractAction;
-import javax.swing.JButton;
-import javax.swing.JPopupMenu;
-import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
-
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-
 import com.eviware.soapui.impl.support.components.ModelItemXmlEditor;
 import com.eviware.soapui.impl.support.components.RequestXmlDocument;
 import com.eviware.soapui.impl.support.components.ResponseXmlDocument;
@@ -32,8 +24,10 @@ import com.eviware.soapui.impl.wsdl.WsdlRequest;
 import com.eviware.soapui.impl.wsdl.WsdlSubmitContext;
 import com.eviware.soapui.impl.wsdl.actions.request.AddRequestToMockServiceAction;
 import com.eviware.soapui.impl.wsdl.actions.request.CloneRequestAction;
+import com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction;
 import com.eviware.soapui.impl.wsdl.actions.request.CreateEmptyRequestAction;
 import com.eviware.soapui.impl.wsdl.actions.request.RecreateRequestAction;
+import com.eviware.soapui.impl.wsdl.actions.request.ReloadExternalFileAction;
 import com.eviware.soapui.impl.wsdl.panels.request.actions.WSIValidateRequestAction;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.iface.Request.SubmitException;
@@ -45,6 +39,9 @@ import com.eviware.soapui.support.components.JXToolBar;
 import com.eviware.soapui.support.editor.views.xml.source.XmlSourceEditorView;
 import com.eviware.soapui.support.editor.xml.XmlDocument;
 import com.eviware.soapui.support.editor.xml.support.DefaultXmlDocument;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+
+import javax.swing.*;
 
 /**
  * Abstract DesktopPanel for WsdlRequests
@@ -58,6 +55,8 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
     private JButton cloneButton;
     private JButton createEmptyButton;
     private JButton addToMockServiceButton;
+    private JButton configureExternalFileButton;
+    private JButton reloadExternalFileButton;
     private AbstractAction wsiValidateAction;
 
     public AbstractWsdlRequestDesktopPanel(T modelItem, T2 request) {
@@ -72,6 +71,11 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
 
         cloneButton = createActionButton(SwingActionDelegate.createDelegate(CloneRequestAction.SOAPUI_ACTION_ID,
                 request, null, "/clone_request.gif"), true);
+
+        configureExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
+                ConfigureExternalFileAction.SOAPUI_ACTION_ID, request, null, "/options.gif" ), true );
+        reloadExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
+                ReloadExternalFileAction.SOAPUI_ACTION_ID, getModelItem(), null, "/arrow_refresh.png" ), true);
 
         createEmptyButton = createActionButton(new CreateEmptyRequestAction(request), true);
 
@@ -96,6 +100,8 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
     }
 
     protected void insertButtons(JXToolBar toolbar) {
+        toolbar.add( configureExternalFileButton );
+        toolbar.add( reloadExternalFileButton );
         toolbar.add(addToMockServiceButton);
         toolbar.add(recreateButton);
         toolbar.add(createEmptyButton);
@@ -105,6 +111,8 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
 
+        configureExternalFileButton.setEnabled( enabled );
+        reloadExternalFileButton.setEnabled( enabled );
         recreateButton.setEnabled(enabled);
         createEmptyButton.setEnabled(enabled);
         cloneButton.setEnabled(enabled);
