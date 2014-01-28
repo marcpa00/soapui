@@ -63,6 +63,15 @@ public interface UISettings {
     @Setting(name = "AutoSave Interval", description = "Sets the autosave interval in minutes, 0 = off", type = SettingType.INT)
     public static final String AUTO_SAVE_INTERVAL = UISettings.class.getSimpleName() + "@auto_save_interval";
 
+    @Setting( name = "Content in external file", description = "should the content of wsdl request test step, groovy test step, groovy assertion, script, etc, be stored in a file, outside the project file", type = SettingType.BOOLEAN)
+    public final static String CONTENT_IN_EXTERNAL_FILE = UISettings.class.getSimpleName() + "@contentInExternalFile";
+
+    @Setting( name = "Save content in external file and in project file", description = "when saving a content in external file, also keep a copy of the value in the project XML file", type = SettingType.BOOLEAN)
+    public final static String ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE = UISettings.class.getSimpleName() + "@alsoKeepInProjectWhenContentInExternalFile";
+
+    @Setting( name = "Convert to content in external file", description = "Automatically convert config in project file to use an external file for content", type = SettingType.BOOLEAN)
+    public final static String AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE = UISettings.class.getSimpleName() + "@autoConvertContentToUseExternalFile";
+
     public static final String DESKTOP_TYPE = UISettings.class.getSimpleName() + "@desktop-type";
 
     @Setting(name = "MRU Panel Selection", description = "Activate the most recently used desktop panel when closing a panel",

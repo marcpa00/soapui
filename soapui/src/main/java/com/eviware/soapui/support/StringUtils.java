@@ -403,4 +403,31 @@ public class StringUtils {
         Arrays.sort(names);
         return names;
     }
+
+	public static boolean equalsIgnoringLineEndings(String a, String b)
+	{
+		if( a == null || b == null )
+		{
+			if( a == null && b == null )
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		String aToCompare = a.replaceAll( "\\r\\n|\\r|\\n", System.getProperty( "line.separator" ) );
+		String bToCompare = b.replaceAll( "\\r\\n|\\r|\\n", System.getProperty( "line.separator" ) );
+      return aToCompare.equals( bToCompare );
+	}
+
+	public static String stringNormalizeLineBreak( String original )
+	{
+		if( isNullOrEmpty( original ) )
+		{
+			return original;
+		}
+		return original.replaceAll( "\\r\\n|\\r|\\n", System.getProperty( "line.separator" ) );
+	}
 }

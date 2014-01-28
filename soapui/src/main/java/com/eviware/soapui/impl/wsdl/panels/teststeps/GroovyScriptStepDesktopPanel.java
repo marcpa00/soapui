@@ -18,6 +18,8 @@ package com.eviware.soapui.impl.wsdl.panels.teststeps;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.support.actions.ShowOnlineHelpAction;
+import com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction;
+import com.eviware.soapui.impl.wsdl.actions.request.ReloadExternalFileAction;
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext;
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunner;
 import com.eviware.soapui.impl.wsdl.panels.support.TestRunComponentEnabler;
@@ -31,11 +33,8 @@ import com.eviware.soapui.model.settings.Settings;
 import com.eviware.soapui.model.settings.SettingsListener;
 import com.eviware.soapui.support.ListDataChangeListener;
 import com.eviware.soapui.support.UISupport;
-import com.eviware.soapui.support.components.JComponentInspector;
-import com.eviware.soapui.support.components.JEditorStatusBarWithProgress;
-import com.eviware.soapui.support.components.JInspectorPanel;
-import com.eviware.soapui.support.components.JInspectorPanelFactory;
-import com.eviware.soapui.support.components.JXToolBar;
+import com.eviware.soapui.support.action.swing.SwingActionDelegate;
+import com.eviware.soapui.support.components.*;
 import com.eviware.soapui.support.log.JLogList;
 import com.eviware.soapui.ui.support.ModelItemDesktopPanel;
 import org.apache.commons.lang.StringUtils;
@@ -84,6 +83,13 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
     public GroovyScriptStepDesktopPanel(WsdlGroovyScriptTestStep groovyStep) {
         super(groovyStep);
         this.groovyStep = groovyStep;
+		if( this.groovyStep.getContentInExternalFileSupport() != null )
+		{
+			if( this.groovyStep.getContentInExternalFileSupport().maybeReloadStepContent() )
+			{
+				this.groovyStep.setScript( this.groovyStep.getContentInExternalFileSupport().getContent() );
+			}
+		}
         componentEnabler = new TestRunComponentEnabler(groovyStep.getTestCase());
 
         buildUI();
@@ -154,7 +160,13 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
     private JComponent buildToolbar() {
         JXToolBar toolBar = UISupport.createToolbar();
         JButton runButton = UISupport.createToolbarButton(runAction);
+		JButton configureExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
+				ConfigureExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep.getContentInExternalFileSupport(), null, "/options.gif" ), true );
+		JButton reloadExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
+				ReloadExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep, null, "/arrow_refresh.png" ), true );
         toolBar.add(runButton);
+		toolBar.add( configureExternalFileButton );
+		toolBar.add( reloadExternalFileButton );
         toolBar.add(Box.createHorizontalGlue());
         JLabel label = new JLabel("<html>Script is invoked with <code>log</code>, <code>context</code> "
                 + "and <code>testRunner</code> variables</html>");
@@ -166,6 +178,8 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
         toolBar.add(UISupport.createToolbarButton(new ShowOnlineHelpAction(HelpUrls.GROOVYSTEPEDITOR_HELP_URL)));
 
         componentEnabler.add(runButton);
+		componentEnabler.add( configureExternalFileButton );
+		componentEnabler.add( reloadExternalFileButton );
 
         return toolBar;
     }
@@ -270,6 +284,7 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
 
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(SCRIPT_PROPERTY) && !updating) {
+		if( evt.getPropertyName().equals( SCRIPT_PROPERTY ) && !updating && editor != null)
             updating = true;
             editor.getEditArea().setText((String) evt.getNewValue());
             updating = false;

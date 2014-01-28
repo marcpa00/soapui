@@ -16,9 +16,17 @@
 
 package com.eviware.soapui.ui.desktop;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.impl.support.ContentInExternalFileSaveStatus;
+import com.eviware.soapui.impl.support.ContentInExternalFileSupport;
+import com.eviware.soapui.impl.wsdl.WsdlProject;
+import com.eviware.soapui.impl.wsdl.WsdlTestSuite;
+import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
+import com.eviware.soapui.impl.wsdl.teststeps.HttpTestRequestStep;
+import com.eviware.soapui.impl.wsdl.teststeps.WsdlGroovyScriptTestStep;
+import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequest;
+import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep;
+import com.eviware.soapui.impl.wsdl.teststeps.assertions.basic.GroovyScriptAssertion;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.iface.Interface;
 import com.eviware.soapui.model.iface.Operation;
@@ -32,13 +40,15 @@ import com.eviware.soapui.model.support.MockServiceListenerAdapter;
 import com.eviware.soapui.model.support.ProjectListenerAdapter;
 import com.eviware.soapui.model.support.TestSuiteListenerAdapter;
 import com.eviware.soapui.model.support.WorkspaceListenerAdapter;
-import com.eviware.soapui.model.testsuite.LoadTest;
-import com.eviware.soapui.model.testsuite.TestCase;
-import com.eviware.soapui.model.testsuite.TestStep;
-import com.eviware.soapui.model.testsuite.TestSuite;
+import com.eviware.soapui.model.testsuite.*;
 import com.eviware.soapui.model.workspace.Workspace;
 import com.eviware.soapui.security.SecurityTest;
 import com.eviware.soapui.support.action.swing.ActionList;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Abstract SoapUIDesktop implementation for extension
@@ -171,6 +181,8 @@ public abstract class AbstractSoapUIDesktop implements SoapUIDesktop {
         public void mockServiceRemoved(MockService mockService) {
             mockService.removeMockServiceListener(mockServiceListener);
             closeDependantPanels(mockService);
+		}
+
         }
     }
 

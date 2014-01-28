@@ -16,7 +16,11 @@
 
 package com.eviware.soapui.impl.wsdl.panels.teststeps.support;
 
+import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
+import com.eviware.soapui.impl.wsdl.WsdlTestSuite;
+import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
+import com.eviware.soapui.impl.wsdl.teststeps.assertions.basic.GroovyScriptAssertion;
 import com.eviware.soapui.model.settings.Settings;
 import com.eviware.soapui.model.settings.SettingsListener;
 import com.eviware.soapui.model.support.ModelSupport;
@@ -234,6 +238,17 @@ public class GroovyEditor extends JPanel implements JEditorStatusBarTarget, Prop
 
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(SCRIPT_PROPERTY)) {
+		String property = evt.getPropertyName();
+		if( property.equals( SCRIPT_PROPERTY )
+				|| property.equals( WsdlProject.AFTER_LOAD_SCRIPT_PROPERTY_RELOAD )
+				|| property.equals( WsdlProject.BEFORE_SAVE_SCRIPT_PROPERTY_RELOAD )
+				|| property.equals( WsdlProject.AFTER_RUN_SCRIPT_PROPERTY_RELOAD )
+				|| property.equals( WsdlProject.BEFORE_RUN_SCRIPT_PROPERTY_RELOAD )
+				|| property.equals( WsdlTestSuite.SETUP_SCRIPT_PROPERTY_RELOAD )
+				|| property.equals( WsdlTestSuite.TEARDOWN_SCRIPT_PROPERTY_RELOAD )
+				|| property.equals( WsdlTestCase.SETUP_SCRIPT_PROPERTY_RELOAD )
+				|| property.equals( WsdlTestCase.TEARDOWN_SCRIPT_PROPERTY_RELOAD )
+				|| property.equals( GroovyScriptAssertion.GROOVY_ASSERTION_SCRIPT_PROPERTY_RELOAD ) )
             updating = true;
             editArea.setText(String.valueOf(evt.getNewValue()));
             updating = false;

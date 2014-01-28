@@ -27,17 +27,13 @@ import java.util.Map;
 import java.util.Set;
 
 import com.eviware.soapui.SoapUI;
-import com.eviware.soapui.config.LoadTestConfig;
-import com.eviware.soapui.config.SecurityTestConfig;
-import com.eviware.soapui.config.TestCaseConfig;
-import com.eviware.soapui.config.TestCaseDocumentConfig;
-import com.eviware.soapui.config.TestStepSecurityTestConfig;
-import com.eviware.soapui.config.TestSuiteConfig;
-import com.eviware.soapui.config.TestSuiteRunTypesConfig;
+import com.eviware.soapui.config.*;
 import com.eviware.soapui.config.TestSuiteRunTypesConfig.Enum;
+import com.eviware.soapui.impl.support.ContentInExternalFileSupport;
 import com.eviware.soapui.impl.wsdl.loadtest.WsdlLoadTest;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestSuiteRunner;
+import com.eviware.soapui.impl.wsdl.teststeps.ScriptCategory;
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestStep;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.support.ModelSupport;
@@ -64,6 +60,8 @@ import com.eviware.soapui.support.types.StringToObjectMap;
 public class WsdlTestSuite extends AbstractTestPropertyHolderWsdlModelItem<TestSuiteConfig> implements TestSuite {
     public final static String SETUP_SCRIPT_PROPERTY = WsdlTestSuite.class.getName() + "@setupScript";
     public final static String TEARDOWN_SCRIPT_PROPERTY = WsdlTestSuite.class.getName() + "@tearDownScript";
+	public final static String SETUP_SCRIPT_PROPERTY_RELOAD = SETUP_SCRIPT_PROPERTY + "Reload";
+	public final static String TEARDOWN_SCRIPT_PROPERTY_RELOAD = TEARDOWN_SCRIPT_PROPERTY + "Reload";
     public static final String ICON_NAME = "/testSuite.gif";
 
     private final WsdlProject project;
@@ -72,6 +70,8 @@ public class WsdlTestSuite extends AbstractTestPropertyHolderWsdlModelItem<TestS
     private Set<TestSuiteRunListener> testSuiteRunListeners = new HashSet<TestSuiteRunListener>();
     private SoapUIScriptEngine setupScriptEngine;
     private SoapUIScriptEngine tearDownScriptEngine;
+	private ContentInExternalFileSupport setupScriptContentInExternalFile;
+	private ContentInExternalFileSupport tearDownScriptContentInExternalFile;
 
     public WsdlTestSuite(WsdlProject project, TestSuiteConfig config) {
         super(config, project, ICON_NAME);
@@ -82,6 +82,32 @@ public class WsdlTestSuite extends AbstractTestPropertyHolderWsdlModelItem<TestS
         }
 
         setPropertiesConfig(config.getProperties());
+
+		ScriptConfig scriptConfig = null;
+		if( config.isSetSetupScript() )
+		{
+			scriptConfig = config.getSetupScript();
+		}
+		else
+		{
+			scriptConfig = ScriptConfig.Factory.newInstance();
+			scriptConfig.setStringValue( "" );
+		}
+
+		setupScriptContentInExternalFile = new ContentInExternalFileSupport( this, ScriptCategory.TEST_SUITE_SETUP, scriptConfig, getSettings() );
+		setupScriptContentInExternalFile.initExternalFilenameSupport();
+
+		if( config.isSetTearDownScript() )
+		{
+			scriptConfig = config.getTearDownScript();
+		}
+		else
+		{
+			scriptConfig = ScriptConfig.Factory.newInstance();
+			scriptConfig.setStringValue( "" );
+		}
+		tearDownScriptContentInExternalFile = new ContentInExternalFileSupport( this, ScriptCategory.TEST_SUITE_TEARDOWN, scriptConfig, getSettings() );
+		tearDownScriptContentInExternalFile.initExternalFilenameSupport();
 
         List<TestCaseConfig> testCaseConfigs = config.getTestCaseList();
         for (int i = 0; i < testCaseConfigs.size(); i++) {
@@ -696,5 +722,25 @@ public class WsdlTestSuite extends AbstractTestPropertyHolderWsdlModelItem<TestS
         for (int c = 0; c < a.length; c++) {
             a[c].securityTestRemoved(securityTest);
         }
+	}
+
+	public ContentInExternalFileSupport getSetupScriptContentInExternalFile()
+	{
+		return setupScriptContentInExternalFile;
+	}
+
+	public void setSetupScriptContentInExternalFile( ContentInExternalFileSupport setupScriptContentInExternalFile )
+	{
+		this.setupScriptContentInExternalFile = setupScriptContentInExternalFile;
+	}
+
+	public ContentInExternalFileSupport getTearDownScriptContentInExternalFile()
+	{
+		return tearDownScriptContentInExternalFile;
+	}
+
+	public void setTearDownScriptContentInExternalFile( ContentInExternalFileSupport tearDownScriptContentInExternalFile )
+	{
+		this.tearDownScriptContentInExternalFile = tearDownScriptContentInExternalFile;
     }
 }

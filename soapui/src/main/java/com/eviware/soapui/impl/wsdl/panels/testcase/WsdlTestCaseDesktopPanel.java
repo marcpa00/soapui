@@ -102,6 +102,8 @@ public class WsdlTestCaseDesktopPanel extends KeySensitiveModelItemDesktopPanel<
 
     public WsdlTestCaseDesktopPanel(WsdlTestCase testCase) {
         super(testCase);
+		// needed for synchronizing with loadUI
+		this.testCase = testCase;
 
         buildUI();
 
@@ -236,11 +238,13 @@ public class WsdlTestCaseDesktopPanel extends KeySensitiveModelItemDesktopPanel<
 
     protected GroovyEditorComponent buildTearDownScriptPanel() {
         tearDownGroovyEditor = new GroovyEditorComponent(new TearDownScriptGroovyEditorModel(), null);
+		testCase.addPropertyChangeListener( WsdlTestCase.TEARDOWN_SCRIPT_PROPERTY_RELOAD, tearDownGroovyEditor );
         return tearDownGroovyEditor;
     }
 
     protected GroovyEditorComponent buildSetupScriptPanel() {
         setupGroovyEditor = new GroovyEditorComponent(new SetupScriptGroovyEditorModel(), null);
+		testCase.addPropertyChangeListener( WsdlTestCase.SETUP_SCRIPT_PROPERTY_RELOAD, setupGroovyEditor );
         return setupGroovyEditor;
     }
 
