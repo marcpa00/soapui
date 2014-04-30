@@ -36,14 +36,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PathUtils
-{
-	private final static char[] FILENAME_ILLEGAL_CHARACTERS = { '/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':' };
+public class PathUtils {
+    private final static char[] FILENAME_ILLEGAL_CHARACTERS = {'/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':'};
 
+    File folder = new File(path);
+
+    public static String getAbsoluteFolder(String path) {
         File folder = new File(path);
-	public static String getAbsoluteFolder( String path )
-	{
-		File folder = new File( path );
 
         if (!folder.exists()) {
             return null;
@@ -60,10 +59,10 @@ public class PathUtils
     public static String expandPath(String path, AbstractWsdlModelItem<?> modelItem) {
         return expandPath(path, modelItem, null);
     }
-	public static String expandPath( String path, AbstractWsdlModelItem<?> modelItem )
-	{
-		return expandPath( path, modelItem, null );
-	}
+
+    public static String expandPath(String path, AbstractWsdlModelItem<?> modelItem) {
+        return expandPath(path, modelItem, null);
+    }
 
     public static String expandPath(String path, AbstractWsdlModelItem<?> modelItem, PropertyExpansionContext context) {
         // if ( path != null ) {
@@ -74,15 +73,16 @@ public class PathUtils
         // }
         path = context == null ? PropertyExpander.expandProperties(modelItem, path) : PropertyExpander
                 .expandProperties(context, path);
-	public static String expandPath( String path, AbstractWsdlModelItem<?> modelItem, PropertyExpansionContext context )
-	{
-		// if ( path != null ) {
-		path = stripQuotes( path );
-		if( isHttpPath( path ) )
-			path = path.replaceAll( " ", "%20" );
-		// }
-		path = context == null ? PropertyExpander.expandProperties( modelItem, path ) : PropertyExpander
-				.expandProperties( context, path );
+
+    public static String expandPath(String path, AbstractWsdlModelItem<?> modelItem, PropertyExpansionContext context) {
+        // if ( path != null ) {
+        path = stripQuotes(path);
+        if (isHttpPath(path)) {
+            path = path.replaceAll(" ", "%20");
+        }
+        // }
+        path = context == null ? PropertyExpander.expandProperties(modelItem, path) : PropertyExpander
+                .expandProperties(context, path);
 
         if (!isRelativePath(path)) {
             return path;
@@ -111,10 +111,10 @@ public class PathUtils
         return path;
     }
 
-	public static String adjustRelativePath( String str, String root, ModelItem contextModelItem )
-	{
-		if( StringUtils.isNullOrEmpty( root ) || StringUtils.isNullOrEmpty( str ) )
-			return str;
+    public static String adjustRelativePath(String str, String root, ModelItem contextModelItem) {
+        if (StringUtils.isNullOrEmpty(root) || StringUtils.isNullOrEmpty(str)) {
+            return str;
+        }
 
         if (!isRelativePath(str)) {
             return str;
@@ -399,55 +399,50 @@ public class PathUtils
         }
 
         return path;
-	}
+    }
 
-	/**
-	 * Take a <code>filename</code> and replace characters that may be problematic in a multi-plateform scenario
-	 * with an underscore character.
-	 * <p>
-	 *    NOTE: it is assumed that <code>filename</code> is *not* a pathname, i.e. any occurance of File.separatorChar
-	 *    in <i>filename</i> is unwanted and will be replaced with an underscore.  In other words, this method assumes
-	 *    that it receives a terminal part, not a path.
-	 * </p>
-	 *
-	 * @param filename The string to check for problematic characters, assuming the string will be used at some point
-	 *                 to construct a physical File on many different plateforms (windows, unix, macos)
-	 * @return a new string with every problematic character replaced with the underscore, "_" , character.
-	 */
-	public static String replaceProblematicCharactersWithUnderscore(String filename)
-	{
-		if ( filename == null || filename.isEmpty() )
-		{
-			return "";
-		}
-		StringBuffer result = new StringBuffer();
-		FILENAME_CHARS:
-		for ( Character c : filename.toCharArray() )
-		{
-			for ( Character unwanted : FILENAME_ILLEGAL_CHARACTERS )
-			{
-				if ( c == unwanted )
-				{
-					result.append( '_' );
-					continue FILENAME_CHARS;
-				}
-			}
-			result.append( c );
-		}
-		return result.toString();
-	}
+    /**
+     * Take a <code>filename</code> and replace characters that may be problematic in a multi-plateform scenario
+     * with an underscore character.
+     * <p>
+     * NOTE: it is assumed that <code>filename</code> is *not* a pathname, i.e. any occurance of File.separatorChar
+     * in <i>filename</i> is unwanted and will be replaced with an underscore.  In other words, this method assumes
+     * that it receives a terminal part, not a path.
+     * </p>
+     *
+     * @param filename The string to check for problematic characters, assuming the string will be used at some point
+     *                 to construct a physical File on many different plateforms (windows, unix, macos)
+     * @return a new string with every problematic character replaced with the underscore, "_" , character.
+     */
+    public static String replaceProblematicCharactersWithUnderscore(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "";
+        }
+        StringBuffer result = new StringBuffer();
+        FILENAME_CHARS:
+        for (Character c : filename.toCharArray()) {
+            for (Character unwanted : FILENAME_ILLEGAL_CHARACTERS) {
+                if (c == unwanted) {
+                    result.append('_');
+                    continue FILENAME_CHARS;
+                }
+            }
+            result.append(c);
+        }
+        return result.toString();
+    }
 
-	public static List<String> asfilePartList(String pathname) {
-		List<String> parts = new ArrayList<String>();
-		if (pathname == null || pathname.isEmpty()) {
-			return parts;
-		}
-		String part = null;
-		File f = new File(pathname);
-		while ( f != null && ( part = f.getName() ) != null ) {
-			parts.add( 0, part );
-			f = f.getParentFile();
-		}
-		return parts;
+    public static List<String> asfilePartList(String pathname) {
+        List<String> parts = new ArrayList<String>();
+        if (pathname == null || pathname.isEmpty()) {
+            return parts;
+        }
+        String part = null;
+        File f = new File(pathname);
+        while (f != null && (part = f.getName()) != null) {
+            parts.add(0, part);
+            f = f.getParentFile();
+        }
+        return parts;
     }
 }

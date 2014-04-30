@@ -6,5 +6,5 @@ package com.eviware.soapui.impl.support;
  * @author Marc Paquette
  */
 public enum ContentInExternalFileLoadStatus {
-	LOADED, NOT_LOADED, SAVED_ON_LOAD
+    LOADED, NOT_LOADED, SAVED_ON_LOAD
 }

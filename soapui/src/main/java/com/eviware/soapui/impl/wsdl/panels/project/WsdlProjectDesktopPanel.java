@@ -298,13 +298,13 @@ public class WsdlProjectDesktopPanel extends ModelItemDesktopPanel<WsdlProject> 
 
     protected GroovyEditorComponent buildLoadScriptPanel() {
         loadScriptGroovyEditor = new GroovyEditorComponent(new LoadScriptGroovyEditorModel(), null);
-		getModelItem().addPropertyChangeListener( WsdlProject.AFTER_LOAD_SCRIPT_PROPERTY_RELOAD, loadScriptGroovyEditor );
+        getModelItem().addPropertyChangeListener(WsdlProject.AFTER_LOAD_SCRIPT_PROPERTY_RELOAD, loadScriptGroovyEditor);
         return loadScriptGroovyEditor;
     }
 
     protected GroovyEditorComponent buildSaveScriptPanel() {
         saveScriptGroovyEditor = new GroovyEditorComponent(new SaveScriptGroovyEditorModel(), null);
-		getModelItem().addPropertyChangeListener( WsdlProject.BEFORE_SAVE_SCRIPT_PROPERTY_RELOAD, saveScriptGroovyEditor );
+        getModelItem().addPropertyChangeListener(WsdlProject.BEFORE_SAVE_SCRIPT_PROPERTY_RELOAD, saveScriptGroovyEditor);
         return saveScriptGroovyEditor;
     }
 

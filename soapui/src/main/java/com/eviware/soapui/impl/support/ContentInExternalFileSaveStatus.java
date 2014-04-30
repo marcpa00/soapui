@@ -6,5 +6,5 @@ package com.eviware.soapui.impl.support;
  * @author Marc Paquette
  */
 public enum ContentInExternalFileSaveStatus {
-	SAVED, NOT_SAVED, RELOADED
+    SAVED, NOT_SAVED, RELOADED
 }

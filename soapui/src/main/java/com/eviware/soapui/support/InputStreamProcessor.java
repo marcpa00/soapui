@@ -8,7 +8,7 @@ import java.io.InputStream;
  * From http://tutorials.jenkov.com/java-exception-handling/exception-handling-templates.html
  */
 public interface InputStreamProcessor {
-	public void process(InputStream input) throws IOException;
+    public void process(InputStream input) throws IOException;
 
-	public String getResult();
+    public String getResult();
 }

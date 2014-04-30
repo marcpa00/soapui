@@ -24,5 +24,5 @@ public final class Script {
 
     public final static String RESULT_PROPERTY = "result";
     public final static String SCRIPT_PROPERTY = "script";
-	public final static String SCRIPT_ALT_PROPERTY = "scriptText";
+    public final static String SCRIPT_ALT_PROPERTY = "scriptText";
 }

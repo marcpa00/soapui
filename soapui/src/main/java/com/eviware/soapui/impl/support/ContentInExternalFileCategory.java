@@ -6,5 +6,5 @@ package com.eviware.soapui.impl.support;
  * @author Marc Paquette
  */
 public enum ContentInExternalFileCategory {
-	WSDL_STEP, GROOVY_STEP, GROOVY_ASSERTION, SCRIPT
+    WSDL_STEP, GROOVY_STEP, GROOVY_ASSERTION, SCRIPT
 }
