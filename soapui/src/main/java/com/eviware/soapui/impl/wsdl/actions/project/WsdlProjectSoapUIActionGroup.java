@@ -60,12 +60,12 @@ public class WsdlProjectSoapUIActionGroup extends AbstractSoapUIActionGroup<Wsdl
                     !project.isRemote() && project.getPath() != null);
             mappings.getMapping(StartHermesJMS.SOAPUI_ACTION_ID).setEnabled(HermesUtils.isHermesJMSSupported());
 
-			mappings.getMapping( SaveProjectIncludingContentAction.SOAPUI_ACTION_ID ).setEnabled(
-					project.getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) && ! project.getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE )
-			);
-			mappings.getMapping( SaveProjectAsIncludingContentAction.SOAPUI_ACTION_ID ).setEnabled(
-					project.getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) && ! project.getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE )
-			);
+            mappings.getMapping(SaveProjectIncludingContentAction.SOAPUI_ACTION_ID).setEnabled(
+                    project.getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) && !project.getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE)
+            );
+            mappings.getMapping(SaveProjectAsIncludingContentAction.SOAPUI_ACTION_ID).setEnabled(
+                    project.getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) && !project.getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE)
+            );
 
             return mappings;
         }

@@ -23,34 +23,34 @@ import com.eviware.soapui.model.support.AbstractModelItem;
 import com.eviware.soapui.support.action.support.AbstractSoapUIAction;
 
 public class ReloadExternalFileAction extends AbstractSoapUIAction<ModelItem> {
-	public static final String SOAPUI_ACTION_ID = "ReloadExternalFileAction";
-	private ContentInExternalFileSupport contentInExternalFileSupport = null;
+    public static final String SOAPUI_ACTION_ID = "ReloadExternalFileAction";
+    private ContentInExternalFileSupport contentInExternalFileSupport = null;
 
-	public ReloadExternalFileAction() {
-		super("Reload external file for step", "Synchronize content with external file");
-	}
+    public ReloadExternalFileAction() {
+        super("Reload external file for step", "Synchronize content with external file");
+    }
 
-	public void perform(ModelItem modelItem, Object param) {
-		WsdlGroovyScriptTestStep wsdlGroovyScriptTestStep = null;
-		WsdlTestRequestStep wsdlTestRequestStep = null;
-		GroovyScriptAssertion groovyScriptAssertion = null;
-		if(modelItem instanceof ContentInExternalFileSupport) {
-			contentInExternalFileSupport = (ContentInExternalFileSupport)modelItem;
-		} else if(modelItem instanceof WsdlGroovyScriptTestStep) {
-			wsdlGroovyScriptTestStep = (WsdlGroovyScriptTestStep)modelItem;
-			contentInExternalFileSupport = wsdlGroovyScriptTestStep.getContentInExternalFileSupport();
-		} else if(modelItem instanceof WsdlTestRequestStep) {
-			wsdlTestRequestStep = (WsdlTestRequestStep)modelItem;
-			contentInExternalFileSupport = wsdlTestRequestStep.getContentInExternalFileSupport();
-		} else if(modelItem instanceof GroovyScriptAssertion) {
-			groovyScriptAssertion = (GroovyScriptAssertion)modelItem;
-			contentInExternalFileSupport = groovyScriptAssertion.getContentInExternalFileSupport();
-		}
-		if(contentInExternalFileSupport != null) {
-			contentInExternalFileSupport.loadContent();
-			contentInExternalFileSupport.updateScript();
-			contentInExternalFileSupport.updateConfig();
-			SoapUI.log.debug("ReloadExternalFileAction.perform() : external file reloaded.");
-		}
-	}
+    public void perform(ModelItem modelItem, Object param) {
+        WsdlGroovyScriptTestStep wsdlGroovyScriptTestStep = null;
+        WsdlTestRequestStep wsdlTestRequestStep = null;
+        GroovyScriptAssertion groovyScriptAssertion = null;
+        if (modelItem instanceof ContentInExternalFileSupport) {
+            contentInExternalFileSupport = (ContentInExternalFileSupport) modelItem;
+        } else if (modelItem instanceof WsdlGroovyScriptTestStep) {
+            wsdlGroovyScriptTestStep = (WsdlGroovyScriptTestStep) modelItem;
+            contentInExternalFileSupport = wsdlGroovyScriptTestStep.getContentInExternalFileSupport();
+        } else if (modelItem instanceof WsdlTestRequestStep) {
+            wsdlTestRequestStep = (WsdlTestRequestStep) modelItem;
+            contentInExternalFileSupport = wsdlTestRequestStep.getContentInExternalFileSupport();
+        } else if (modelItem instanceof GroovyScriptAssertion) {
+            groovyScriptAssertion = (GroovyScriptAssertion) modelItem;
+            contentInExternalFileSupport = groovyScriptAssertion.getContentInExternalFileSupport();
+        }
+        if (contentInExternalFileSupport != null) {
+            contentInExternalFileSupport.loadContent();
+            contentInExternalFileSupport.updateScript();
+            contentInExternalFileSupport.updateConfig();
+            SoapUI.log.debug("ReloadExternalFileAction.perform() : external file reloaded.");
+        }
+    }
 }

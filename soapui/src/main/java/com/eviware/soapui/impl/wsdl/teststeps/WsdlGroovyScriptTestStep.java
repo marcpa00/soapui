@@ -76,30 +76,48 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
                 saveScript(config);
                 initTestRequestStepInExternalFile(config);
             }
-            }
-        } else {
-            readConfig(config);
-        }
-
-        addProperty(new DefaultTestStepProperty(RESULT_PROPERTY, true, new DefaultTestStepProperty.PropertyHandlerAdapter() {
-
-            public String getValue(DefaultTestStepProperty property) {
-                return scriptResult == null ? null : scriptResult.toString();
-            }
-        }, this));
-
-        addProperty(new TestStepBeanProperty(SCRIPT_PROPERTY, false, this, SCRIPT_PROPERTY, this));
-
-        scriptEngine = SoapUIScriptEngineRegistry.create(this);
-        scriptEngine.setScript(getScript());
-        if (forLoadTest && !isDisabled()) {
-            try {
-                scriptEngine.compile();
-            } catch (Exception e) {
-                SoapUI.logError(e);
-            }
         }
     }
+
+    else
+
+    {
+        readConfig(config);
+    }
+
+    addProperty(new DefaultTestStepProperty(RESULT_PROPERTY, true,new DefaultTestStepProperty.PropertyHandlerAdapter() {
+
+        public String getValue (DefaultTestStepProperty property){
+            return scriptResult == null ? null : scriptResult.toString();
+        }
+    }
+
+    ,this));
+
+    addProperty(new TestStepBeanProperty(SCRIPT_PROPERTY, false,this,SCRIPT_PROPERTY, this)
+
+    );
+
+    scriptEngine=SoapUIScriptEngineRegistry.create(this);
+    scriptEngine.setScript(
+
+    getScript()
+
+    );
+    if(forLoadTest&&!
+
+    isDisabled()
+
+    )
+
+    {
+        try {
+            scriptEngine.compile();
+        } catch (Exception e) {
+            SoapUI.logError(e);
+        }
+    }
+}
 
     public Logger getLogger() {
         SoapUI.ensureGroovyLog();
@@ -108,33 +126,32 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 
     /**
      * Read config to initialize current test step.
-     *
-     * This is a groovy script, but the 'script' element is *not* a 'Script' XML type as defined in the XSD, simply an instance of an anyType.
-     *
-     * However, when reading a config, we create an instance of ScriptConfig because its API is more natural than fiddling with XmlObject/XmlCursor
+     * This is a groovy script, but the 'script' element is *not* a 'Script' XML type as defined in the XSD, simply an
+     * instance of an anyType.
+     * However, when reading a config, we create an instance of ScriptConfig because its API is more natural than
+     * fiddling with XmlObject/XmlCursor
      * directly.  At the end, this test step config is set from the xml representation built up in ScriptConfig.
-     *
      * Therefore, the ScriptConfig object created here does not live past beyond the return point of this method.
      *
      * @param config
      */
-	private void readConfig(TestStepConfig config) {
-		if (! getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE )) {
-			XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( config.getConfig() );
-			scriptText = reader.readString( SCRIPT_PROPERTY, "" );
-		} else {
-			initTestRequestStepInExternalFile(config);
-		}
-	}
+    private void readConfig(TestStepConfig config) {
+        if (!getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+            XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader(config.getConfig());
+            scriptText = reader.readString(SCRIPT_PROPERTY, "");
+        } else {
+            initTestRequestStepInExternalFile(config);
+        }
+    }
 
-	private void initTestRequestStepInExternalFile( TestStepConfig testStepConfig) {
-		contentInExternalFileSupport = new ContentInExternalFileSupport(this, testStepConfig, getSettings());
-		contentInExternalFileSupport.initExternalFilenameSupport();
-		scriptText = contentInExternalFileSupport.getContent();
+    private void initTestRequestStepInExternalFile(TestStepConfig testStepConfig) {
+        contentInExternalFileSupport = new ContentInExternalFileSupport(this, testStepConfig, getSettings());
+        contentInExternalFileSupport.initExternalFilenameSupport();
+        scriptText = contentInExternalFileSupport.getContent();
     }
 
     private void saveScript(TestStepConfig config) {
-        if (!getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE ) || (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE ) && getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE ))) {
+        if (!getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) || (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) && getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE))) {
 
             // XmlObjectConfigurationBuilder is providing a simpler API that manipulating XmlObject directly, but it wipes out attributes on 'script' element :
             // that is why we resort to bits and pieces instead when script exists already
@@ -147,127 +164,127 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
                 cursor.setTextValue(scriptText);
                 cursor.dispose();
             } else {
-        XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
-        builder.add(SCRIPT_PROPERTY, scriptText);
-        config.setConfig(builder.finish());
-    }
+                XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
+                builder.add(SCRIPT_PROPERTY, scriptText);
+                config.setConfig(builder.finish());
+            }
 
             //XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
             //builder.add( "script", scriptText );
             //config.setConfig( builder.finish() );
         }
         // when in step in external file mode, no need to "save" the content into config, scriptText will be written to file at save time
-	}
+    }
 
+super.resetConfigOnMove(config);
+readConfig(config);
+}
+public void resetConfigOnMove(TestStepConfig config)
+        {
         super.resetConfigOnMove(config);
-        readConfig(config);
-    }
-	public void resetConfigOnMove( TestStepConfig config )
-	{
-		super.resetConfigOnMove( config );
-		readConfig( config );
-	}
+readConfig(config);
+}
 
-    public String getDefaultSourcePropertyName() {
+public String getDefaultSourcePropertyName(){
         return RESULT_PROPERTY;
-    }
+}
 
-    public TestStepResult run(TestCaseRunner testRunner, TestCaseRunContext context) {
+public TestStepResult run(TestCaseRunner testRunner,TestCaseRunContext context){
         SoapUI.ensureGroovyLog();
 
-        WsdlTestStepResult result = new WsdlTestStepResult(this);
-        Logger log = (Logger) context.getProperty("log");
-        if (log == null) {
-            log = logger;
+WsdlTestStepResult result=new WsdlTestStepResult(this);
+Logger log=(Logger)context.getProperty("log");
+if(log==null){
+        log=logger;
+}
+
+        try{
+        if(scriptText.trim().length()>0){
+synchronized(this){
+        scriptEngine.setVariable("context",context);
+scriptEngine.setVariable("testRunner",testRunner);
+scriptEngine.setVariable("log",log);
+
+result.setTimeStamp(System.currentTimeMillis());
+result.startTimer();
+scriptResult=scriptEngine.run();
+result.stopTimer();
+
+if(scriptResult!=null){
+        result.addMessage("Script-result: "+scriptResult.toString());
+// FIXME The property should not me hard coded
+firePropertyValueChanged(RESULT_PROPERTY,null,String.valueOf(result));
+}
+
+        }
         }
 
-        try {
-            if (scriptText.trim().length() > 0) {
-                synchronized (this) {
-                    scriptEngine.setVariable("context", context);
-                    scriptEngine.setVariable("testRunner", testRunner);
-                    scriptEngine.setVariable("log", log);
+        // testRunner status may have been changed by script..
+        Status testRunnerStatus=testRunner.getStatus();
+if(testRunnerStatus==Status.FAILED){
+        result.setStatus(TestStepStatus.FAILED);
+}else if(testRunnerStatus==Status.CANCELED){
+        result.setStatus(TestStepStatus.CANCELED);
+}else{
+        result.setStatus(TestStepStatus.OK);
+}
+        }catch(Throwable e){
+        String errorLineNumber=GroovyUtils.extractErrorLineNumber(e);
 
-                    result.setTimeStamp(System.currentTimeMillis());
-                    result.startTimer();
-                    scriptResult = scriptEngine.run();
-                    result.stopTimer();
+SoapUI.logError(e);
+result.stopTimer();
+result.addMessage(e.toString());
+if(errorLineNumber!=null){
+        result.addMessage("error at line: "+errorLineNumber);
+}
+        result.setError(e);
+result.setStatus(TestStepStatus.FAILED);
+}finally{
+        if(!isForLoadTest()){
+        setIcon(result.getStatus()==TestStepStatus.FAILED?failedIcon:okIcon);
+}
 
-                    if (scriptResult != null) {
-                        result.addMessage("Script-result: " + scriptResult.toString());
-                        // FIXME The property should not me hard coded
-                        firePropertyValueChanged(RESULT_PROPERTY, null, String.valueOf(result));
-                    }
-
-                }
-            }
-
-            // testRunner status may have been changed by script..
-            Status testRunnerStatus = testRunner.getStatus();
-            if (testRunnerStatus == Status.FAILED) {
-                result.setStatus(TestStepStatus.FAILED);
-            } else if (testRunnerStatus == Status.CANCELED) {
-                result.setStatus(TestStepStatus.CANCELED);
-            } else {
-                result.setStatus(TestStepStatus.OK);
-            }
-        } catch (Throwable e) {
-            String errorLineNumber = GroovyUtils.extractErrorLineNumber(e);
-
-            SoapUI.logError(e);
-            result.stopTimer();
-            result.addMessage(e.toString());
-            if (errorLineNumber != null) {
-                result.addMessage("error at line: " + errorLineNumber);
-            }
-            result.setError(e);
-            result.setStatus(TestStepStatus.FAILED);
-        } finally {
-            if (!isForLoadTest()) {
-                setIcon(result.getStatus() == TestStepStatus.FAILED ? failedIcon : okIcon);
-            }
-
-            if (scriptEngine != null) {
-                scriptEngine.clearVariables();
-            }
+        if(scriptEngine!=null){
+        scriptEngine.clearVariables();
+}
         }
 
         return result;
-    }
-
-    public String getScript() {
-        return scriptText;
-    }
-
-    public void setScript(String scriptText) {
-        if (scriptText.equals(this.scriptText)) {
-            return;
-        }
-
-        String oldScript = this.scriptText;
-        this.scriptText = scriptText;
-        scriptEngine.setScript(scriptText);
-        contentInExternalFileSupport.setContent( scriptText );
-        saveScript(getConfig());
-
-        notifyPropertyChanged(SCRIPT_PROPERTY, oldScript, scriptText);
-    }
-
-    @Override
-    public void release() {
-        super.release();
-        scriptEngine.release();
-    }
-
-    public PropertyExpansion[] getPropertyExpansions() {
-        PropertyExpansionsResult result = new PropertyExpansionsResult(this);
-
-        result.extractAndAddAll(SCRIPT_PROPERTY);
-
-        return result.toArray();
-    }
-
-    public ContentInExternalFileSupport getContentInExternalFileSupport() {
-        return contentInExternalFileSupport;
-    }
 }
+
+public String getScript(){
+        return scriptText;
+}
+
+public void setScript(String scriptText){
+        if(scriptText.equals(this.scriptText)){
+        return;
+}
+
+        String oldScript=this.scriptText;
+this.scriptText=scriptText;
+scriptEngine.setScript(scriptText);
+contentInExternalFileSupport.setContent(scriptText);
+saveScript(getConfig());
+
+notifyPropertyChanged(SCRIPT_PROPERTY,oldScript,scriptText);
+}
+
+@Override
+public void release(){
+        super.release();
+scriptEngine.release();
+}
+
+public PropertyExpansion[]getPropertyExpansions(){
+        PropertyExpansionsResult result=new PropertyExpansionsResult(this);
+
+result.extractAndAddAll(SCRIPT_PROPERTY);
+
+return result.toArray();
+}
+
+public ContentInExternalFileSupport getContentInExternalFileSupport(){
+        return contentInExternalFileSupport;
+}
+        }

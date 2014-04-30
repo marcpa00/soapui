@@ -94,7 +94,7 @@ public class ConsoleDialogs implements XDialogs {
         return 2;
     }
 
-    public int yesYesToAllNoNoToAll( String question, String title, String yesToAllLabel, String noToAllLabel ) {
+    public int yesYesToAllNoNoToAll(String question, String title, String yesToAllLabel, String noToAllLabel) {
         return 2;
     }
 }

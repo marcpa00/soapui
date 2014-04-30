@@ -98,49 +98,44 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
     private final InternalInterfaceListener interfaceListener = new InternalInterfaceListener();
     private WsdlSubmit<WsdlRequest> submit;
 
-	private ContentInExternalFileSupport contentInExternalFileSupport;
+    private ContentInExternalFileSupport contentInExternalFileSupport;
 
+    super(testCase,config,true,forLoadTest);
+
+    public WsdlTestRequestStep(WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest) {
         super(testCase, config, true, forLoadTest);
-	public WsdlTestRequestStep( WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest )
-	{
-		super( testCase, config, true, forLoadTest );
 
         if (getConfig().getConfig() != null) {
             requestStepConfig = (RequestStepConfig) getConfig().getConfig().changeType(RequestStepConfig.type);
-		if( getConfig().getConfig() != null )
-		{
-			requestStepConfig = ( RequestStepConfig )getConfig().getConfig().changeType( RequestStepConfig.type );
+            if (getConfig().getConfig() != null) {
+                requestStepConfig = (RequestStepConfig) getConfig().getConfig().changeType(RequestStepConfig.type);
 
-			wsdlOperation = findWsdlOperation();
-			if( wsdlOperation == null )
-			{
-				log.error( "Could not find operation [" + requestStepConfig.getOperation() + "] in interface ["
-						+ requestStepConfig.getInterface() + "] for test request [" + getName() + "] in TestCase ["
-						+ getTestCase().getTestSuite().getName() + "/" + getTestCase().getName() + "]" );
-				// requestStepConfig.setRequest(null);
-				setDisabled( true );
-			}
-			else
-			{
-				initTestRequest( config, forLoadTest );
-				contentInExternalFileSupport = new ContentInExternalFileSupport( this, testRequest, requestStepConfig, getSettings() );
-				contentInExternalFileSupport.initExternalFilenameSupport();
-				if( getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) )
-				{
-					requestStepConfig.getRequest().getRequest().setStringValue( contentInExternalFileSupport.getContent() );
-					testRequest.setRequestContent( contentInExternalFileSupport.getContent() );
-					testRequest.updateConfig( requestStepConfig.getRequest() );
-				}
-			}
+                wsdlOperation = findWsdlOperation();
+                if (wsdlOperation == null) {
+                    log.error("Could not find operation [" + requestStepConfig.getOperation() + "] in interface ["
+                            + requestStepConfig.getInterface() + "] for test request [" + getName() + "] in TestCase ["
+                            + getTestCase().getTestSuite().getName() + "/" + getTestCase().getName() + "]");
+                    // requestStepConfig.setRequest(null);
+                    setDisabled(true);
+                } else {
+                    initTestRequest(config, forLoadTest);
+                    contentInExternalFileSupport = new ContentInExternalFileSupport(this, testRequest, requestStepConfig, getSettings());
+                    contentInExternalFileSupport.initExternalFilenameSupport();
+                    if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+                        requestStepConfig.getRequest().getRequest().setStringValue(contentInExternalFileSupport.getContent());
+                        testRequest.setRequestContent(contentInExternalFileSupport.getContent());
+                        testRequest.updateConfig(requestStepConfig.getRequest());
+                    }
+                }
 
-            requestStepConfig = (RequestStepConfig) getConfig().addNewConfig().changeType(RequestStepConfig.type);
+                requestStepConfig = (RequestStepConfig) getConfig().addNewConfig().changeType(RequestStepConfig.type);
+            }
+
+            // init properties
+            if (testRequest != null) {
+                initRequestProperties();
+            }
         }
-
-        // init properties
-        if (testRequest != null) {
-            initRequestProperties();
-        }
-    }
 
     private void initRequestProperties() {
         addProperty(new TestStepBeanProperty("Endpoint", false, testRequest, "endpoint", this, false));
@@ -148,58 +143,67 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
         addProperty(new TestStepBeanProperty("Password", false, testRequest, "password", this, true));
         addProperty(new TestStepBeanProperty("Domain", false, testRequest, "domain", this, false));
         addProperty(new TestStepBeanProperty("AuthType", false, testRequest, "authType", this, true) {
-		{
+            {
 
-            @Override
-            public String getDefaultValue() {
+                @Override
+                public String getDefaultValue () {
                 // TODO Auto-generated method stub
                 return "XXX";
             }
-        });
-
-        addProperty(new TestStepBeanProperty("Request", false, testRequest, "requestContent", this, true) {
-            @Override
-            public String getDefaultValue() {
-                return getOperation().createRequest(true);
             }
 
-            @Override
-            public SchemaType getSchemaType() {
-                try {
-                    WsdlInterface iface = getOperation().getInterface();
-                    if (WsdlUtils.isRpc(iface.getBinding())) {
-                        return WsdlUtils.generateRpcBodyType(getOperation());
-                    } else {
-                        return iface.getDefinitionContext().getSchemaTypeSystem()
-                                .findElement(getOperation().getRequestBodyElementQName()).getType();
+            );
+
+            addProperty(new TestStepBeanProperty("Request", false,testRequest, "requestContent",this,true) {
+                @Override
+                public String getDefaultValue () {
+                    return getOperation().createRequest(true);
+                }
+
+                @Override
+                public SchemaType getSchemaType () {
+                    try {
+                        WsdlInterface iface = getOperation().getInterface();
+                        if (WsdlUtils.isRpc(iface.getBinding())) {
+                            return WsdlUtils.generateRpcBodyType(getOperation());
+                        } else {
+                            return iface.getDefinitionContext().getSchemaTypeSystem()
+                                    .findElement(getOperation().getRequestBodyElementQName()).getType();
+                        }
+                    } catch (Exception e) {
+                        SoapUI.logError(e);
+                        return XmlString.type;
                     }
-                } catch (Exception e) {
-                    SoapUI.logError(e);
-                    return XmlString.type;
+                }
+
+                @Override
+                public QName getType () {
+                    return getSchemaType().getName();
+                }
+
+            }
+
+            );
+
+            addProperty(new TestStepBeanProperty("Response", true,testRequest, "responseContent",this) {
+                @Override
+                public String getDefaultValue () {
+                    return getOperation().createResponse(true);
                 }
             }
 
-            @Override
-            public QName getType() {
-                return getSchemaType().getName();
+            );
+
+            addProperty(new DefaultTestStepProperty("RawRequest", true,this) {
+                @Override
+                public String getValue () {
+                    WsdlResponse response = testRequest.getResponse();
+                    return response == null ? null : response.getRequestContent();
+                }
             }
 
-        });
-        addProperty(new TestStepBeanProperty("Response", true, testRequest, "responseContent", this) {
-            @Override
-            public String getDefaultValue() {
-                return getOperation().createResponse(true);
-            }
-        });
-
-        addProperty(new DefaultTestStepProperty("RawRequest", true, this) {
-            @Override
-            public String getValue() {
-                WsdlResponse response = testRequest.getResponse();
-                return response == null ? null : response.getRequestContent();
-            }
-        });
-    }
+            );
+        }
 
     private void initTestRequest(TestStepConfig config, boolean forLoadTest) {
         if (!forLoadTest) {
@@ -345,10 +349,9 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
                 delegatePropertyChange("Endpoint", event);
             }
 
-			if( event.getPropertyName().equals( Request.REQUEST_PROPERTY ) )
-			{
-				contentInExternalFileSupport.setContent( ( String )event.getNewValue() );
-			}
+            if (event.getPropertyName().equals(Request.REQUEST_PROPERTY)) {
+                contentInExternalFileSupport.setContent((String) event.getNewValue());
+            }
         }
 
         if (event.getSource() == wsdlOperation) {
@@ -755,7 +758,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
                         }
 
-			);
+                        );
                     }
             );
         } else {
@@ -769,8 +772,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
         }
     }
 
-	public ContentInExternalFileSupport getContentInExternalFileSupport()
-	{
-		return contentInExternalFileSupport;
-	}
+    public ContentInExternalFileSupport getContentInExternalFileSupport() {
+        return contentInExternalFileSupport;
+    }
 }

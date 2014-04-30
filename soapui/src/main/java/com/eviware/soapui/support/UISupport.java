@@ -229,8 +229,8 @@ public class UISupport {
         return dialogs.yesYesToAllOrNo(question, title);
     }
 
-    public static int yesYesToAllNoNoToAll( String question, String title, String yesToAllLabel, String noToAllLable ) {
-        return dialogs.yesYesToAllNoNoToAll( question, title, yesToAllLabel, noToAllLable );
+    public static int yesYesToAllNoNoToAll(String question, String title, String yesToAllLabel, String noToAllLable) {
+        return dialogs.yesYesToAllNoNoToAll(question, title, yesToAllLabel, noToAllLable);
     }
 
     public static String prompt(String question, String title, String value) {

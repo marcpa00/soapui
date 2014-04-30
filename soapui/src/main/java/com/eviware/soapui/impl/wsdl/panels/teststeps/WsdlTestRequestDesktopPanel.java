@@ -72,13 +72,11 @@ public class WsdlTestRequestDesktopPanel extends AbstractWsdlRequestDesktopPanel
 
     public WsdlTestRequestDesktopPanel(WsdlTestRequestStep requestStep) {
         super(requestStep, requestStep.getTestRequest());
-		if( requestStep.getContentInExternalFileSupport() != null )
-		{
-			if( requestStep.getContentInExternalFileSupport().maybeReloadStepContent() )
-			{
-				requestStep.getTestRequest().setRequestContent( requestStep.getContentInExternalFileSupport().getContent() );
-			}
-		}
+        if (requestStep.getContentInExternalFileSupport() != null) {
+            if (requestStep.getContentInExternalFileSupport().maybeReloadStepContent()) {
+                requestStep.getTestRequest().setRequestContent(requestStep.getContentInExternalFileSupport().getContent());
+            }
+        }
 
         SoapUI.getTestMonitor().addTestMonitorListener(testMonitorListener);
         setEnabled(!SoapUI.getTestMonitor().hasRunningTest(requestStep.getTestCase()));

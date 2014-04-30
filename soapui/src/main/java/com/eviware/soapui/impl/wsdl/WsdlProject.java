@@ -97,13 +97,13 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         PropertyExpansionContainer, PropertyChangeListener, TestRunnable {
     public final static String AFTER_LOAD_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@setupScript";
     public final static String BEFORE_SAVE_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@tearDownScript";
-	public final static String AFTER_LOAD_SCRIPT_PROPERTY_RELOAD = AFTER_LOAD_SCRIPT_PROPERTY + "Reload";
-	public final static String BEFORE_SAVE_SCRIPT_PROPERTY_RELOAD = BEFORE_SAVE_SCRIPT_PROPERTY + "Reload";
+    public final static String AFTER_LOAD_SCRIPT_PROPERTY_RELOAD = AFTER_LOAD_SCRIPT_PROPERTY + "Reload";
+    public final static String BEFORE_SAVE_SCRIPT_PROPERTY_RELOAD = BEFORE_SAVE_SCRIPT_PROPERTY + "Reload";
 
-	public final static String BEFORE_RUN_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@beforeRunScript";
-	public final static String AFTER_RUN_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@afterRunScript";
-	public final static String BEFORE_RUN_SCRIPT_PROPERTY_RELOAD = BEFORE_RUN_SCRIPT_PROPERTY + "Reload";
-	public final static String AFTER_RUN_SCRIPT_PROPERTY_RELOAD = AFTER_RUN_SCRIPT_PROPERTY + "Reload";
+    public final static String BEFORE_RUN_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@beforeRunScript";
+    public final static String AFTER_RUN_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@afterRunScript";
+    public final static String BEFORE_RUN_SCRIPT_PROPERTY_RELOAD = BEFORE_RUN_SCRIPT_PROPERTY + "Reload";
+    public final static String AFTER_RUN_SCRIPT_PROPERTY_RELOAD = AFTER_RUN_SCRIPT_PROPERTY + "Reload";
 
     public final static String RESOURCE_ROOT_PROPERTY = WsdlProject.class.getName() + "@resourceRoot";
     private static final String XML_FILE_TYPE = "XML Files (*.xml)";
@@ -114,8 +114,8 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     protected String path;
     protected List<AbstractInterface<?>> interfaces = new ArrayList<AbstractInterface<?>>();
     protected List<WsdlTestSuite> testSuites = new ArrayList<WsdlTestSuite>();
-	protected List<WsdlMockService> mockServices = new ArrayList<WsdlMockService>();
-	protected List<RestMockService> restMockServices = new ArrayList<RestMockService>();
+    protected List<WsdlMockService> mockServices = new ArrayList<WsdlMockService>();
+    protected List<RestMockService> restMockServices = new ArrayList<RestMockService>();
     protected Set<ProjectListener> projectListeners = new HashSet<ProjectListener>();
     protected SoapuiProjectDocumentConfig projectDocument;
     private ImageIcon disabledIcon;
@@ -127,15 +127,15 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     private boolean remote;
     private boolean open = true;
     private boolean disabled;
-	private Boolean alwaysPreferContentFromProject = null;
-	private Boolean alwaysPreferContentFromExternalFile = null;
+    private Boolean alwaysPreferContentFromProject = null;
+    private Boolean alwaysPreferContentFromExternalFile = null;
 
     private SoapUIScriptEngine afterLoadScriptEngine;
     private SoapUIScriptEngine beforeSaveScriptEngine;
-	private ContentInExternalFileSupport afterLoadContentInExternalFile;
-	private ContentInExternalFileSupport beforeSaveContentInExternalFile;
-	private ContentInExternalFileSupport afterRunContentInExternalFile;
-	private ContentInExternalFileSupport beforeRunContentInExternalFile;
+    private ContentInExternalFileSupport afterLoadContentInExternalFile;
+    private ContentInExternalFileSupport beforeSaveContentInExternalFile;
+    private ContentInExternalFileSupport afterRunContentInExternalFile;
+    private ContentInExternalFileSupport beforeRunContentInExternalFile;
     private PropertyExpansionContext context = new DefaultPropertyExpansionContext(this);
     protected DefaultWssContainer wssContainer;
     protected OAuth2ProfileContainer oAuth2ProfileContainer;
@@ -360,62 +360,49 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                 getConfig().setRunType(TestSuiteRunTypesConfig.SEQUENTIAL);
             }
 
-			alwaysPreferContentFromExternalFile = null;
-			alwaysPreferContentFromProject = null;
+            alwaysPreferContentFromExternalFile = null;
+            alwaysPreferContentFromProject = null;
 
-			ScriptConfig scriptConfig = null;
-			if( getConfig().isSetAfterLoadScript() )
-			{
-				scriptConfig = getConfig().getAfterLoadScript();
-			}
-			else
-			{
-				scriptConfig = ScriptConfig.Factory.newInstance();
-				scriptConfig.setStringValue( "" );
-			}
-			afterLoadContentInExternalFile = new ContentInExternalFileSupport( this, ScriptCategory.PROJECT_AFTER_LOAD, scriptConfig, getSettings() );
-			afterLoadContentInExternalFile.initExternalFilenameSupport();
+            ScriptConfig scriptConfig = null;
+            if (getConfig().isSetAfterLoadScript()) {
+                scriptConfig = getConfig().getAfterLoadScript();
+            } else {
+                scriptConfig = ScriptConfig.Factory.newInstance();
+                scriptConfig.setStringValue("");
+            }
+            afterLoadContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_AFTER_LOAD, scriptConfig, getSettings());
+            afterLoadContentInExternalFile.initExternalFilenameSupport();
 
-			if( getConfig().isSetAfterRunScript())
-			{
-				scriptConfig = getConfig().getAfterRunScript();
-			}
-			else
-			{
-				scriptConfig = ScriptConfig.Factory.newInstance();
-				scriptConfig.setStringValue( "" );
-			}
-			afterRunContentInExternalFile = new ContentInExternalFileSupport( this, ScriptCategory.PROJECT_AFTER_RUN, scriptConfig, getSettings() );
-			afterRunContentInExternalFile.initExternalFilenameSupport();
+            if (getConfig().isSetAfterRunScript()) {
+                scriptConfig = getConfig().getAfterRunScript();
+            } else {
+                scriptConfig = ScriptConfig.Factory.newInstance();
+                scriptConfig.setStringValue("");
+            }
+            afterRunContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_AFTER_RUN, scriptConfig, getSettings());
+            afterRunContentInExternalFile.initExternalFilenameSupport();
 
-			if( getConfig().isSetBeforeRunScript() )
-			{
-				scriptConfig = getConfig().getBeforeRunScript();
-			}
-			else
-			{
-				scriptConfig = ScriptConfig.Factory.newInstance();
-				scriptConfig.setStringValue( "" );
-			}
-			beforeRunContentInExternalFile = new ContentInExternalFileSupport( this, ScriptCategory.PROJECT_BEFORE_RUN, scriptConfig, getSettings() );
-			beforeRunContentInExternalFile.initExternalFilenameSupport();
+            if (getConfig().isSetBeforeRunScript()) {
+                scriptConfig = getConfig().getBeforeRunScript();
+            } else {
+                scriptConfig = ScriptConfig.Factory.newInstance();
+                scriptConfig.setStringValue("");
+            }
+            beforeRunContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_BEFORE_RUN, scriptConfig, getSettings());
+            beforeRunContentInExternalFile.initExternalFilenameSupport();
 
-			if( getConfig().isSetBeforeSaveScript() )
-			{
-				scriptConfig = getConfig().getBeforeSaveScript();
-			}
-			else
-			{
-				scriptConfig = ScriptConfig.Factory.newInstance();
-				scriptConfig.setStringValue( "" );
-			}
-			beforeSaveContentInExternalFile = new ContentInExternalFileSupport( this, ScriptCategory.PROJECT_BEFORE_SAVE, scriptConfig, getSettings() );
-			beforeSaveContentInExternalFile.initExternalFilenameSupport();
+            if (getConfig().isSetBeforeSaveScript()) {
+                scriptConfig = getConfig().getBeforeSaveScript();
+            } else {
+                scriptConfig = ScriptConfig.Factory.newInstance();
+                scriptConfig.setStringValue("");
+            }
+            beforeSaveContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_BEFORE_SAVE, scriptConfig, getSettings());
+            beforeSaveContentInExternalFile.initExternalFilenameSupport();
 
-			if( getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE  ) )
-			{
-				addProjectListener( new ContentInExternalFileProjectListener() );
-			}
+            if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+                addProjectListener(new ContentInExternalFileProjectListener());
+            }
 
             afterLoad();
         } catch (Exception e) {
@@ -647,85 +634,108 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     }
 
     public SaveStatus save() throws IOException {
-		boolean includeContent = getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) ? getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE ) : true;
-		return save( null, includeContent );
+        boolean includeContent = getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) ? getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE) : true;
+        return save(null, includeContent);
     }
 
     public SaveStatus save(String folder) throws IOException {
         if (!isOpen() || isDisabled() || isRemote()) {
-		boolean includeContent = getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) ? getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE ) : true;
-		return save( folder, includeContent );
-	}
-
-	public SaveStatus save( String folder, boolean includeContent ) throws IOException
-	{
-            return SaveStatus.SUCCESS;
+            boolean includeContent = getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) ? getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE) : true;
+            return save(folder, includeContent);
         }
 
-        File projectFile = null;
-
-        if (!hasBeenSavedBefore()) {
-            String tempPath = createProjectFileName();
-
-            if (folder != null) {
-                tempPath = folder + File.separatorChar + tempPath;
-            }
-
-            while (projectFile == null
-                    || (projectFile.exists() && !UISupport.confirm("File [" + projectFile.getName() + "] exists, overwrite?",
-                    "Overwrite File?"))) {
-
-                projectFile = UISupport.getFileDialogs().saveAs(this, "Save project " + getName(), XML_EXTENSION, XML_FILE_TYPE,
-                        new File(tempPath));
-
-                if (projectFile == null) {
-                    return SaveStatus.CANCELLED;
-                }
-            }
-        }
-
-        if (projectFile == null) {
-            projectFile = createFile(path);
-        }
-
-        while (projectFile.exists() && !projectFile.canWrite()) {
-            Boolean confirm = UISupport.confirmOrCancel("Project file [" + projectFile.getAbsolutePath() + "] can not be written to, save to new file?", "Save Project");
-            if (confirm == null) {
-                return SaveStatus.CANCELLED;
-            } else if (!confirm) {
-                return SaveStatus.DONT_SAVE;
-            } else {
-                projectFile = UISupport.getFileDialogs().saveAs(this, "Save project " + getName(), XML_EXTENSION,
-                        XML_FILE_TYPE, projectFile);
-
-                if (projectFile == null) {
-                    return SaveStatus.CANCELLED;
-                }
-
-            }
-        }
-
-
-        if (projectFileModified(projectFile)) {
-            if (!UISupport.confirm("Project file for [" + getName() + "] has been modified externally, overwrite?",
-                    "Save Project")) {
-                return SaveStatus.DONT_SAVE;
-            }
-        }
-
-        if (shouldCreateBackup(projectFile)) {
-            createBackup(projectFile);
-        }
-
-
-		SaveStatus saveStatus = saveIn( projectFile, includeContent );
-
-        if (saveStatus == SaveStatus.SUCCESS) {
-            path = projectFile.getAbsolutePath();
-        }
-
-        return saveStatus;
+    public SaveStatus save(String folder, boolean includeContent) throws IOException {
+        return SaveStatus.SUCCESS;
     }
+
+    File projectFile = null;
+
+    if(!
+
+    hasBeenSavedBefore()
+
+    )
+
+    {
+        String tempPath = createProjectFileName();
+
+        if (folder != null) {
+            tempPath = folder + File.separatorChar + tempPath;
+        }
+
+        while (projectFile == null
+                || (projectFile.exists() && !UISupport.confirm("File [" + projectFile.getName() + "] exists, overwrite?",
+                "Overwrite File?"))) {
+
+            projectFile = UISupport.getFileDialogs().saveAs(this, "Save project " + getName(), XML_EXTENSION, XML_FILE_TYPE,
+                    new File(tempPath));
+
+            if (projectFile == null) {
+                return SaveStatus.CANCELLED;
+            }
+        }
+    }
+
+    if(projectFile==null)
+
+    {
+        projectFile = createFile(path);
+    }
+
+    while(projectFile.exists()&&!projectFile.canWrite())
+
+    {
+        Boolean confirm = UISupport.confirmOrCancel("Project file [" + projectFile.getAbsolutePath() + "] can not be written to, save to new file?", "Save Project");
+        if (confirm == null) {
+            return SaveStatus.CANCELLED;
+        } else if (!confirm) {
+            return SaveStatus.DONT_SAVE;
+        } else {
+            projectFile = UISupport.getFileDialogs().saveAs(this, "Save project " + getName(), XML_EXTENSION,
+                    XML_FILE_TYPE, projectFile);
+
+            if (projectFile == null) {
+                return SaveStatus.CANCELLED;
+            }
+
+        }
+    }
+
+
+    if(
+
+    projectFileModified(projectFile)
+
+    )
+
+    {
+        if (!UISupport.confirm("Project file for [" + getName() + "] has been modified externally, overwrite?",
+                "Save Project")) {
+            return SaveStatus.DONT_SAVE;
+        }
+    }
+
+    if(
+
+    shouldCreateBackup(projectFile)
+
+    )
+
+    {
+        createBackup(projectFile);
+    }
+
+
+    SaveStatus saveStatus = saveIn(projectFile, includeContent);
+
+    if(saveStatus==SaveStatus.SUCCESS)
+
+    {
+        path = projectFile.getAbsolutePath();
+    }
+
+    return saveStatus;
+}
 
     protected boolean shouldCreateBackup(File projectFile) {
         return projectFile.exists() && getSettings().getBoolean(UISettings.CREATE_BACKUP);
@@ -759,11 +769,10 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     }
 
     public SaveStatus saveIn(File projectFile) throws IOException {
-		return saveIn( projectFile, true );
-	}
+        return saveIn(projectFile, true);
+    }
 
-	public SaveStatus saveIn( File projectFile, boolean includeContent ) throws IOException
-	{
+    public SaveStatus saveIn(File projectFile, boolean includeContent) throws IOException {
         long size;
 
         beforeSave();
@@ -772,10 +781,9 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         // if user choose save project, save all etc.
         SoapuiProjectDocumentConfig projectDocument = (SoapuiProjectDocumentConfig) this.projectDocument.copy();
 
-		if( getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) )
-		{
-			updateConfigForContentInExternalFile( projectDocument, includeContent );
-		}
+        if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+            updateConfigForContentInExternalFile(projectDocument, includeContent);
+        }
 
         // check for caching
         if (!getSettings().getBoolean(WsdlSettings.CACHE_WSDLS)) {
@@ -1133,571 +1141,569 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         getSettings().setBoolean(WsdlSettings.CACHE_WSDLS, cacheDefinitions);
     }
 
-	public SaveStatus saveAs( String fileName ) throws IOException
-	{
-		boolean includeContent = getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) ? getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE ) : true;
-		return saveAs( fileName, includeContent );
-	}
+    public SaveStatus saveAs(String fileName) throws IOException {
+        boolean includeContent = getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) ? getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE) : true;
+        return saveAs(fileName, includeContent);
+    }
 
-	public SaveStatus saveAs( String fileName, boolean includeContent ) throws IOException
-	{
-            return SaveStatus.FAILED;
-        }
-		if( !isOpen() || isDisabled() )
-			return SaveStatus.FAILED;
+    public SaveStatus saveAs(String fileName, boolean includeContent) throws IOException {
+        return SaveStatus.FAILED;
+    }
+if(!isOpen()||isDisabled())
+        return SaveStatus.FAILED;
 
-        String oldPath = path;
-        path = fileName;
-		SaveStatus result = save( null, includeContent ); // if remote is true this won't save the file
-        if (result == SaveStatus.SUCCESS) {
-            remote = false;
-        } else {
-            path = oldPath;
-        }
+String oldPath=path;
+path=fileName;
+SaveStatus result=save(null,includeContent); // if remote is true this won't save the file
+if(result==SaveStatus.SUCCESS){
+        remote=false;
+}else{
+        path=oldPath;
+}
 
         setProjectRoot(path);
 
-        return result;
-    }
+return result;
+}
 
-    @Override
-    public void release() {
+@Override
+public void release(){
         super.release();
 
-        if (isOpen()) {
-            endpointStrategy.release();
+if(isOpen()){
+        endpointStrategy.release();
 
-            for (WsdlTestSuite testSuite : testSuites) {
-                testSuite.release();
-            }
+for(WsdlTestSuite testSuite:testSuites){
+        testSuite.release();
+}
 
-            for (WsdlMockService mockService : mockServices) {
-                mockService.release();
-            }
+        for(WsdlMockService mockService:mockServices){
+        mockService.release();
+}
 
-            for (RestMockService mockService : restMockServices) {
-                mockService.release();
-            }
+        for(RestMockService mockService:restMockServices){
+        mockService.release();
+}
 
-            for (AbstractInterface<?> iface : interfaces) {
-                iface.release();
-            }
+        for(AbstractInterface<?>iface:interfaces){
+        iface.release();
+}
 
-            if (wssContainer != null) {
-                wssContainer.release();
-                wssContainer = null;
-            }
+        if(wssContainer!=null){
+        wssContainer.release();
+wssContainer=null;
+}
 
-            if (oAuth2ProfileContainer != null) {
-                oAuth2ProfileContainer.release();
-                oAuth2ProfileContainer = null;
-            }
+        if(oAuth2ProfileContainer!=null){
+        oAuth2ProfileContainer.release();
+oAuth2ProfileContainer=null;
+}
 
         }
 
         projectListeners.clear();
 
-        environmentListeners.clear();
+environmentListeners.clear();
 
-        if (afterLoadScriptEngine != null) {
-            afterLoadScriptEngine.release();
+if(afterLoadScriptEngine!=null){
+        afterLoadScriptEngine.release();
+}
+
+        if(beforeSaveScriptEngine!=null){
+        beforeSaveScriptEngine.release();
+}
         }
 
-        if (beforeSaveScriptEngine != null) {
-            beforeSaveScriptEngine.release();
-        }
-    }
+public WsdlMockService addNewMockService(String name){
+        WsdlMockService mockService=new WsdlMockService(this,getConfig().addNewMockService());
+mockService.setName(name);
+addWsdlMockService(mockService);
+fireMockServiceAdded(mockService);
 
-    public WsdlMockService addNewMockService(String name) {
-        WsdlMockService mockService = new WsdlMockService(this, getConfig().addNewMockService());
-        mockService.setName(name);
-        addWsdlMockService(mockService);
-        fireMockServiceAdded(mockService);
+return mockService;
+}
 
-        return mockService;
-    }
-
-    public void addWsdlMockService(WsdlMockService mockService) {
+public void addWsdlMockService(WsdlMockService mockService){
         mockServices.add(mockService);
-    }
+}
 
-    public RestMockService addNewRestMockService(String name) {
-        RestMockService mockService = new RestMockService(this, getConfig().addNewRestMockService());
-        mockService.setName(name);
-        addRestMockService(mockService);
-        fireMockServiceAdded(mockService);
+public RestMockService addNewRestMockService(String name){
+        RestMockService mockService=new RestMockService(this,getConfig().addNewRestMockService());
+mockService.setName(name);
+addRestMockService(mockService);
+fireMockServiceAdded(mockService);
 
-        return mockService;
-    }
+return mockService;
+}
 
-    public void addRestMockService(RestMockService mockService) {
+public void addRestMockService(RestMockService mockService){
 
-        if (!mockService.getParent().equals(this)) {
-            throw new IllegalStateException("In Illegal state");
-        }
+        if(!mockService.getParent().equals(this)){
+        throw new IllegalStateException("In Illegal state");
+}
 
         restMockServices.add(mockService);
-    }
+}
 
-    public WsdlMockService getMockServiceAt(int index) {
+public WsdlMockService getMockServiceAt(int index){
         return mockServices.get(index);
-    }
+}
 
-    public WsdlMockService getMockServiceByName(String mockServiceName) {
-        return (WsdlMockService) getWsdlModelItemByName(mockServices, mockServiceName);
-    }
+public WsdlMockService getMockServiceByName(String mockServiceName){
+        return(WsdlMockService)getWsdlModelItemByName(mockServices,mockServiceName);
+}
 
-    public int getMockServiceCount() {
+public int getMockServiceCount(){
         return mockServices.size();
-    }
+}
 
-    public RestMockService getRestMockServiceAt(int index) {
+public RestMockService getRestMockServiceAt(int index){
         return restMockServices.get(index);
-    }
+}
 
-    public RestMockService getRestMockServiceByName(String mockServiceName) {
-        return (RestMockService) getWsdlModelItemByName(restMockServices, mockServiceName);
-    }
+public RestMockService getRestMockServiceByName(String mockServiceName){
+        return(RestMockService)getWsdlModelItemByName(restMockServices,mockServiceName);
+}
 
-    public int getRestMockServiceCount() {
+public int getRestMockServiceCount(){
         return restMockServices.size();
-    }
+}
 
-    public void removeMockService(MockService mockService) {
-        int ix = mockServices.indexOf(mockService);
-        boolean isRestMockService = ix == -1;
+public void removeMockService(MockService mockService){
+        int ix=mockServices.indexOf(mockService);
+boolean isRestMockService=ix==-1;
 
-        if (isRestMockService) {
-            ix = restMockServices.indexOf(mockService);
+if(isRestMockService){
+        ix=restMockServices.indexOf(mockService);
+}
+        removeMockServiceFromList(ix,isRestMockService);
+
+try{
+        fireMockServiceRemoved(mockService);
+}finally{
+        mockService.release();
+removeMockServiceFromConfig(ix,isRestMockService);
+}
         }
-        removeMockServiceFromList(ix, isRestMockService);
 
-        try {
-            fireMockServiceRemoved(mockService);
-        } finally {
-            mockService.release();
-            removeMockServiceFromConfig(ix, isRestMockService);
+private void removeMockServiceFromList(int ix,boolean isRestMockService){
+        if(isRestMockService){
+        restMockServices.remove(ix);
+}else{
+        mockServices.remove(ix);
+}
         }
-    }
 
-    private void removeMockServiceFromList(int ix, boolean isRestMockService) {
-        if (isRestMockService) {
-            restMockServices.remove(ix);
-        } else {
-            mockServices.remove(ix);
+private void removeMockServiceFromConfig(int ix,boolean isRestMockService){
+        if(isRestMockService){
+        getConfig().removeRestMockService(ix);
+}else{
+        getConfig().removeMockService(ix);
+}
         }
-    }
 
-    private void removeMockServiceFromConfig(int ix, boolean isRestMockService) {
-        if (isRestMockService) {
-            getConfig().removeRestMockService(ix);
-        } else {
-            getConfig().removeMockService(ix);
-        }
-    }
-
-    public List<TestSuite> getTestSuiteList() {
+public List<TestSuite>getTestSuiteList(){
         return new ArrayList<TestSuite>(testSuites);
-    }
+}
 
-    public List<WsdlMockService> getMockServiceList() {
+public List<WsdlMockService>getMockServiceList(){
         return new ArrayList<WsdlMockService>(mockServices);
-    }
+}
 
-    public List<RestMockService> getRestMockServiceList() {
-		return restMockServices;
-	}
+public List<RestMockService>getRestMockServiceList(){
+        return restMockServices;
+}
 
-    public List<Interface> getInterfaceList() {
+public List<Interface>getInterfaceList(){
         return new ArrayList<Interface>(interfaces);
-    }
+}
 
-    public Map<String, Interface> getInterfaces() {
-        Map<String, Interface> result = new HashMap<String, Interface>();
-        for (Interface iface : interfaces) {
-            result.put(iface.getName(), iface);
-        }
-
-        return result;
-    }
-
-    public Map<String, TestSuite> getTestSuites() {
-        Map<String, TestSuite> result = new HashMap<String, TestSuite>();
-        for (TestSuite iface : testSuites) {
-            result.put(iface.getName(), iface);
-        }
+public Map<String, Interface>getInterfaces(){
+        Map<String, Interface>result=new HashMap<String, Interface>();
+for(Interface iface:interfaces){
+        result.put(iface.getName(),iface);
+}
 
         return result;
-    }
+}
 
-    public Map<String, MockService> getMockServices() {
-        Map<String, MockService> result = new HashMap<String, MockService>();
-        for (MockService mockService : mockServices) {
-            result.put(mockService.getName(), mockService);
-        }
+public Map<String, TestSuite>getTestSuites(){
+        Map<String, TestSuite>result=new HashMap<String, TestSuite>();
+for(TestSuite iface:testSuites){
+        result.put(iface.getName(),iface);
+}
 
         return result;
-    }
+}
 
-    public void reload() throws SoapUIException {
+public Map<String, MockService>getMockServices(){
+        Map<String, MockService>result=new HashMap<String, MockService>();
+for(MockService mockService:mockServices){
+        result.put(mockService.getName(),mockService);
+}
+
+        return result;
+}
+
+public void reload()throws SoapUIException{
         reload(path);
-    }
+}
 
-    public void reload(String path) throws SoapUIException {
-        this.path = path;
-        getWorkspace().reloadProject(this);
-    }
+public void reload(String path)throws SoapUIException{
+        this.path=path;
+getWorkspace().reloadProject(this);
+}
 
-    public boolean hasNature(String natureId) {
-        Settings projectSettings = getSettings();
-        String projectNature = projectSettings.getString(ProjectSettings.PROJECT_NATURE, null);
-        return natureId.equals(projectNature);
-    }
+public boolean hasNature(String natureId){
+        Settings projectSettings=getSettings();
+String projectNature=projectSettings.getString(ProjectSettings.PROJECT_NATURE,null);
+return natureId.equals(projectNature);
+}
 
-    public AbstractInterface<?> importInterface(AbstractInterface<?> iface, boolean importEndpoints, boolean createCopy) {
+public AbstractInterface<?>importInterface(AbstractInterface<?>iface,boolean importEndpoints,boolean createCopy){
         iface.beforeSave();
 
-        InterfaceConfig ifaceConfig = (InterfaceConfig) iface.getConfig().copy();
-        ifaceConfig = (InterfaceConfig) getConfig().addNewInterface().set(ifaceConfig);
+InterfaceConfig ifaceConfig=(InterfaceConfig)iface.getConfig().copy();
+ifaceConfig=(InterfaceConfig)getConfig().addNewInterface().set(ifaceConfig);
 
-        AbstractInterface<?> imported = InterfaceFactoryRegistry.build(this, ifaceConfig);
-        interfaces.add(imported);
+AbstractInterface<?>imported=InterfaceFactoryRegistry.build(this,ifaceConfig);
+interfaces.add(imported);
 
-        if (iface.getProject() != this && importEndpoints) {
-            endpointStrategy.importEndpoints(iface);
-        }
+if(iface.getProject()!=this&&importEndpoints){
+        endpointStrategy.importEndpoints(iface);
+}
 
-        if (createCopy) {
-            ModelSupport.unsetIds(imported);
-        }
+        if(createCopy){
+        ModelSupport.unsetIds(imported);
+}
 
         imported.afterLoad();
-        fireInterfaceAdded(imported);
+fireInterfaceAdded(imported);
 
-        return imported;
-    }
+return imported;
+}
 
-    public WsdlTestSuite importTestSuite(WsdlTestSuite testSuite, String name, int index, boolean createCopy,
-                                         String description) {
+public WsdlTestSuite importTestSuite(WsdlTestSuite testSuite,String name,int index,boolean createCopy,
+        String description){
         testSuite.beforeSave();
-        TestSuiteConfig testSuiteConfig = index == -1 ? (TestSuiteConfig) getConfig().addNewTestSuite().set(
-                testSuite.getConfig().copy()) : (TestSuiteConfig) getConfig().insertNewTestSuite(index).set(
-                testSuite.getConfig().copy());
+TestSuiteConfig testSuiteConfig=index==-1?(TestSuiteConfig)getConfig().addNewTestSuite().set(
+        testSuite.getConfig().copy()):(TestSuiteConfig)getConfig().insertNewTestSuite(index).set(
+        testSuite.getConfig().copy());
 
-        testSuiteConfig.setName(name);
+testSuiteConfig.setName(name);
 
-        if (createCopy) {
-            for (TestCaseConfig testCaseConfig : testSuiteConfig.getTestCaseList()) {
-                testCaseConfig.setSecurityTestArray(new SecurityTestConfig[0]);
-            }
+if(createCopy){
+        for(TestCaseConfig testCaseConfig:testSuiteConfig.getTestCaseList()){
+        testCaseConfig.setSecurityTestArray(new SecurityTestConfig[0]);
+}
         }
 
-        WsdlTestSuite oldTestSuite = testSuite;
-        testSuite = buildTestSuite(testSuiteConfig);
+        WsdlTestSuite oldTestSuite=testSuite;
+testSuite=buildTestSuite(testSuiteConfig);
 
-        if (description != null) {
-            testSuite.setDescription(description);
-        }
+if(description!=null){
+        testSuite.setDescription(description);
+}
 
-        if (index == -1) {
-            testSuites.add(testSuite);
-        } else {
-            testSuites.add(index, testSuite);
-        }
+        if(index==-1){
+        testSuites.add(testSuite);
+}else{
+        testSuites.add(index,testSuite);
+}
 
-        if (createCopy) {
-            ModelSupport.unsetIds(testSuite);
-        }
+        if(createCopy){
+        ModelSupport.unsetIds(testSuite);
+}
 
         testSuite.afterLoad();
 
-        if (createCopy) {
-            testSuite.afterCopy(oldTestSuite);
-        }
+if(createCopy){
+        testSuite.afterCopy(oldTestSuite);
+}
 
         fireTestSuiteAdded(testSuite);
 
-        resolveImportedTestSuite(testSuite);
+resolveImportedTestSuite(testSuite);
 
-        return testSuite;
-    }
+return testSuite;
+}
 
-    public WsdlMockService importMockService(WsdlMockService mockService, String name, boolean createCopy,
-                                             String description) {
+public WsdlMockService importMockService(WsdlMockService mockService,String name,boolean createCopy,
+        String description){
         mockService.beforeSave();
-        MockServiceConfig mockServiceConfig = (MockServiceConfig) getConfig().addNewMockService().set(
-                mockService.getConfig().copy());
-        mockServiceConfig.setName(name);
-        if (mockServiceConfig.isSetId() && createCopy) {
-            mockServiceConfig.unsetId();
-        }
-        mockService = new WsdlMockService(this, mockServiceConfig);
-        mockService.setDescription(description);
-        addWsdlMockService(mockService);
-        if (createCopy) {
-            ModelSupport.unsetIds(mockService);
-        }
+MockServiceConfig mockServiceConfig=(MockServiceConfig)getConfig().addNewMockService().set(
+        mockService.getConfig().copy());
+mockServiceConfig.setName(name);
+if(mockServiceConfig.isSetId()&&createCopy){
+        mockServiceConfig.unsetId();
+}
+        mockService=new WsdlMockService(this,mockServiceConfig);
+mockService.setDescription(description);
+addWsdlMockService(mockService);
+if(createCopy){
+        ModelSupport.unsetIds(mockService);
+}
 
         mockService.afterLoad();
 
-        fireMockServiceAdded(mockService);
+fireMockServiceAdded(mockService);
 
-        return mockService;
-    }
+return mockService;
+}
 
-    public EndpointStrategy getEndpointStrategy() {
+public EndpointStrategy getEndpointStrategy(){
         return endpointStrategy;
-    }
+}
 
-    public boolean isOpen() {
+public boolean isOpen(){
         return open;
-    }
+}
 
-    public List<? extends ModelItem> getChildren() {
-        ArrayList<ModelItem> list = new ArrayList<ModelItem>();
-        list.addAll(getInterfaceList());
-        list.addAll(getTestSuiteList());
-        list.addAll(getMockServiceList());
-        list.addAll(getRestMockServiceList());
-        return list;
-    }
+public List<?extends ModelItem>getChildren(){
+        ArrayList<ModelItem>list=new ArrayList<ModelItem>();
+list.addAll(getInterfaceList());
+list.addAll(getTestSuiteList());
+list.addAll(getMockServiceList());
+list.addAll(getRestMockServiceList());
+return list;
+}
 
-    public void setAfterLoadScript(String script) {
-        String oldScript = getAfterLoadScript();
+public void setAfterLoadScript(String script){
+        String oldScript=getAfterLoadScript();
 
-        if (!getConfig().isSetAfterLoadScript()) {
-            getConfig().addNewAfterLoadScript();
-        }
+if(!getConfig().isSetAfterLoadScript()){
+        getConfig().addNewAfterLoadScript();
+}
 
         getConfig().getAfterLoadScript().setStringValue(script);
-        if (afterLoadScriptEngine != null) {
-            afterLoadScriptEngine.setScript(script);
-        }
+if(afterLoadScriptEngine!=null){
+        afterLoadScriptEngine.setScript(script);
+}
 
-        notifyPropertyChanged(AFTER_LOAD_SCRIPT_PROPERTY, oldScript, script);
-    }
+        notifyPropertyChanged(AFTER_LOAD_SCRIPT_PROPERTY,oldScript,script);
+}
 
-    public String getAfterLoadScript() {
-        return getConfig().isSetAfterLoadScript() ? getConfig().getAfterLoadScript().getStringValue() : null;
-    }
+public String getAfterLoadScript(){
+        return getConfig().isSetAfterLoadScript()?getConfig().getAfterLoadScript().getStringValue():null;
+}
 
-    public void setBeforeSaveScript(String script) {
-        String oldScript = getBeforeSaveScript();
+public void setBeforeSaveScript(String script){
+        String oldScript=getBeforeSaveScript();
 
-        if (!getConfig().isSetBeforeSaveScript()) {
-            getConfig().addNewBeforeSaveScript();
-        }
+if(!getConfig().isSetBeforeSaveScript()){
+        getConfig().addNewBeforeSaveScript();
+}
 
         getConfig().getBeforeSaveScript().setStringValue(script);
-        if (beforeSaveScriptEngine != null) {
-            beforeSaveScriptEngine.setScript(script);
-        }
+if(beforeSaveScriptEngine!=null){
+        beforeSaveScriptEngine.setScript(script);
+}
 
-        notifyPropertyChanged(BEFORE_SAVE_SCRIPT_PROPERTY, oldScript, script);
-    }
+        notifyPropertyChanged(BEFORE_SAVE_SCRIPT_PROPERTY,oldScript,script);
+}
 
-    public String getBeforeSaveScript() {
-        return getConfig().isSetBeforeSaveScript() ? getConfig().getBeforeSaveScript().getStringValue() : null;
-    }
+public String getBeforeSaveScript(){
+        return getConfig().isSetBeforeSaveScript()?getConfig().getBeforeSaveScript().getStringValue():null;
+}
 
-    public Object runAfterLoadScript() throws Exception {
-        String script = getAfterLoadScript();
-        if (StringUtils.isNullOrEmpty(script)) {
-            return null;
-        }
+public Object runAfterLoadScript()throws Exception{
+        String script=getAfterLoadScript();
+if(StringUtils.isNullOrEmpty(script)){
+        return null;
+}
 
-        if (afterLoadScriptEngine == null) {
-            afterLoadScriptEngine = SoapUIScriptEngineRegistry.create(this);
-            afterLoadScriptEngine.setScript(script);
-        }
+        if(afterLoadScriptEngine==null){
+        afterLoadScriptEngine=SoapUIScriptEngineRegistry.create(this);
+afterLoadScriptEngine.setScript(script);
+}
 
-        afterLoadScriptEngine.setVariable("context", context);
-        afterLoadScriptEngine.setVariable("project", this);
-        afterLoadScriptEngine.setVariable("log", SoapUI.ensureGroovyLog());
-        return afterLoadScriptEngine.run();
-    }
+        afterLoadScriptEngine.setVariable("context",context);
+afterLoadScriptEngine.setVariable("project",this);
+afterLoadScriptEngine.setVariable("log",SoapUI.ensureGroovyLog());
+return afterLoadScriptEngine.run();
+}
 
-    public Object runBeforeSaveScript() throws Exception {
-        String script = getBeforeSaveScript();
-        if (StringUtils.isNullOrEmpty(script)) {
-            return null;
-        }
+public Object runBeforeSaveScript()throws Exception{
+        String script=getBeforeSaveScript();
+if(StringUtils.isNullOrEmpty(script)){
+        return null;
+}
 
-        if (beforeSaveScriptEngine == null) {
-            beforeSaveScriptEngine = SoapUIScriptEngineRegistry.create(this);
-            beforeSaveScriptEngine.setScript(script);
-        }
+        if(beforeSaveScriptEngine==null){
+        beforeSaveScriptEngine=SoapUIScriptEngineRegistry.create(this);
+beforeSaveScriptEngine.setScript(script);
+}
 
-        beforeSaveScriptEngine.setVariable("context", context);
-        beforeSaveScriptEngine.setVariable("project", this);
-        beforeSaveScriptEngine.setVariable("log", SoapUI.ensureGroovyLog());
-        return beforeSaveScriptEngine.run();
-    }
+        beforeSaveScriptEngine.setVariable("context",context);
+beforeSaveScriptEngine.setVariable("project",this);
+beforeSaveScriptEngine.setVariable("log",SoapUI.ensureGroovyLog());
+return beforeSaveScriptEngine.run();
+}
 
-    public PropertyExpansionContext getContext() {
+public PropertyExpansionContext getContext(){
         return context;
-    }
+}
 
-    public DefaultWssContainer getWssContainer() {
+public DefaultWssContainer getWssContainer(){
         return wssContainer;
-    }
+}
 
-    public OAuth2ProfileContainer getOAuth2ProfileContainer() {
+public OAuth2ProfileContainer getOAuth2ProfileContainer(){
         return oAuth2ProfileContainer;
-    }
+}
 
-    @Override
-    public void resolve(ResolveContext<?> context) {
+@Override
+public void resolve(ResolveContext<?>context){
         super.resolve(context);
 
-        wssContainer.resolve(context);
-    }
+wssContainer.resolve(context);
+}
 
-    public PropertyExpansion[] getPropertyExpansions() {
-        List<PropertyExpansion> result = new ArrayList<PropertyExpansion>();
+public PropertyExpansion[]getPropertyExpansions(){
+        List<PropertyExpansion>result=new ArrayList<PropertyExpansion>();
 
-        result.addAll(Arrays.asList(wssContainer.getPropertyExpansions()));
-        result.addAll(Arrays.asList(oAuth2ProfileContainer.getPropertyExpansions()));
+result.addAll(Arrays.asList(wssContainer.getPropertyExpansions()));
+result.addAll(Arrays.asList(oAuth2ProfileContainer.getPropertyExpansions()));
 
-        return result.toArray(new PropertyExpansion[result.size()]);
+return result.toArray(new PropertyExpansion[result.size()]);
 
-    }
+}
 
-    @Override
-    protected void addExternalDependencies(List<ExternalDependency> dependencies) {
+@Override
+protected void addExternalDependencies(List<ExternalDependency>dependencies){
         super.addExternalDependencies(dependencies);
-        wssContainer.addExternalDependency(dependencies);
-    }
+wssContainer.addExternalDependency(dependencies);
+}
 
-    public String getShadowPassword() {
-        projectPassword = getSettings() == null ? projectPassword : getSettings().getString(
-                ProjectSettings.SHADOW_PASSWORD, null);
-        return projectPassword;
-    }
+public String getShadowPassword(){
+        projectPassword=getSettings()==null?projectPassword:getSettings().getString(
+        ProjectSettings.SHADOW_PASSWORD,null);
+return projectPassword;
+}
 
-    public void setShadowPassword(String password) {
-        String oldPassword = getSettings().getString(ProjectSettings.SHADOW_PASSWORD, null);
-        getSettings().setString(ProjectSettings.SHADOW_PASSWORD, password);
-        notifyPropertyChanged("projectPassword", oldPassword, password);
-    }
+public void setShadowPassword(String password){
+        String oldPassword=getSettings().getString(ProjectSettings.SHADOW_PASSWORD,null);
+getSettings().setString(ProjectSettings.SHADOW_PASSWORD,password);
+notifyPropertyChanged("projectPassword",oldPassword,password);
+}
 
-    public String getHermesConfig() {
-        hermesConfig = getSettings() == null ? hermesConfig : resolveHermesConfig();
-        return hermesConfig;
-    }
+public String getHermesConfig(){
+        hermesConfig=getSettings()==null?hermesConfig:resolveHermesConfig();
+return hermesConfig;
+}
 
-    private String resolveHermesConfig() {
-        String hermesConfigProperty = getSettings().getString(ProjectSettings.HERMES_CONFIG, null);
-        if (hermesConfigProperty != null && !hermesConfigProperty.equals("")) {
-            return hermesConfigProperty;
-        } else if (System.getenv("HERMES_CONFIG") != null) {
-            return System.getenv("HERMES_CONFIG");
-        } else {
-            return "${#System#user.home}\\.hermes";
+private String resolveHermesConfig(){
+        String hermesConfigProperty=getSettings().getString(ProjectSettings.HERMES_CONFIG,null);
+if(hermesConfigProperty!=null&&!hermesConfigProperty.equals("")){
+        return hermesConfigProperty;
+}else if(System.getenv("HERMES_CONFIG")!=null){
+        return System.getenv("HERMES_CONFIG");
+}else{
+        return"${#System#user.home}\\.hermes";
+}
+
         }
 
-    }
+public void setHermesConfig(String hermesConfigPath){
+        String oldHermesConfigPath=getSettings().getString(ProjectSettings.HERMES_CONFIG,null);
+getSettings().setString(ProjectSettings.HERMES_CONFIG,hermesConfigPath);
+notifyPropertyChanged("hermesConfig",oldHermesConfigPath,hermesConfigPath);
 
-    public void setHermesConfig(String hermesConfigPath) {
-        String oldHermesConfigPath = getSettings().getString(ProjectSettings.HERMES_CONFIG, null);
-        getSettings().setString(ProjectSettings.HERMES_CONFIG, hermesConfigPath);
-        notifyPropertyChanged("hermesConfig", oldHermesConfigPath, hermesConfigPath);
+}
 
-    }
+public void inspect(){
 
-    public void inspect() {
+        if(!isOpen()){
+        return;
+}
 
-        if (!isOpen()) {
-            return;
+        byte data[]=projectDocument.getSoapuiProject().getEncryptedContent();
+if(data!=null&&data.length>0){
+        try{
+        reload();
+}catch(SoapUIException e){
+        e.printStackTrace();
+}
+        }
         }
 
-        byte data[] = projectDocument.getSoapuiProject().getEncryptedContent();
-        if (data != null && data.length > 0) {
-            try {
-                reload();
-            } catch (SoapUIException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public int getEncrypted() {
+public int getEncrypted(){
         return this.encrypted;
-    }
+}
 
-    public int setEncrypted(int code) {
-        return this.encrypted = code;
-    }
+public int setEncrypted(int code){
+        return this.encrypted=code;
+}
 
-    public void propertyChange(PropertyChangeEvent evt) {
-        if ("projectPassword".equals(evt.getPropertyName())) {
-            if (encrypted == 0 & (evt.getOldValue() == null || ((String) evt.getOldValue()).length() == 0)) {
-                encrypted = 1;
-            }
-            if (encrypted == 1 & (evt.getNewValue() == null || ((String) evt.getNewValue()).length() == 0)) {
-                encrypted = 0;
-            }
+public void propertyChange(PropertyChangeEvent evt){
+        if("projectPassword".equals(evt.getPropertyName())){
+        if(encrypted==0&(evt.getOldValue()==null||((String)evt.getOldValue()).length()==0)){
+        encrypted=1;
+}
+        if(encrypted==1&(evt.getNewValue()==null||((String)evt.getNewValue()).length()==0)){
+        encrypted=0;
+}
 
-            if (SoapUI.getNavigator() != null) {
-                SoapUI.getNavigator().repaint();
-            }
+        if(SoapUI.getNavigator()!=null){
+        SoapUI.getNavigator().repaint();
+}
         }
-    }
+        }
 
-    public SoapuiProjectDocumentConfig getProjectDocument() {
+public SoapuiProjectDocumentConfig getProjectDocument(){
         return projectDocument;
-    }
+}
 
-    public int getInterfaceCount(String type) {
-        int result = 0;
+public int getInterfaceCount(String type){
+        int result=0;
 
-        for (AbstractInterface<?> iface : interfaces) {
-            if (iface.getType().equals(type)) {
-                result++;
-            }
+for(AbstractInterface<?>iface:interfaces){
+        if(iface.getType().equals(type)){
+        result++;
+}
         }
 
         return result;
-    }
+}
 
-    public List<AbstractInterface<?>> getInterfaces(String type) {
-        ArrayList<AbstractInterface<?>> result = new ArrayList<AbstractInterface<?>>();
+public List<AbstractInterface<?>>getInterfaces(String type){
+        ArrayList<AbstractInterface<?>>result=new ArrayList<AbstractInterface<?>>();
 
-        for (AbstractInterface<?> iface : interfaces) {
-            if (iface.getType().equals(type)) {
-                result.add(iface);
-            }
+for(AbstractInterface<?>iface:interfaces){
+        if(iface.getType().equals(type)){
+        result.add(iface);
+}
         }
 
         return result;
-    }
+}
 
-    public void importTestSuite(File file) {
-        if (!file.exists()) {
-            UISupport.showErrorMessage("Error loading test case ");
-            return;
-        }
+public void importTestSuite(File file){
+        if(!file.exists()){
+        UISupport.showErrorMessage("Error loading test case ");
+return;
+}
 
-        TestSuiteDocumentConfig newTestSuiteConfig = null;
+        TestSuiteDocumentConfig newTestSuiteConfig=null;
 
-        try {
-            newTestSuiteConfig = TestSuiteDocumentConfig.Factory.parse(file);
-        } catch (Exception e) {
-            SoapUI.logError(e);
-        }
+try{
+        newTestSuiteConfig=TestSuiteDocumentConfig.Factory.parse(file);
+}catch(Exception e){
+        SoapUI.logError(e);
+}
 
-        if (newTestSuiteConfig == null) {
-            UISupport.showErrorMessage("Not valid test case xml");
-        } else {
-            TestSuiteConfig config = (TestSuiteConfig) projectDocument.getSoapuiProject().addNewTestSuite()
-                    .set(newTestSuiteConfig.getTestSuite());
-            WsdlTestSuite testSuite = buildTestSuite(config);
+        if(newTestSuiteConfig==null){
+        UISupport.showErrorMessage("Not valid test case xml");
+}else{
+        TestSuiteConfig config=(TestSuiteConfig)projectDocument.getSoapuiProject().addNewTestSuite()
+        .set(newTestSuiteConfig.getTestSuite());
+WsdlTestSuite testSuite=buildTestSuite(config);
 
-            ModelSupport.unsetIds(testSuite);
-            testSuite.afterLoad();
+ModelSupport.unsetIds(testSuite);
+testSuite.afterLoad();
 
 			/*
-			 * security test keeps reference to test step by id, which gets changed
+             * security test keeps reference to test step by id, which gets changed
 			 * during importing, so old values needs to be rewritten to new ones.
 			 *
 			 * Create tarnsition table ( old id , new id ) and use it to replace
@@ -1705,440 +1711,440 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 			 *
 			 * Here needs to be done for all test cases separatly.
 			 */
-            for (int cnt2 = 0; cnt2 < config.getTestCaseList().size(); cnt2++) {
-                TestCaseConfig newTestCase = config.getTestCaseList().get(cnt2);
-                TestCaseConfig importTestCaseConfig = newTestSuiteConfig.getTestSuite().getTestCaseList().get(cnt2);
-                LinkedHashMap<String, String> oldNewIds = new LinkedHashMap<String, String>();
-                for (int cnt = 0; cnt < importTestCaseConfig.getTestStepList().size(); cnt++) {
-                    oldNewIds.put(importTestCaseConfig.getTestStepList().get(cnt).getId(), newTestCase.getTestStepList()
-                            .get(cnt).getId());
-                }
+for(int cnt2=0;cnt2<config.getTestCaseList().size();cnt2++){
+        TestCaseConfig newTestCase=config.getTestCaseList().get(cnt2);
+TestCaseConfig importTestCaseConfig=newTestSuiteConfig.getTestSuite().getTestCaseList().get(cnt2);
+LinkedHashMap<String, String>oldNewIds=new LinkedHashMap<String, String>();
+for(int cnt=0;cnt<importTestCaseConfig.getTestStepList().size();cnt++){
+        oldNewIds.put(importTestCaseConfig.getTestStepList().get(cnt).getId(),newTestCase.getTestStepList()
+        .get(cnt).getId());
+}
 
-                for (SecurityTestConfig scan : newTestCase.getSecurityTestList()) {
-                    for (TestStepSecurityTestConfig secStepConfig : scan.getTestStepSecurityTestList()) {
-                        if (oldNewIds.containsKey(secStepConfig.getTestStepId())) {
-                            secStepConfig.setTestStepId(oldNewIds.get(secStepConfig.getTestStepId()));
-                        }
-                    }
-                }
-
-            }
-            testSuites.add(testSuite);
-            fireTestSuiteAdded(testSuite);
-
-            resolveImportedTestSuite(testSuite);
+        for(SecurityTestConfig scan:newTestCase.getSecurityTestList()){
+        for(TestStepSecurityTestConfig secStepConfig:scan.getTestStepSecurityTestList()){
+        if(oldNewIds.containsKey(secStepConfig.getTestStepId())){
+        secStepConfig.setTestStepId(oldNewIds.get(secStepConfig.getTestStepId()));
+}
         }
-    }
+        }
 
-    private void resolveImportedTestSuite(WsdlTestSuite testSuite) {
-        ResolveDialog resolver = new ResolveDialog("Validate TestSuite", "Checks TestSuite for inconsistencies", null);
-        resolver.setShowOkMessage(false);
-        resolver.resolve(testSuite);
-    }
+        }
+        testSuites.add(testSuite);
+fireTestSuiteAdded(testSuite);
 
-    /**
-     * @deprecated replaced by {@link WsdlInterfaceFactory#importWsdl(WsdlProject, String, boolean)}
-     */
-    public WsdlInterface[] importWsdl(String url, boolean createRequests) throws SoapUIException {
-        return WsdlInterfaceFactory.importWsdl(this, url, createRequests);
-    }
+resolveImportedTestSuite(testSuite);
+}
+        }
 
-    /**
-     * @deprecated replaced by {@link WsdlInterfaceFactory#importWsdl(WsdlProject, String, boolean, WsdlLoader)}
-     */
-    public WsdlInterface[] importWsdl(String url, boolean createRequests, WsdlLoader wsdlLoader)
-            throws SoapUIException {
-        return WsdlInterfaceFactory.importWsdl(this, url, createRequests, null, wsdlLoader);
-    }
+private void resolveImportedTestSuite(WsdlTestSuite testSuite){
+        ResolveDialog resolver=new ResolveDialog("Validate TestSuite","Checks TestSuite for inconsistencies",null);
+resolver.setShowOkMessage(false);
+resolver.resolve(testSuite);
+}
 
-    /**
-     * @deprecated replaced by {@link WsdlInterfaceFactory#importWsdl(WsdlProject, String, boolean, QName, WsdlLoader)}
-     */
+/**
+ * @deprecated replaced by {@link WsdlInterfaceFactory#importWsdl(WsdlProject, String, boolean)}
+ */
+public WsdlInterface[]importWsdl(String url,boolean createRequests)throws SoapUIException{
+        return WsdlInterfaceFactory.importWsdl(this,url,createRequests);
+}
 
-    public WsdlInterface[] importWsdl(String url, boolean createRequests, QName bindingName, WsdlLoader wsdlLoader)
-            throws SoapUIException {
-        return WsdlInterfaceFactory.importWsdl(this, url, createRequests, bindingName, wsdlLoader);
-    }
+/**
+ * @deprecated replaced by {@link WsdlInterfaceFactory#importWsdl(WsdlProject, String, boolean, WsdlLoader)}
+ */
+public WsdlInterface[]importWsdl(String url,boolean createRequests,WsdlLoader wsdlLoader)
+        throws SoapUIException{
+        return WsdlInterfaceFactory.importWsdl(this,url,createRequests,null,wsdlLoader);
+}
 
-    public void setDefaultScriptLanguage(String id) {
+/**
+ * @deprecated replaced by {@link WsdlInterfaceFactory#importWsdl(WsdlProject, String, boolean, QName, WsdlLoader)}
+ */
+
+public WsdlInterface[]importWsdl(String url,boolean createRequests,QName bindingName,WsdlLoader wsdlLoader)
+        throws SoapUIException{
+        return WsdlInterfaceFactory.importWsdl(this,url,createRequests,bindingName,wsdlLoader);
+}
+
+public void setDefaultScriptLanguage(String id){
         getConfig().setDefaultScriptLanguage(id);
-    }
+}
 
-    public String getDefaultScriptLanguage() {
-        if (getConfig().isSetDefaultScriptLanguage()) {
-            return getConfig().getDefaultScriptLanguage();
-        } else {
-            return SoapUIScriptEngineRegistry.DEFAULT_SCRIPT_ENGINE_ID;
+public String getDefaultScriptLanguage(){
+        if(getConfig().isSetDefaultScriptLanguage()){
+        return getConfig().getDefaultScriptLanguage();
+}else{
+        return SoapUIScriptEngineRegistry.DEFAULT_SCRIPT_ENGINE_ID;
+}
         }
-    }
 
-    public int getIndexOfTestSuite(TestSuite testSuite) {
+public int getIndexOfTestSuite(TestSuite testSuite){
         return testSuites.indexOf(testSuite);
-    }
+}
 
-    public String getBeforeRunScript() {
-        return getConfig().isSetBeforeRunScript() ? getConfig().getBeforeRunScript().getStringValue() : null;
-    }
+public String getBeforeRunScript(){
+        return getConfig().isSetBeforeRunScript()?getConfig().getBeforeRunScript().getStringValue():null;
+}
 
-    public void setBeforeRunScript(String script) {
-        String oldScript = getBeforeRunScript();
+public void setBeforeRunScript(String script){
+        String oldScript=getBeforeRunScript();
 
-        if (!getConfig().isSetBeforeRunScript()) {
-            getConfig().addNewBeforeRunScript();
-        }
+if(!getConfig().isSetBeforeRunScript()){
+        getConfig().addNewBeforeRunScript();
+}
 
         getConfig().getBeforeRunScript().setStringValue(script);
-        if (beforeRunScriptEngine != null) {
-            beforeRunScriptEngine.setScript(script);
-        }
+if(beforeRunScriptEngine!=null){
+        beforeRunScriptEngine.setScript(script);
+}
 
-		notifyPropertyChanged( BEFORE_RUN_SCRIPT_PROPERTY, oldScript, script );
-    }
+        notifyPropertyChanged(BEFORE_RUN_SCRIPT_PROPERTY,oldScript,script);
+}
 
-    public Object runBeforeRunScript(ProjectRunContext context, ProjectRunner runner) throws Exception {
-        String script = getBeforeRunScript();
-        if (StringUtils.isNullOrEmpty(script)) {
-            return null;
-        }
+public Object runBeforeRunScript(ProjectRunContext context,ProjectRunner runner)throws Exception{
+        String script=getBeforeRunScript();
+if(StringUtils.isNullOrEmpty(script)){
+        return null;
+}
 
-        if (beforeRunScriptEngine == null) {
-            beforeRunScriptEngine = SoapUIScriptEngineRegistry.create(this);
-            beforeRunScriptEngine.setScript(script);
-        }
+        if(beforeRunScriptEngine==null){
+        beforeRunScriptEngine=SoapUIScriptEngineRegistry.create(this);
+beforeRunScriptEngine.setScript(script);
+}
 
-        beforeRunScriptEngine.setVariable("runner", runner);
-        beforeRunScriptEngine.setVariable("context", context);
-        beforeRunScriptEngine.setVariable("project", this);
-        beforeRunScriptEngine.setVariable("log", SoapUI.ensureGroovyLog());
-        return beforeRunScriptEngine.run();
-    }
+        beforeRunScriptEngine.setVariable("runner",runner);
+beforeRunScriptEngine.setVariable("context",context);
+beforeRunScriptEngine.setVariable("project",this);
+beforeRunScriptEngine.setVariable("log",SoapUI.ensureGroovyLog());
+return beforeRunScriptEngine.run();
+}
 
-    public String getAfterRunScript() {
-        return getConfig().isSetAfterRunScript() ? getConfig().getAfterRunScript().getStringValue() : null;
-    }
+public String getAfterRunScript(){
+        return getConfig().isSetAfterRunScript()?getConfig().getAfterRunScript().getStringValue():null;
+}
 
-    public void setAfterRunScript(String script) {
-        String oldScript = getAfterRunScript();
+public void setAfterRunScript(String script){
+        String oldScript=getAfterRunScript();
 
-        if (!getConfig().isSetAfterRunScript()) {
-            getConfig().addNewAfterRunScript();
-        }
+if(!getConfig().isSetAfterRunScript()){
+        getConfig().addNewAfterRunScript();
+}
 
         getConfig().getAfterRunScript().setStringValue(script);
-        if (afterRunScriptEngine != null) {
-            afterRunScriptEngine.setScript(script);
-        }
+if(afterRunScriptEngine!=null){
+        afterRunScriptEngine.setScript(script);
+}
 
-		notifyPropertyChanged( AFTER_RUN_SCRIPT_PROPERTY, oldScript, script );
-    }
+        notifyPropertyChanged(AFTER_RUN_SCRIPT_PROPERTY,oldScript,script);
+}
 
-    public Object runAfterRunScript(ProjectRunContext context, ProjectRunner runner) throws Exception {
-        String script = getAfterRunScript();
-        if (StringUtils.isNullOrEmpty(script)) {
-            return null;
-        }
+public Object runAfterRunScript(ProjectRunContext context,ProjectRunner runner)throws Exception{
+        String script=getAfterRunScript();
+if(StringUtils.isNullOrEmpty(script)){
+        return null;
+}
 
-        if (afterRunScriptEngine == null) {
-            afterRunScriptEngine = SoapUIScriptEngineRegistry.create(this);
-            afterRunScriptEngine.setScript(script);
-        }
+        if(afterRunScriptEngine==null){
+        afterRunScriptEngine=SoapUIScriptEngineRegistry.create(this);
+afterRunScriptEngine.setScript(script);
+}
 
-        afterRunScriptEngine.setVariable("runner", runner);
-        afterRunScriptEngine.setVariable("context", context);
-        afterRunScriptEngine.setVariable("project", this);
-        afterRunScriptEngine.setVariable("log", SoapUI.ensureGroovyLog());
-        return afterRunScriptEngine.run();
-    }
+        afterRunScriptEngine.setVariable("runner",runner);
+afterRunScriptEngine.setVariable("context",context);
+afterRunScriptEngine.setVariable("project",this);
+afterRunScriptEngine.setVariable("log",SoapUI.ensureGroovyLog());
+return afterRunScriptEngine.run();
+}
 
-    public void addProjectRunListener(ProjectRunListener projectRunListener) {
+public void addProjectRunListener(ProjectRunListener projectRunListener){
         runListeners.add(projectRunListener);
-    }
+}
 
-    public void removeProjectRunListener(ProjectRunListener projectRunListener) {
+public void removeProjectRunListener(ProjectRunListener projectRunListener){
         runListeners.remove(projectRunListener);
-    }
+}
 
-    public WsdlProjectRunner run(StringToObjectMap context, boolean async) {
-        WsdlProjectRunner runner = new WsdlProjectRunner(this, context);
-        runner.start(async);
-        return runner;
-    }
+public WsdlProjectRunner run(StringToObjectMap context,boolean async){
+        WsdlProjectRunner runner=new WsdlProjectRunner(this,context);
+runner.start(async);
+return runner;
+}
 
-    public boolean isAbortOnError() {
+public boolean isAbortOnError(){
         return getConfig().getAbortOnError();
-    }
+}
 
-    public void setAbortOnError(boolean arg0) {
+public void setAbortOnError(boolean arg0){
         getConfig().setAbortOnError(arg0);
-    }
+}
 
-    public long getTimeout() {
+public long getTimeout(){
         return getConfig().getTimeout();
-    }
+}
 
-    public void setTimeout(long timeout) {
+public void setTimeout(long timeout){
         getConfig().setTimeout(timeout);
-    }
+}
 
-    public ProjectRunListener[] getProjectRunListeners() {
+public ProjectRunListener[]getProjectRunListeners(){
         return runListeners.toArray(new ProjectRunListener[runListeners.size()]);
-    }
+}
 
-    public TestSuiteRunType getRunType() {
-        Enum runType = getConfig().getRunType();
+public TestSuiteRunType getRunType(){
+        Enum runType=getConfig().getRunType();
 
-        if (TestSuiteRunTypesConfig.PARALLELL.equals(runType)) {
-            return TestSuiteRunType.PARALLEL;
-        } else {
-            return TestSuiteRunType.SEQUENTIAL;
+if(TestSuiteRunTypesConfig.PARALLELL.equals(runType)){
+        return TestSuiteRunType.PARALLEL;
+}else{
+        return TestSuiteRunType.SEQUENTIAL;
+}
         }
-    }
 
-    public void setRunType(TestSuiteRunType runType) {
-        TestSuiteRunType oldRunType = getRunType();
+public void setRunType(TestSuiteRunType runType){
+        TestSuiteRunType oldRunType=getRunType();
 
-        if (runType == TestSuiteRunType.PARALLEL && oldRunType != TestSuiteRunType.PARALLEL) {
-            getConfig().setRunType(TestSuiteRunTypesConfig.PARALLELL);
-            notifyPropertyChanged("runType", oldRunType, runType);
-        } else if (runType == TestSuiteRunType.SEQUENTIAL && oldRunType != TestSuiteRunType.SEQUENTIAL) {
-            getConfig().setRunType(TestSuiteRunTypesConfig.SEQUENTIAL);
-            notifyPropertyChanged("runType", oldRunType, runType);
+if(runType==TestSuiteRunType.PARALLEL&&oldRunType!=TestSuiteRunType.PARALLEL){
+        getConfig().setRunType(TestSuiteRunTypesConfig.PARALLELL);
+notifyPropertyChanged("runType",oldRunType,runType);
+}else if(runType==TestSuiteRunType.SEQUENTIAL&&oldRunType!=TestSuiteRunType.SEQUENTIAL){
+        getConfig().setRunType(TestSuiteRunTypesConfig.SEQUENTIAL);
+notifyPropertyChanged("runType",oldRunType,runType);
+}
         }
-    }
 
-    public WsdlTestSuite moveTestSuite(int ix, int offset) {
-        WsdlTestSuite testSuite = testSuites.get(ix);
+public WsdlTestSuite moveTestSuite(int ix,int offset){
+        WsdlTestSuite testSuite=testSuites.get(ix);
 
-        if (offset == 0) {
-            return testSuite;
-        }
+if(offset==0){
+        return testSuite;
+}
 
         testSuites.remove(ix);
-        testSuites.add(ix + offset, testSuite);
+testSuites.add(ix+offset,testSuite);
 
-        TestSuiteConfig[] configs = new TestSuiteConfig[testSuites.size()];
+TestSuiteConfig[]configs=new TestSuiteConfig[testSuites.size()];
 
-        for (int c = 0; c < testSuites.size(); c++) {
-            if (offset > 0) {
-                if (c < ix) {
-                    configs[c] = (TestSuiteConfig) getConfig().getTestSuiteArray(c).copy();
-                } else if (c < (ix + offset)) {
-                    configs[c] = (TestSuiteConfig) getConfig().getTestSuiteArray(c + 1).copy();
-                } else if (c == ix + offset) {
-                    configs[c] = (TestSuiteConfig) getConfig().getTestSuiteArray(ix).copy();
-                } else {
-                    configs[c] = (TestSuiteConfig) getConfig().getTestSuiteArray(c).copy();
-                }
-            } else {
-                if (c < ix + offset) {
-                    configs[c] = (TestSuiteConfig) getConfig().getTestSuiteArray(c).copy();
-                } else if (c == ix + offset) {
-                    configs[c] = (TestSuiteConfig) getConfig().getTestSuiteArray(ix).copy();
-                } else if (c <= ix) {
-                    configs[c] = (TestSuiteConfig) getConfig().getTestSuiteArray(c - 1).copy();
-                } else {
-                    configs[c] = (TestSuiteConfig) getConfig().getTestSuiteArray(c).copy();
-                }
-            }
+for(int c=0;c<testSuites.size();c++){
+        if(offset>0){
+        if(c<ix){
+        configs[c]=(TestSuiteConfig)getConfig().getTestSuiteArray(c).copy();
+}else if(c<(ix+offset)){
+        configs[c]=(TestSuiteConfig)getConfig().getTestSuiteArray(c+1).copy();
+}else if(c==ix+offset){
+        configs[c]=(TestSuiteConfig)getConfig().getTestSuiteArray(ix).copy();
+}else{
+        configs[c]=(TestSuiteConfig)getConfig().getTestSuiteArray(c).copy();
+}
+        }else{
+        if(c<ix+offset){
+        configs[c]=(TestSuiteConfig)getConfig().getTestSuiteArray(c).copy();
+}else if(c==ix+offset){
+        configs[c]=(TestSuiteConfig)getConfig().getTestSuiteArray(ix).copy();
+}else if(c<=ix){
+        configs[c]=(TestSuiteConfig)getConfig().getTestSuiteArray(c-1).copy();
+}else{
+        configs[c]=(TestSuiteConfig)getConfig().getTestSuiteArray(c).copy();
+}
+        }
         }
 
         getConfig().setTestSuiteArray(configs);
-        for (int c = 0; c < configs.length; c++) {
-            testSuites.get(c).resetConfigOnMove(getConfig().getTestSuiteArray(c));
-        }
+for(int c=0;c<configs.length;c++){
+        testSuites.get(c).resetConfigOnMove(getConfig().getTestSuiteArray(c));
+}
 
-        fireTestSuiteMoved(testSuite, ix, offset);
-        return testSuite;
-
-    }
-
-    public void importMockService(File file) {
-        if (!file.exists()) {
-            UISupport.showErrorMessage("Error loading test case ");
-            return;
-        }
-
-        MockServiceDocumentConfig newMockServiceConfig = null;
-
-        try {
-            newMockServiceConfig = MockServiceDocumentConfig.Factory.parse(file);
-        } catch (Exception e) {
-            SoapUI.logError(e);
-        }
-
-        if (newMockServiceConfig == null) {
-            UISupport.showErrorMessage("Not valid mock service xml");
-        } else {
-            MockServiceConfig config = (MockServiceConfig) projectDocument.getSoapuiProject().addNewMockService()
-                    .set(newMockServiceConfig.getMockService());
-            WsdlMockService mockService = new WsdlMockService(this, config);
-
-            ModelSupport.unsetIds(mockService);
-            mockService.afterLoad();
-
-            addWsdlMockService(mockService);
-            fireMockServiceAdded(mockService);
-
-            resolveImportedMockService(mockService);
-        }
-    }
-
-    private void resolveImportedMockService(WsdlMockService mockService) {
-        ResolveDialog resolver = new ResolveDialog("Validate MockService", "Checks MockService for inconsistencies",
-                null);
-        resolver.setShowOkMessage(false);
-        resolver.resolve(mockService);
-    }
-
-    public void addEnvironmentListener(EnvironmentListener listener) {
-        environmentListeners.add(listener);
-    }
-
-    public void removeEnvironmentListener(EnvironmentListener listener) {
-        environmentListeners.remove(listener);
-    }
-
-	private void updateConfigForContentInExternalFile( SoapuiProjectDocumentConfig projectDocumentCopy, boolean includeContent )
-	{
-		// When UISettings have USE_EXTERNAL_FILE and step does not override it to NONE :
-		//
-		//   for elements having an 'externalFilename' attribute, modify the project copy to clear out the
-		//   textValue of element because we don't want to have that content in 2 places.  We let the in-memory
-		// `this.projectDocument` intact because we want this content to appear in the UI !
-		if( !includeContent )
-		{
-			SoapUI.log.debug( "Clearing the textValue of content using an external file (unless they are flagged as not using content in external file)." );
-		}
-
-		List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
-		for( String path : ALL_PATHS_IN_CONFIG )
-		{
-			xmlObjects.addAll( Arrays.asList( projectDocumentCopy.selectPath( CONFIG_NAMESPACE + "$this/" + path ) ) );
-		}
-
-		for( XmlObject xmlObject : xmlObjects )
-		{
-			XmlCursor contentCursor = xmlObject.newCursor();
-			XmlCursor parentCursor = xmlObject.selectPath( CONFIG_NAMESPACE + "$this/.." )[0].newCursor();
-			XmlCursor contentContainerCursor;
-
-			if( contentCursor == null || parentCursor == null )
-			{
-				continue;
-			}
-
-			String externalizableContentType;
-
-			// TODO (marcpa00) : regroup this into static methods in ContentInExternalFileSupport so we don't have the logic at two differen places
-			if( "config".equals( parentCursor.getName().getLocalPart() ) )
-			{
-				contentContainerCursor = xmlObject.selectPath( CONFIG_NAMESPACE + "$this/../.." )[0].newCursor();
-				externalizableContentType = contentContainerCursor.getAttributeText( TYPE_QNAME );
-			}
-			else if( "configuration".equals( parentCursor.getName().getLocalPart() ) && "assertion".equals( xmlObject.selectPath( CONFIG_NAMESPACE + "$this/../.." )[0].newCursor().getName().getLocalPart() ) )
-			{
-				contentContainerCursor = xmlObject.selectPath( CONFIG_NAMESPACE + "$this/../.." )[0].newCursor();
-				externalizableContentType = GROOVY_TYPE;
-			}
-			else
-			{
-				contentContainerCursor = parentCursor;
-				externalizableContentType = GROOVY_TYPE;
-			}
-
-
-			String externalFilenameBuildModeValue = contentCursor.getAttributeText( EXTERNAL_FILENAME_BUILD_MODE_QNAME );
-			if( externalFilenameBuildModeValue != null && externalFilenameBuildModeValue.equals( ExternalFilenameBuildModeConfig.NONE.toString() ) )
-			{
-				continue;
-			}
-			if( externalFilenameBuildModeValue == null && !getSettings().getBoolean( UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE ) )
-			{
-				// skip this step, it does not use external filename and we are not in auto-convert mode
-				continue;
-			}
-
-			if( externalizableContentType != null )
-			{
-				if( externalizableContentType.equals( REQUEST_TYPE ) )
-				{
-					WsdlRequestConfig wsdlRequestConfig = ( WsdlRequestConfig )xmlObject.changeType( WsdlRequestConfig.type );
-					if( !includeContent )
-					{
-						wsdlRequestConfig.getRequest().setStringValue( "" );
-					}
-				}
-				else if( externalizableContentType.equals( GROOVY_TYPE ) )
-				{
-					if( !includeContent )
-					{
-						contentCursor.setTextValue( "" );
-					}
-				}
-			}
-			contentCursor.dispose();
-		}
-	}
-
-
-	public Boolean getAlwaysPreferContentFromProject()
-	{
-		return alwaysPreferContentFromProject;
-	}
-
-	public void setAlwaysPreferContentFromProject( Boolean alwaysPreferContentFromProject )
-	{
-		this.alwaysPreferContentFromProject = alwaysPreferContentFromProject;
-	}
-
-	public Boolean getAlwaysPreferContentFromExternalFile()
-	{
-		return alwaysPreferContentFromExternalFile;
-	}
-
-	public void setAlwaysPreferContentFromExternalFile( Boolean alwaysPreferContentFromExternalFile )
-	{
-		this.alwaysPreferContentFromExternalFile = alwaysPreferContentFromExternalFile;
-	}
-
-	public ContentInExternalFileSupport getBeforeSaveContentInExternalFile()
-	{
-		return beforeSaveContentInExternalFile;
-	}
-
-	public void setBeforeSaveContentInExternalFile( ContentInExternalFileSupport beforeSaveContentInExternalFile )
-	{
-		this.beforeSaveContentInExternalFile = beforeSaveContentInExternalFile;
-	}
-
-	public ContentInExternalFileSupport getAfterLoadContentInExternalFile()
-	{
-		return afterLoadContentInExternalFile;
-	}
-
-	public void setAfterLoadContentInExternalFile( ContentInExternalFileSupport afterLoadContentInExternalFile )
-	{
-		this.afterLoadContentInExternalFile = afterLoadContentInExternalFile;
-	}
-
-	public ContentInExternalFileSupport getAfterRunContentInExternalFile()
-	{
-		return afterRunContentInExternalFile;
-	}
-
-	public void setAfterRunContentInExternalFile( ContentInExternalFileSupport afterRunContentInExternalFile )
-	{
-		this.afterRunContentInExternalFile = afterRunContentInExternalFile;
-	}
-
-	public ContentInExternalFileSupport getBeforeRunContentInExternalFile()
-	{
-		return beforeRunContentInExternalFile;
-	}
-
-	public void setBeforeRunContentInExternalFile( ContentInExternalFileSupport beforeRunContentInExternalFile )
-	{
-		this.beforeRunContentInExternalFile = beforeRunContentInExternalFile;
-	}
+        fireTestSuiteMoved(testSuite,ix,offset);
+return testSuite;
 
 }
+
+public void importMockService(File file){
+        if(!file.exists()){
+        UISupport.showErrorMessage("Error loading test case ");
+return;
+}
+
+        MockServiceDocumentConfig newMockServiceConfig=null;
+
+try{
+        newMockServiceConfig=MockServiceDocumentConfig.Factory.parse(file);
+}catch(Exception e){
+        SoapUI.logError(e);
+}
+
+        if(newMockServiceConfig==null){
+        UISupport.showErrorMessage("Not valid mock service xml");
+}else{
+        MockServiceConfig config=(MockServiceConfig)projectDocument.getSoapuiProject().addNewMockService()
+        .set(newMockServiceConfig.getMockService());
+WsdlMockService mockService=new WsdlMockService(this,config);
+
+ModelSupport.unsetIds(mockService);
+mockService.afterLoad();
+
+addWsdlMockService(mockService);
+fireMockServiceAdded(mockService);
+
+resolveImportedMockService(mockService);
+}
+        }
+
+private void resolveImportedMockService(WsdlMockService mockService){
+        ResolveDialog resolver=new ResolveDialog("Validate MockService","Checks MockService for inconsistencies",
+        null);
+resolver.setShowOkMessage(false);
+resolver.resolve(mockService);
+}
+
+public void addEnvironmentListener(EnvironmentListener listener){
+        environmentListeners.add(listener);
+}
+
+public void removeEnvironmentListener(EnvironmentListener listener){
+        environmentListeners.remove(listener);
+}
+
+private void updateConfigForContentInExternalFile(SoapuiProjectDocumentConfig projectDocumentCopy,boolean includeContent)
+        {
+        // When UISettings have USE_EXTERNAL_FILE and step does not override it to NONE :
+        //
+        //   for elements having an 'externalFilename' attribute, modify the project copy to clear out the
+        //   textValue of element because we don't want to have that content in 2 places.  We let the in-memory
+        // `this.projectDocument` intact because we want this content to appear in the UI !
+        if(!includeContent)
+        {
+        SoapUI.log.debug("Clearing the textValue of content using an external file (unless they are flagged as not using content in external file).");
+}
+
+        List<XmlObject>xmlObjects=new ArrayList<XmlObject>();
+for(String path:ALL_PATHS_IN_CONFIG)
+        {
+        xmlObjects.addAll(Arrays.asList(projectDocumentCopy.selectPath(CONFIG_NAMESPACE+"$this/"+path)));
+}
+
+        for(XmlObject xmlObject:xmlObjects)
+        {
+        XmlCursor contentCursor=xmlObject.newCursor();
+XmlCursor parentCursor=xmlObject.selectPath(CONFIG_NAMESPACE+"$this/..")[0].newCursor();
+XmlCursor contentContainerCursor;
+
+if(contentCursor==null||parentCursor==null)
+        {
+        continue;
+}
+
+        String externalizableContentType;
+
+// TODO (marcpa00) : regroup this into static methods in ContentInExternalFileSupport so we don't have the logic at two differen places
+if("config".equals(parentCursor.getName().getLocalPart()))
+        {
+        contentContainerCursor=xmlObject.selectPath(CONFIG_NAMESPACE+"$this/../..")[0].newCursor();
+externalizableContentType=contentContainerCursor.getAttributeText(TYPE_QNAME);
+}
+        else if("configuration".equals(parentCursor.getName().getLocalPart())&&"assertion".equals(xmlObject.selectPath(CONFIG_NAMESPACE+"$this/../..")[0].newCursor().getName().getLocalPart()))
+        {
+        contentContainerCursor=xmlObject.selectPath(CONFIG_NAMESPACE+"$this/../..")[0].newCursor();
+externalizableContentType=GROOVY_TYPE;
+}
+        else
+        {
+        contentContainerCursor=parentCursor;
+externalizableContentType=GROOVY_TYPE;
+}
+
+
+        String externalFilenameBuildModeValue=contentCursor.getAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME);
+if(externalFilenameBuildModeValue!=null&&externalFilenameBuildModeValue.equals(ExternalFilenameBuildModeConfig.NONE.toString()))
+        {
+        continue;
+}
+        if(externalFilenameBuildModeValue==null&&!getSettings().getBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE))
+        {
+        // skip this step, it does not use external filename and we are not in auto-convert mode
+        continue;
+}
+
+        if(externalizableContentType!=null)
+        {
+        if(externalizableContentType.equals(REQUEST_TYPE))
+        {
+        WsdlRequestConfig wsdlRequestConfig=(WsdlRequestConfig)xmlObject.changeType(WsdlRequestConfig.type);
+if(!includeContent)
+        {
+        wsdlRequestConfig.getRequest().setStringValue("");
+}
+        }
+        else if(externalizableContentType.equals(GROOVY_TYPE))
+        {
+        if(!includeContent)
+        {
+        contentCursor.setTextValue("");
+}
+        }
+        }
+        contentCursor.dispose();
+}
+        }
+
+
+public Boolean getAlwaysPreferContentFromProject()
+        {
+        return alwaysPreferContentFromProject;
+}
+
+public void setAlwaysPreferContentFromProject(Boolean alwaysPreferContentFromProject)
+        {
+        this.alwaysPreferContentFromProject=alwaysPreferContentFromProject;
+}
+
+public Boolean getAlwaysPreferContentFromExternalFile()
+        {
+        return alwaysPreferContentFromExternalFile;
+}
+
+public void setAlwaysPreferContentFromExternalFile(Boolean alwaysPreferContentFromExternalFile)
+        {
+        this.alwaysPreferContentFromExternalFile=alwaysPreferContentFromExternalFile;
+}
+
+public ContentInExternalFileSupport getBeforeSaveContentInExternalFile()
+        {
+        return beforeSaveContentInExternalFile;
+}
+
+public void setBeforeSaveContentInExternalFile(ContentInExternalFileSupport beforeSaveContentInExternalFile)
+        {
+        this.beforeSaveContentInExternalFile=beforeSaveContentInExternalFile;
+}
+
+public ContentInExternalFileSupport getAfterLoadContentInExternalFile()
+        {
+        return afterLoadContentInExternalFile;
+}
+
+public void setAfterLoadContentInExternalFile(ContentInExternalFileSupport afterLoadContentInExternalFile)
+        {
+        this.afterLoadContentInExternalFile=afterLoadContentInExternalFile;
+}
+
+public ContentInExternalFileSupport getAfterRunContentInExternalFile()
+        {
+        return afterRunContentInExternalFile;
+}
+
+public void setAfterRunContentInExternalFile(ContentInExternalFileSupport afterRunContentInExternalFile)
+        {
+        this.afterRunContentInExternalFile=afterRunContentInExternalFile;
+}
+
+public ContentInExternalFileSupport getBeforeRunContentInExternalFile()
+        {
+        return beforeRunContentInExternalFile;
+}
+
+public void setBeforeRunContentInExternalFile(ContentInExternalFileSupport beforeRunContentInExternalFile)
+        {
+        this.beforeRunContentInExternalFile=beforeRunContentInExternalFile;
+}
+
+        }
