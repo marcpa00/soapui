@@ -100,8 +100,6 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
     private ContentInExternalFileSupport contentInExternalFileSupport;
 
-    super(testCase,config,true,forLoadTest);
-
     public WsdlTestRequestStep(WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest) {
         super(testCase, config, true, forLoadTest);
 
@@ -136,6 +134,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
                 initRequestProperties();
             }
         }
+    }
 
     private void initRequestProperties() {
         addProperty(new TestStepBeanProperty("Endpoint", false, testRequest, "endpoint", this, false));
@@ -143,22 +142,19 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
         addProperty(new TestStepBeanProperty("Password", false, testRequest, "password", this, true));
         addProperty(new TestStepBeanProperty("Domain", false, testRequest, "domain", this, false));
         addProperty(new TestStepBeanProperty("AuthType", false, testRequest, "authType", this, true) {
-            {
 
                 @Override
                 public String getDefaultValue () {
                 // TODO Auto-generated method stub
                 return "XXX";
             }
+        });
+
+        addProperty(new TestStepBeanProperty("Request", false,testRequest, "requestContent",this,true) {
+            @Override
+            public String getDefaultValue () {
+                return getOperation().createRequest(true);
             }
-
-            );
-
-            addProperty(new TestStepBeanProperty("Request", false,testRequest, "requestContent",this,true) {
-                @Override
-                public String getDefaultValue () {
-                    return getOperation().createRequest(true);
-                }
 
                 @Override
                 public SchemaType getSchemaType () {
@@ -761,8 +757,6 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
                             return interfaces.toArray(new Interface[interfaces.size()]);
 
                         }
-
-                        );
                     }
             );
         } else {

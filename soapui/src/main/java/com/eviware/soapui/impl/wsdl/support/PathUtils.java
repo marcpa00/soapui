@@ -39,8 +39,6 @@ import java.util.List;
 public class PathUtils {
     private final static char[] FILENAME_ILLEGAL_CHARACTERS = {'/', '\n', '\r', '\t', '\0', '\f', '`', '?', '*', '\\', '<', '>', '|', '\"', ':'};
 
-    File folder = new File(path);
-
     public static String getAbsoluteFolder(String path) {
         File folder = new File(path);
 
@@ -59,20 +57,6 @@ public class PathUtils {
     public static String expandPath(String path, AbstractWsdlModelItem<?> modelItem) {
         return expandPath(path, modelItem, null);
     }
-
-    public static String expandPath(String path, AbstractWsdlModelItem<?> modelItem) {
-        return expandPath(path, modelItem, null);
-    }
-
-    public static String expandPath(String path, AbstractWsdlModelItem<?> modelItem, PropertyExpansionContext context) {
-        // if ( path != null ) {
-        path = stripQuotes(path);
-        if (isHttpPath(path)) {
-            path = path.replaceAll(" ", "%20");
-        }
-        // }
-        path = context == null ? PropertyExpander.expandProperties(modelItem, path) : PropertyExpander
-                .expandProperties(context, path);
 
     public static String expandPath(String path, AbstractWsdlModelItem<?> modelItem, PropertyExpansionContext context) {
         // if ( path != null ) {
