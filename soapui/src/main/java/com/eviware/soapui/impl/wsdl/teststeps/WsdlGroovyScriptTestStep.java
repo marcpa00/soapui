@@ -155,8 +155,6 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
             //config.setConfig( builder.finish() );
         }
         // when in step in external file mode, no need to "save" the content into config, scriptText will be written to file at save time
-        super.resetConfigOnMove(config);
-        readConfig(config);
     }
 
     public void resetConfigOnMove(TestStepConfig config) {

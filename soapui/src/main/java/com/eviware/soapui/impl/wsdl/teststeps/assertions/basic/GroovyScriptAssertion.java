@@ -94,8 +94,6 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
 
     private ContentInExternalFileSupport contentInExternalFileSupport;
 
-    super(assertionConfig,modelItem,true,true,true,false);
-
     public GroovyScriptAssertion(TestAssertionConfig assertionConfig, Assertable modelItem) {
         super(assertionConfig, modelItem, true, true, true, false);
 
@@ -156,7 +154,7 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
     public boolean configure() {
         if (dialog == null) {
             buildDialog();
-            this.addPropertyChangeListener(GROOVY_ASSERTION_SCRIPT_PROPERTY_RELOAD, groovyScriptAssertionPanel.editor);
+            this.addPropertyChangeListener(GROOVY_ASSERTION_SCRIPT_PROPERTY_RELOAD, groovyScriptAssertionPanel.getGroovyEditor());
         }
 
         oldScriptText = scriptText;
@@ -201,9 +199,6 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
         }
     }
 
-    return scriptText;
-}
-
     public void setScriptText(String scriptText) {
         this.scriptText = scriptText;
         scriptEngine.setScript(scriptText);
@@ -212,7 +207,7 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
         notifyPropertyChanged(GROOVY_ASSERTION_SCRIPT_PROPERTY, oldScriptText, scriptText);
     }
 
-protected class GroovyScriptAssertionPanel extends JPanel {
+    protected class GroovyScriptAssertionPanel extends JPanel {
     private GroovyEditor editor;
     private JSplitPane mainSplit;
     private JLogList logArea;
@@ -348,7 +343,7 @@ protected class GroovyScriptAssertionPanel extends JPanel {
         }
 
         public String getScript() {
-            return getScriptText();
+            return scriptText;
         }
 
         public void setScript(String text) {
