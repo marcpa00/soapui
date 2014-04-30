@@ -76,48 +76,29 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
                 saveScript(config);
                 initTestRequestStepInExternalFile(config);
             }
+        } else {
+            readConfig(config);
+        }
+
+        addProperty(new DefaultTestStepProperty(RESULT_PROPERTY, true, new DefaultTestStepProperty.PropertyHandlerAdapter() {
+
+            public String getValue(DefaultTestStepProperty property) {
+                return scriptResult == null ? null : scriptResult.toString();
+            }
+        }, this));
+
+        addProperty(new TestStepBeanProperty(SCRIPT_PROPERTY, false, this, SCRIPT_PROPERTY, this));
+
+        scriptEngine = SoapUIScriptEngineRegistry.create(this);
+        scriptEngine.setScript(getScript());
+        if (forLoadTest && !isDisabled()) {
+            try {
+                scriptEngine.compile();
+            } catch (Exception e) {
+                SoapUI.logError(e);
+            }
         }
     }
-
-    else
-
-    {
-        readConfig(config);
-    }
-
-    addProperty(new DefaultTestStepProperty(RESULT_PROPERTY, true,new DefaultTestStepProperty.PropertyHandlerAdapter() {
-
-        public String getValue (DefaultTestStepProperty property){
-            return scriptResult == null ? null : scriptResult.toString();
-        }
-    }
-
-    ,this));
-
-    addProperty(new TestStepBeanProperty(SCRIPT_PROPERTY, false,this,SCRIPT_PROPERTY, this)
-
-    );
-
-    scriptEngine=SoapUIScriptEngineRegistry.create(this);
-    scriptEngine.setScript(
-
-    getScript()
-
-    );
-    if(forLoadTest&&!
-
-    isDisabled()
-
-    )
-
-    {
-        try {
-            scriptEngine.compile();
-        } catch (Exception e) {
-            SoapUI.logError(e);
-        }
-    }
-}
 
     public Logger getLogger() {
         SoapUI.ensureGroovyLog();
@@ -174,117 +155,115 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
             //config.setConfig( builder.finish() );
         }
         // when in step in external file mode, no need to "save" the content into config, scriptText will be written to file at save time
+        super.resetConfigOnMove(config);
+        readConfig(config);
     }
 
-super.resetConfigOnMove(config);
-readConfig(config);
-}
-public void resetConfigOnMove(TestStepConfig config)
-        {
+    public void resetConfigOnMove(TestStepConfig config) {
         super.resetConfigOnMove(config);
-readConfig(config);
-}
+        readConfig(config);
+    }
 
-public String getDefaultSourcePropertyName(){
+    public String getDefaultSourcePropertyName() {
         return RESULT_PROPERTY;
-}
+    }
 
-public TestStepResult run(TestCaseRunner testRunner,TestCaseRunContext context){
+    public TestStepResult run(TestCaseRunner testRunner, TestCaseRunContext context) {
         SoapUI.ensureGroovyLog();
 
-WsdlTestStepResult result=new WsdlTestStepResult(this);
-Logger log=(Logger)context.getProperty("log");
-if(log==null){
-        log=logger;
-}
+        WsdlTestStepResult result = new WsdlTestStepResult(this);
+        Logger log = (Logger) context.getProperty("log");
+        if (log == null) {
+            log = logger;
+        }
 
-        try{
-        if(scriptText.trim().length()>0){
-synchronized(this){
-        scriptEngine.setVariable("context",context);
-scriptEngine.setVariable("testRunner",testRunner);
-scriptEngine.setVariable("log",log);
+        try {
+            if (scriptText.trim().length() > 0) {
+                synchronized (this) {
+                    scriptEngine.setVariable("context", context);
+                    scriptEngine.setVariable("testRunner", testRunner);
+                    scriptEngine.setVariable("log", log);
 
-result.setTimeStamp(System.currentTimeMillis());
-result.startTimer();
-scriptResult=scriptEngine.run();
-result.stopTimer();
+                    result.setTimeStamp(System.currentTimeMillis());
+                    result.startTimer();
+                    scriptResult = scriptEngine.run();
+                    result.stopTimer();
 
-if(scriptResult!=null){
-        result.addMessage("Script-result: "+scriptResult.toString());
+                    if (scriptResult != null) {
+                        result.addMessage("Script-result: " + scriptResult.toString());
 // FIXME The property should not me hard coded
-firePropertyValueChanged(RESULT_PROPERTY,null,String.valueOf(result));
-}
+                        firePropertyValueChanged(RESULT_PROPERTY, null, String.valueOf(result));
+                    }
 
-        }
-        }
+                }
+            }
 
-        // testRunner status may have been changed by script..
-        Status testRunnerStatus=testRunner.getStatus();
-if(testRunnerStatus==Status.FAILED){
-        result.setStatus(TestStepStatus.FAILED);
-}else if(testRunnerStatus==Status.CANCELED){
-        result.setStatus(TestStepStatus.CANCELED);
-}else{
-        result.setStatus(TestStepStatus.OK);
-}
-        }catch(Throwable e){
-        String errorLineNumber=GroovyUtils.extractErrorLineNumber(e);
+            // testRunner status may have been changed by script..
+            Status testRunnerStatus = testRunner.getStatus();
+            if (testRunnerStatus == Status.FAILED) {
+                result.setStatus(TestStepStatus.FAILED);
+            } else if (testRunnerStatus == Status.CANCELED) {
+                result.setStatus(TestStepStatus.CANCELED);
+            } else {
+                result.setStatus(TestStepStatus.OK);
+            }
+        } catch (Throwable e) {
+            String errorLineNumber = GroovyUtils.extractErrorLineNumber(e);
 
-SoapUI.logError(e);
-result.stopTimer();
-result.addMessage(e.toString());
-if(errorLineNumber!=null){
-        result.addMessage("error at line: "+errorLineNumber);
-}
-        result.setError(e);
-result.setStatus(TestStepStatus.FAILED);
-}finally{
-        if(!isForLoadTest()){
-        setIcon(result.getStatus()==TestStepStatus.FAILED?failedIcon:okIcon);
-}
+            SoapUI.logError(e);
+            result.stopTimer();
+            result.addMessage(e.toString());
+            if (errorLineNumber != null) {
+                result.addMessage("error at line: " + errorLineNumber);
+            }
+            result.setError(e);
+            result.setStatus(TestStepStatus.FAILED);
+        } finally {
+            if (!isForLoadTest()) {
+                setIcon(result.getStatus() == TestStepStatus.FAILED ? failedIcon : okIcon);
+            }
 
-        if(scriptEngine!=null){
-        scriptEngine.clearVariables();
-}
+            if (scriptEngine != null) {
+                scriptEngine.clearVariables();
+            }
         }
 
         return result;
-}
+    }
 
-public String getScript(){
+    public String getScript() {
         return scriptText;
-}
+    }
 
-public void setScript(String scriptText){
-        if(scriptText.equals(this.scriptText)){
-        return;
-}
-
-        String oldScript=this.scriptText;
-this.scriptText=scriptText;
-scriptEngine.setScript(scriptText);
-contentInExternalFileSupport.setContent(scriptText);
-saveScript(getConfig());
-
-notifyPropertyChanged(SCRIPT_PROPERTY,oldScript,scriptText);
-}
-
-@Override
-public void release(){
-        super.release();
-scriptEngine.release();
-}
-
-public PropertyExpansion[]getPropertyExpansions(){
-        PropertyExpansionsResult result=new PropertyExpansionsResult(this);
-
-result.extractAndAddAll(SCRIPT_PROPERTY);
-
-return result.toArray();
-}
-
-public ContentInExternalFileSupport getContentInExternalFileSupport(){
-        return contentInExternalFileSupport;
-}
+    public void setScript(String scriptText) {
+        if (scriptText.equals(this.scriptText)) {
+            return;
         }
+
+        String oldScript = this.scriptText;
+        this.scriptText = scriptText;
+        scriptEngine.setScript(scriptText);
+        contentInExternalFileSupport.setContent(scriptText);
+        saveScript(getConfig());
+
+        notifyPropertyChanged(SCRIPT_PROPERTY, oldScript, scriptText);
+    }
+
+    @Override
+    public void release() {
+        super.release();
+        scriptEngine.release();
+    }
+
+    public PropertyExpansion[] getPropertyExpansions() {
+        PropertyExpansionsResult result = new PropertyExpansionsResult(this);
+
+        result.extractAndAddAll(SCRIPT_PROPERTY);
+
+        return result.toArray();
+    }
+
+    public ContentInExternalFileSupport getContentInExternalFileSupport() {
+        return contentInExternalFileSupport;
+    }
+}
