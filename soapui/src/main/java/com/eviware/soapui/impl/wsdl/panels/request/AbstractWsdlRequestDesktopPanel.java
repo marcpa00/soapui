@@ -72,10 +72,10 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
         cloneButton = createActionButton(SwingActionDelegate.createDelegate(CloneRequestAction.SOAPUI_ACTION_ID,
                 request, null, "/clone_request.gif"), true);
 
-        configureExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
-                ConfigureExternalFileAction.SOAPUI_ACTION_ID, request, null, "/options.gif" ), true );
-        reloadExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
-                ReloadExternalFileAction.SOAPUI_ACTION_ID, getModelItem(), null, "/arrow_refresh.png" ), true);
+        configureExternalFileButton = createActionButton(SwingActionDelegate.createDelegate(
+                ConfigureExternalFileAction.SOAPUI_ACTION_ID, request, null, "/options.gif"), true);
+        reloadExternalFileButton = createActionButton(SwingActionDelegate.createDelegate(
+                ReloadExternalFileAction.SOAPUI_ACTION_ID, getModelItem(), null, "/arrow_refresh.png"), true);
 
         createEmptyButton = createActionButton(new CreateEmptyRequestAction(request), true);
 
@@ -100,8 +100,8 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
     }
 
     protected void insertButtons(JXToolBar toolbar) {
-        toolbar.add( configureExternalFileButton );
-        toolbar.add( reloadExternalFileButton );
+        toolbar.add(configureExternalFileButton);
+        toolbar.add(reloadExternalFileButton);
         toolbar.add(addToMockServiceButton);
         toolbar.add(recreateButton);
         toolbar.add(createEmptyButton);
@@ -111,8 +111,8 @@ public abstract class AbstractWsdlRequestDesktopPanel<T extends ModelItem, T2 ex
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
 
-        configureExternalFileButton.setEnabled( enabled );
-        reloadExternalFileButton.setEnabled( enabled );
+        configureExternalFileButton.setEnabled(enabled);
+        reloadExternalFileButton.setEnabled(enabled);
         recreateButton.setEnabled(enabled);
         createEmptyButton.setEnabled(enabled);
         cloneButton.setEnabled(enabled);

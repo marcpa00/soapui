@@ -83,13 +83,11 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
     public GroovyScriptStepDesktopPanel(WsdlGroovyScriptTestStep groovyStep) {
         super(groovyStep);
         this.groovyStep = groovyStep;
-		if( this.groovyStep.getContentInExternalFileSupport() != null )
-		{
-			if( this.groovyStep.getContentInExternalFileSupport().maybeReloadStepContent() )
-			{
-				this.groovyStep.setScript( this.groovyStep.getContentInExternalFileSupport().getContent() );
-			}
-		}
+        if (this.groovyStep.getContentInExternalFileSupport() != null) {
+            if (this.groovyStep.getContentInExternalFileSupport().maybeReloadStepContent()) {
+                this.groovyStep.setScript(this.groovyStep.getContentInExternalFileSupport().getContent());
+            }
+        }
         componentEnabler = new TestRunComponentEnabler(groovyStep.getTestCase());
 
         buildUI();
@@ -160,13 +158,13 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
     private JComponent buildToolbar() {
         JXToolBar toolBar = UISupport.createToolbar();
         JButton runButton = UISupport.createToolbarButton(runAction);
-		JButton configureExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
-				ConfigureExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep.getContentInExternalFileSupport(), null, "/options.gif" ), true );
-		JButton reloadExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
-				ReloadExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep, null, "/arrow_refresh.png" ), true );
+        JButton configureExternalFileButton = createActionButton(SwingActionDelegate.createDelegate(
+                ConfigureExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep.getContentInExternalFileSupport(), null, "/options.gif"), true);
+        JButton reloadExternalFileButton = createActionButton(SwingActionDelegate.createDelegate(
+                ReloadExternalFileAction.SOAPUI_ACTION_ID, this.groovyStep, null, "/arrow_refresh.png"), true);
         toolBar.add(runButton);
-		toolBar.add( configureExternalFileButton );
-		toolBar.add( reloadExternalFileButton );
+        toolBar.add(configureExternalFileButton);
+        toolBar.add(reloadExternalFileButton);
         toolBar.add(Box.createHorizontalGlue());
         JLabel label = new JLabel("<html>Script is invoked with <code>log</code>, <code>context</code> "
                 + "and <code>testRunner</code> variables</html>");
@@ -178,8 +176,8 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
         toolBar.add(UISupport.createToolbarButton(new ShowOnlineHelpAction(HelpUrls.GROOVYSTEPEDITOR_HELP_URL)));
 
         componentEnabler.add(runButton);
-		componentEnabler.add( configureExternalFileButton );
-		componentEnabler.add( reloadExternalFileButton );
+        componentEnabler.add(configureExternalFileButton);
+        componentEnabler.add(reloadExternalFileButton);
 
         return toolBar;
     }
@@ -284,8 +282,9 @@ public class GroovyScriptStepDesktopPanel extends ModelItemDesktopPanel<WsdlGroo
 
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(SCRIPT_PROPERTY) && !updating) {
-		if( evt.getPropertyName().equals( SCRIPT_PROPERTY ) && !updating && editor != null)
-            updating = true;
+            if (evt.getPropertyName().equals(SCRIPT_PROPERTY) && !updating && editor != null) {
+                updating = true;
+            }
             editor.getEditArea().setText((String) evt.getNewValue());
             updating = false;
         }

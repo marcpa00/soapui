@@ -29,21 +29,21 @@ import java.io.IOException;
  */
 
 public class SaveProjectIncludingContentAction extends AbstractSoapUIAction<WsdlProject> {
-	public static final String SOAPUI_ACTION_ID = "SaveProjectIncludingContentAction";
+    public static final String SOAPUI_ACTION_ID = "SaveProjectIncludingContentAction";
 
-	public SaveProjectIncludingContentAction() {
-		super("Save Project (with step content)", "Saves this project");
-	}
+    public SaveProjectIncludingContentAction() {
+        super("Save Project (with step content)", "Saves this project");
+    }
 
-	public void perform(WsdlProject project, Object param) {
-		try {
-			if(StringUtils.hasContent(project.getPath()) || project.getWorkspace() == null) {
-				project.save(null, true);
-			} else {
-				project.save(project.getWorkspace().getProjectRoot(), true);
-			}
-		} catch(IOException e1) {
-			UISupport.showErrorMessage("Failed to save project; " + e1);
-		}
-	}
+    public void perform(WsdlProject project, Object param) {
+        try {
+            if (StringUtils.hasContent(project.getPath()) || project.getWorkspace() == null) {
+                project.save(null, true);
+            } else {
+                project.save(project.getWorkspace().getProjectRoot(), true);
+            }
+        } catch (IOException e1) {
+            UISupport.showErrorMessage("Failed to save project; " + e1);
+        }
+    }
 }

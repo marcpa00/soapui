@@ -17,6 +17,7 @@
 package com.eviware.soapui.impl.wsdl.teststeps.assertions.basic;
 
 import javax.xml.namespace.QName;
+
 import com.eviware.soapui.impl.support.ContentInExternalFileSupport;
 import com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction;
 import com.eviware.soapui.impl.wsdl.actions.request.ReloadExternalFileAction;
@@ -80,8 +81,8 @@ import java.awt.event.MouseEvent;
  */
 
 public class GroovyScriptAssertion extends WsdlMessageAssertion implements RequestAssertion, ResponseAssertion {
-	public final static String GROOVY_ASSERTION_SCRIPT_PROPERTY = GroovyScriptAssertion.class.getName() + "@script";
-	public final static String GROOVY_ASSERTION_SCRIPT_PROPERTY_RELOAD = GROOVY_ASSERTION_SCRIPT_PROPERTY + "Reload";
+    public final static String GROOVY_ASSERTION_SCRIPT_PROPERTY = GroovyScriptAssertion.class.getName() + "@script";
+    public final static String GROOVY_ASSERTION_SCRIPT_PROPERTY_RELOAD = GROOVY_ASSERTION_SCRIPT_PROPERTY + "Reload";
     public static final String ID = "GroovyScriptAssertion";
     public static final String LABEL = "Script Assertion";
     public static final String DESCRIPTION = "Runs a custom script to perform arbitrary validations. Applicable to any Property.";
@@ -91,32 +92,26 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
     private GroovyScriptAssertionPanel groovyScriptAssertionPanel;
     private String oldScriptText;
 
-	private ContentInExternalFileSupport contentInExternalFileSupport;
+    private ContentInExternalFileSupport contentInExternalFileSupport;
 
+    super(assertionConfig,modelItem,true,true,true,false);
+
+    public GroovyScriptAssertion(TestAssertionConfig assertionConfig, Assertable modelItem) {
         super(assertionConfig, modelItem, true, true, true, false);
-	public GroovyScriptAssertion( TestAssertionConfig assertionConfig, Assertable modelItem )
-	{
-		super( assertionConfig, modelItem, true, true, true, false );
 
-		if( modelItem instanceof WsdlTestStep)
-		{
-			contentInExternalFileSupport = new ContentInExternalFileSupport( (WsdlTestStep)modelItem, this, assertionConfig, ( ( WsdlTestStep )modelItem ).getSettings() );
-			contentInExternalFileSupport.initExternalFilenameSupport();
-			if( getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) )
-			{
-				scriptText = contentInExternalFileSupport.getContent();
-			}
-			else
-			{
-				XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( getConfiguration() );
-				scriptText = reader.readString( "scriptText", "" );
-			}
-		}
-		else
-		{
-			XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( getConfiguration() );
-			scriptText = reader.readString( "scriptText", "" );
-		}
+        if (modelItem instanceof WsdlTestStep) {
+            contentInExternalFileSupport = new ContentInExternalFileSupport((WsdlTestStep) modelItem, this, assertionConfig, ((WsdlTestStep) modelItem).getSettings());
+            contentInExternalFileSupport.initExternalFilenameSupport();
+            if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+                scriptText = contentInExternalFileSupport.getContent();
+            } else {
+                XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader(getConfiguration());
+                scriptText = reader.readString("scriptText", "");
+            }
+        } else {
+            XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader(getConfiguration());
+            scriptText = reader.readString("scriptText", "");
+        }
 
         scriptEngine = SoapUIScriptEngineRegistry.create(this);
         scriptEngine.setScript(scriptText);
@@ -161,7 +156,7 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
     public boolean configure() {
         if (dialog == null) {
             buildDialog();
-			this.addPropertyChangeListener( GROOVY_ASSERTION_SCRIPT_PROPERTY_RELOAD, groovyScriptAssertionPanel.editor );
+            this.addPropertyChangeListener(GROOVY_ASSERTION_SCRIPT_PROPERTY_RELOAD, groovyScriptAssertionPanel.editor);
         }
 
         oldScriptText = scriptText;
@@ -190,225 +185,230 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
         return builder.finish();
     }
 
-	protected XmlObject updateOrCreateConfiguration()
-	{
-		XmlObject configuration = getConfiguration();
-		if( configuration == null )
-		{
-			return createConfiguration();
-		}
-		XmlCursor cursor = configuration.newCursor();
-		String namespaceUri = cursor.namespaceForPrefix( "" );
-		QName scriptTextQName = new QName( namespaceUri, "scriptText" );
-		if( cursor.toChild( scriptTextQName ) )
-		{
-			cursor.setTextValue( scriptText );
-			return configuration;
-		}
-		else
-		{
-			return createConfiguration();
-		}
-	}
-
-        return scriptText;
+    protected XmlObject updateOrCreateConfiguration() {
+        XmlObject configuration = getConfiguration();
+        if (configuration == null) {
+            return createConfiguration();
+        }
+        XmlCursor cursor = configuration.newCursor();
+        String namespaceUri = cursor.namespaceForPrefix("");
+        QName scriptTextQName = new QName(namespaceUri, "scriptText");
+        if (cursor.toChild(scriptTextQName)) {
+            cursor.setTextValue(scriptText);
+            return configuration;
+        } else {
+            return createConfiguration();
+        }
     }
+
+    return scriptText;
+}
 
     public void setScriptText(String scriptText) {
         this.scriptText = scriptText;
         scriptEngine.setScript(scriptText);
-		setConfiguration( updateOrCreateConfiguration() );
+        setConfiguration(updateOrCreateConfiguration());
 
-		notifyPropertyChanged( GROOVY_ASSERTION_SCRIPT_PROPERTY, oldScriptText, scriptText );
+        notifyPropertyChanged(GROOVY_ASSERTION_SCRIPT_PROPERTY, oldScriptText, scriptText);
     }
 
-    protected class GroovyScriptAssertionPanel extends JPanel {
-        private GroovyEditor editor;
-        private JSplitPane mainSplit;
-        private JLogList logArea;
-        private RunAction runAction = new RunAction();
-        private Logger logger;
-        private JButton okButton;
-        private ShowOnlineHelpAction showOnlineHelpAction;
+protected class GroovyScriptAssertionPanel extends JPanel {
+    private GroovyEditor editor;
+    private JSplitPane mainSplit;
+    private JLogList logArea;
+    private RunAction runAction = new RunAction();
+    private Logger logger;
+    private JButton okButton;
+    private ShowOnlineHelpAction showOnlineHelpAction;
 
-        public GroovyScriptAssertionPanel() {
-            super(new BorderLayout());
+    public GroovyScriptAssertionPanel() {
+        super(new BorderLayout());
 
-            buildUI();
-            setPreferredSize(new Dimension(600, 440));
+        buildUI();
+        setPreferredSize(new Dimension(600, 440));
 
-            logger = Logger.getLogger("ScriptAssertion." + getName());
+        logger = Logger.getLogger("ScriptAssertion." + getName());
+        editor.requestFocusInWindow();
+    }
+
+    public GroovyEditor getGroovyEditor() {
+        return editor;
+    }
+
+    public void release() {
+        editor.release();
+        logger = null;
+    }
+
+    private void buildUI() {
+        editor = new GroovyEditor(new ScriptStepGroovyEditorModel());
+
+        logArea = new JLogList("Groovy Test Log");
+        logArea.addLogger("ScriptAssertion." + getName(), true);
+        logArea.getLogList().addMouseListener(new MouseAdapter() {
+
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() < 2) {
+                    return;
+                }
+
+                String value = logArea.getLogList().getSelectedValue().toString();
+                if (value == null) {
+                    return;
+                }
+
+                editor.selectError(value);
+            }
+        });
+
+        editor.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3),
+                editor.getBorder()));
+
+        mainSplit = UISupport.createVerticalSplit(editor, logArea);
+        mainSplit.setDividerLocation(280);
+        mainSplit.setResizeWeight(0.8);
+        add(mainSplit, BorderLayout.CENTER);
+        add(buildToolbar(), BorderLayout.NORTH);
+        add(buildStatusBar(), BorderLayout.SOUTH);
+    }
+
+    public JButton getDefaultButton() {
+        return okButton;
+    }
+
+    public ShowOnlineHelpAction getShowOnlineHelpAction() {
+        return showOnlineHelpAction;
+    }
+
+    private Component buildStatusBar() {
+        ButtonBarBuilder builder = new ButtonBarBuilder();
+
+        showOnlineHelpAction = new ShowOnlineHelpAction(HelpUrls.GROOVYASSERTION_HELP_URL);
+        builder.addFixed(UISupport.createToolbarButton(showOnlineHelpAction));
+        builder.addGlue();
+        okButton = new JButton(new OkAction());
+        builder.addFixed(okButton);
+        builder.addRelatedGap();
+        builder.addFixed(new JButton(new CancelAction()));
+        builder.setBorder(BorderFactory.createEmptyBorder(0, 3, 3, 3));
+        return builder.getPanel();
+    }
+
+    private JComponent buildToolbar() {
+        JXToolBar toolBar = UISupport.createToolbar();
+        JButton runButton = UISupport.createToolbarButton(runAction);
+        JButton configureExternalFileButton = createActionButton(SwingActionDelegate.createDelegate(
+                ConfigureExternalFileAction.SOAPUI_ACTION_ID, getContentInExternalFileSupport(), null, "/options.gif"), true);
+        JButton reloadExternalFileButton = createActionButton(SwingActionDelegate.createDelegate(
+                ReloadExternalFileAction.SOAPUI_ACTION_ID, getContentInExternalFileSupport(), null, "/arrow_refresh.png"), true);
+        toolBar.add(runButton);
+        toolBar.add(configureExternalFileButton);
+        toolBar.add(reloadExternalFileButton);
+        toolBar.add(Box.createHorizontalGlue());
+        JLabel label = new JLabel("<html>Script is invoked with <code>log</code>, <code>context</code> "
+                + "and <code>messageExchange</code> variables</html>");
+        label.setToolTipText(label.getText());
+        label.setMaximumSize(label.getPreferredSize());
+
+        toolBar.addFixed(label);
+        toolBar.addSpace(3);
+
+        return toolBar;
+    }
+
+    private final class OkAction extends AbstractAction {
+        public OkAction() {
+            super("OK");
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            dialog.setVisible(false);
+            setScriptText(editor.getEditArea().getText());
+        }
+    }
+
+    private final class CancelAction extends AbstractAction {
+        public CancelAction() {
+            super("Cancel");
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            dialog.setVisible(false);
+            editor.getEditArea().setText(oldScriptText);
+        }
+    }
+
+    private class ScriptStepGroovyEditorModel extends AbstractGroovyEditorModel {
+        public ScriptStepGroovyEditorModel() {
+            super(new String[]{"log", "context", "messageExchange"}, getAssertable().getModelItem(), "Assertion");
+        }
+
+        public Action getRunAction() {
+            return runAction;
+        }
+
+        public String getScript() {
+            return getScriptText();
+        }
+
+        public void setScript(String text) {
+
+        }
+    }
+
+    private class RunAction extends AbstractAction {
+        public RunAction() {
+            putValue(Action.SMALL_ICON, UISupport.createImageIcon("/run_groovy_script.gif"));
+            putValue(Action.SHORT_DESCRIPTION,
+                    "Runs this assertion script against the last messageExchange with a mock testContext");
+        }
+
+        public void actionPerformed(ActionEvent event) {
+            TestStep testStep = getAssertable().getTestStep();
+            MessageExchange exchange = null;
+
+            if (testStep instanceof WsdlTestRequestStep) {
+                WsdlTestRequestStep testRequestStep = (WsdlTestRequestStep) testStep;
+                exchange = new WsdlResponseMessageExchange(testRequestStep.getTestRequest());
+                ((WsdlResponseMessageExchange) exchange).setResponse(testRequestStep.getTestRequest().getResponse());
+            } else if (testStep instanceof RestTestRequestStepInterface) {
+                RestTestRequestStepInterface testRequestStep = (RestTestRequestStepInterface) testStep;
+                exchange = new RestResponseMessageExchange((RestRequestInterface) testRequestStep.getTestRequest());
+                ((RestResponseMessageExchange) exchange)
+                        .setResponse(((HttpRequest) testRequestStep.getTestRequest()) /* cast makes code compile with Java 6 */
+                                .getResponse());
+            } else if (testStep instanceof HttpTestRequestStepInterface) {
+                HttpTestRequestStepInterface testRequestStep = (HttpTestRequestStepInterface) testStep;
+                exchange = new HttpResponseMessageExchange(testRequestStep.getTestRequest());
+                ((HttpResponseMessageExchange) exchange)
+                        .setResponse(((HttpRequest) testRequestStep.getTestRequest()) /* cast makes code compile with Java 6 */
+                                .getResponse());
+            } else if (testStep instanceof WsdlMockResponseTestStep) {
+                WsdlMockResponseTestStep mockResponseStep = (WsdlMockResponseTestStep) testStep;
+                exchange = new WsdlMockResponseMessageExchange(mockResponseStep.getMockResponse());
+            }
+
+            try {
+                setScriptText(editor.getEditArea().getText());
+                String result = assertScript(exchange, new WsdlTestRunContext(testStep), logger);
+                UISupport
+                        .showInfoMessage("Script Assertion Passed" + ((result == null) ? "" : ": [" + result + "]"));
+            } catch (AssertionException e) {
+                UISupport.showErrorMessage(e.getMessage());
+            } catch (Exception e) {
+                SoapUI.logError(e);
+                UISupport.showErrorMessage(e.getMessage());
+            }
+
             editor.requestFocusInWindow();
         }
+    }
+}
 
-        public GroovyEditor getGroovyEditor() {
-            return editor;
-        }
-
-        public void release() {
-            editor.release();
-            logger = null;
-        }
-
-        private void buildUI() {
-            editor = new GroovyEditor(new ScriptStepGroovyEditorModel());
-
-            logArea = new JLogList("Groovy Test Log");
-            logArea.addLogger("ScriptAssertion." + getName(), true);
-            logArea.getLogList().addMouseListener(new MouseAdapter() {
-
-                public void mouseClicked(MouseEvent e) {
-                    if (e.getClickCount() < 2) {
-                        return;
-                    }
-
-                    String value = logArea.getLogList().getSelectedValue().toString();
-                    if (value == null) {
-                        return;
-                    }
-
-                    editor.selectError(value);
-                }
-            });
-
-            editor.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3),
-                    editor.getBorder()));
-
-            mainSplit = UISupport.createVerticalSplit(editor, logArea);
-            mainSplit.setDividerLocation(280);
-            mainSplit.setResizeWeight(0.8);
-            add(mainSplit, BorderLayout.CENTER);
-            add(buildToolbar(), BorderLayout.NORTH);
-            add(buildStatusBar(), BorderLayout.SOUTH);
-        }
-
-        public JButton getDefaultButton() {
-            return okButton;
-        }
-
-        public ShowOnlineHelpAction getShowOnlineHelpAction() {
-            return showOnlineHelpAction;
-        }
-
-        private Component buildStatusBar() {
-            ButtonBarBuilder builder = new ButtonBarBuilder();
-
-            showOnlineHelpAction = new ShowOnlineHelpAction(HelpUrls.GROOVYASSERTION_HELP_URL);
-            builder.addFixed(UISupport.createToolbarButton(showOnlineHelpAction));
-            builder.addGlue();
-            okButton = new JButton(new OkAction());
-            builder.addFixed(okButton);
-            builder.addRelatedGap();
-            builder.addFixed(new JButton(new CancelAction()));
-            builder.setBorder(BorderFactory.createEmptyBorder(0, 3, 3, 3));
-            return builder.getPanel();
-        }
-
-        private JComponent buildToolbar() {
-            JXToolBar toolBar = UISupport.createToolbar();
-            JButton runButton = UISupport.createToolbarButton(runAction);
-			JButton configureExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
-					ConfigureExternalFileAction.SOAPUI_ACTION_ID, getContentInExternalFileSupport(), null, "/options.gif" ), true );
-			JButton reloadExternalFileButton = createActionButton( SwingActionDelegate.createDelegate(
-					ReloadExternalFileAction.SOAPUI_ACTION_ID, getContentInExternalFileSupport(), null, "/arrow_refresh.png" ), true );
-            toolBar.add(runButton);
-			toolBar.add( configureExternalFileButton );
-			toolBar.add( reloadExternalFileButton );
-            toolBar.add(Box.createHorizontalGlue());
-            JLabel label = new JLabel("<html>Script is invoked with <code>log</code>, <code>context</code> "
-                    + "and <code>messageExchange</code> variables</html>");
-            label.setToolTipText(label.getText());
-            label.setMaximumSize(label.getPreferredSize());
-
-            toolBar.addFixed(label);
-            toolBar.addSpace(3);
-
-            return toolBar;
-        }
-
-        private final class OkAction extends AbstractAction {
-            public OkAction() {
-                super("OK");
-            }
-
-            public void actionPerformed(ActionEvent e) {
-                dialog.setVisible(false);
-                setScriptText(editor.getEditArea().getText());
-            }
-        }
-
-        private final class CancelAction extends AbstractAction {
-            public CancelAction() {
-                super("Cancel");
-            }
-
-            public void actionPerformed(ActionEvent e) {
-                dialog.setVisible(false);
-                editor.getEditArea().setText(oldScriptText);
-            }
-        }
-
-        private class ScriptStepGroovyEditorModel extends AbstractGroovyEditorModel {
-            public ScriptStepGroovyEditorModel() {
-                super(new String[]{"log", "context", "messageExchange"}, getAssertable().getModelItem(), "Assertion");
-            }
-
-            public Action getRunAction() {
-                return runAction;
-            }
-
-            public String getScript() {
-                return getScriptText();
-            }
-
-            public void setScript(String text) {
-
-            }
-        }
-
-        private class RunAction extends AbstractAction {
-            public RunAction() {
-                putValue(Action.SMALL_ICON, UISupport.createImageIcon("/run_groovy_script.gif"));
-                putValue(Action.SHORT_DESCRIPTION,
-                        "Runs this assertion script against the last messageExchange with a mock testContext");
-            }
-
-            public void actionPerformed(ActionEvent event) {
-                TestStep testStep = getAssertable().getTestStep();
-                MessageExchange exchange = null;
-
-                if (testStep instanceof WsdlTestRequestStep) {
-                    exchange = new WsdlResponseMessageExchange(((WsdlTestRequestStep) testStep).getTestRequest());
-                } else if (testStep instanceof RestTestRequestStepInterface) {
-                    exchange = new RestResponseMessageExchange(((RestRequestInterface) ((RestTestRequestStepInterface) testStep).getTestRequest()));
-                } else if (testStep instanceof HttpTestRequestStepInterface) {
-                    exchange = new HttpResponseMessageExchange(((HttpTestRequestStepInterface) testStep).getTestRequest());
-                } else if (testStep instanceof WsdlMockResponseTestStep) {
-                    exchange = new WsdlMockResponseMessageExchange(((WsdlMockResponseTestStep) testStep).getMockResponse());
-                }
-
-                try {
-                    setScriptText(editor.getEditArea().getText());
-                    String result = assertScript(exchange, new WsdlTestRunContext(testStep), logger);
-                    UISupport
-                            .showInfoMessage("Script Assertion Passed" + ((result == null) ? "" : ": [" + result + "]"));
-                } catch (AssertionException e) {
-                    UISupport.showErrorMessage(e.getMessage());
-                } catch (Exception e) {
-                    SoapUI.logError(e);
-                    UISupport.showErrorMessage(e.getMessage());
-                }
-
-                editor.requestFocusInWindow();
-            }
-        }
-	}
-
-	public static JButton createActionButton( Action action, boolean enabled )
-	{
-		JButton button = UISupport.createToolbarButton( action, enabled );
-		action.putValue( Action.NAME, null );
-		return button;
+    public static JButton createActionButton(Action action, boolean enabled) {
+        JButton button = UISupport.createToolbarButton(action, enabled);
+        action.putValue(Action.NAME, null);
+        return button;
     }
 
     @Override
@@ -421,35 +421,34 @@ public class GroovyScriptAssertion extends WsdlMessageAssertion implements Reque
         }
     }
 
-    public static class Factory extends AbstractTestAssertionFactory {
-        public Factory() {
-            super(GroovyScriptAssertion.ID, GroovyScriptAssertion.LABEL, GroovyScriptAssertion.class);
-        }
+public static class Factory extends AbstractTestAssertionFactory {
+    public Factory() {
+        super(GroovyScriptAssertion.ID, GroovyScriptAssertion.LABEL, GroovyScriptAssertion.class);
+    }
 
-        @Override
-        public String getCategory() {
-            return AssertionCategoryMapping.SCRIPT_CATEGORY;
-        }
+    @Override
+    public String getCategory() {
+        return AssertionCategoryMapping.SCRIPT_CATEGORY;
+    }
 
-        @Override
-        public Class<? extends WsdlMessageAssertion> getAssertionClassType() {
-            return GroovyScriptAssertion.class;
-        }
+    @Override
+    public Class<? extends WsdlMessageAssertion> getAssertionClassType() {
+        return GroovyScriptAssertion.class;
+    }
 
-        @Override
-        public AssertionListEntry getAssertionListEntry() {
-            return new AssertionListEntry(GroovyScriptAssertion.ID, GroovyScriptAssertion.LABEL,
-                    GroovyScriptAssertion.DESCRIPTION);
-        }
-	}
+    @Override
+    public AssertionListEntry getAssertionListEntry() {
+        return new AssertionListEntry(GroovyScriptAssertion.ID, GroovyScriptAssertion.LABEL,
+                GroovyScriptAssertion.DESCRIPTION);
+    }
 
-	public ContentInExternalFileSupport getContentInExternalFileSupport()
-	{
-		return contentInExternalFileSupport;
-	}
+}
 
-	public void setContentInExternalFileSupport( ContentInExternalFileSupport contentInExternalFileSupport )
-	{
-		this.contentInExternalFileSupport = contentInExternalFileSupport;
+    public ContentInExternalFileSupport getContentInExternalFileSupport() {
+        return contentInExternalFileSupport;
+    }
+
+    public void setContentInExternalFileSupport(ContentInExternalFileSupport contentInExternalFileSupport) {
+        this.contentInExternalFileSupport = contentInExternalFileSupport;
     }
 }

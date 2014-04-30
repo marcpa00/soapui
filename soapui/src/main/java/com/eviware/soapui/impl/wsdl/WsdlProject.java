@@ -120,13 +120,13 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         PropertyExpansionContainer, PropertyChangeListener, TestRunnable {
     public final static String AFTER_LOAD_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@setupScript";
     public final static String BEFORE_SAVE_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@tearDownScript";
-	public final static String AFTER_LOAD_SCRIPT_PROPERTY_RELOAD = AFTER_LOAD_SCRIPT_PROPERTY + "Reload";
-	public final static String BEFORE_SAVE_SCRIPT_PROPERTY_RELOAD = BEFORE_SAVE_SCRIPT_PROPERTY + "Reload";
+    public final static String AFTER_LOAD_SCRIPT_PROPERTY_RELOAD = AFTER_LOAD_SCRIPT_PROPERTY + "Reload";
+    public final static String BEFORE_SAVE_SCRIPT_PROPERTY_RELOAD = BEFORE_SAVE_SCRIPT_PROPERTY + "Reload";
 
-	public final static String BEFORE_RUN_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@beforeRunScript";
-	public final static String AFTER_RUN_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@afterRunScript";
-	public final static String BEFORE_RUN_SCRIPT_PROPERTY_RELOAD = BEFORE_RUN_SCRIPT_PROPERTY + "Reload";
-	public final static String AFTER_RUN_SCRIPT_PROPERTY_RELOAD = AFTER_RUN_SCRIPT_PROPERTY + "Reload";
+    public final static String BEFORE_RUN_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@beforeRunScript";
+    public final static String AFTER_RUN_SCRIPT_PROPERTY = WsdlProject.class.getName() + "@afterRunScript";
+    public final static String BEFORE_RUN_SCRIPT_PROPERTY_RELOAD = BEFORE_RUN_SCRIPT_PROPERTY + "Reload";
+    public final static String AFTER_RUN_SCRIPT_PROPERTY_RELOAD = AFTER_RUN_SCRIPT_PROPERTY + "Reload";
 
     public final static String RESOURCE_ROOT_PROPERTY = WsdlProject.class.getName() + "@resourceRoot";
     private static final String XML_FILE_TYPE = "XML Files (*.xml)";
@@ -137,8 +137,8 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     protected String path;
     protected List<AbstractInterface<?>> interfaces = new ArrayList<AbstractInterface<?>>();
     protected List<WsdlTestSuite> testSuites = new ArrayList<WsdlTestSuite>();
-	protected List<WsdlMockService> mockServices = new ArrayList<WsdlMockService>();
-	protected List<RestMockService> restMockServices = new ArrayList<RestMockService>();
+    protected List<WsdlMockService> mockServices = new ArrayList<WsdlMockService>();
+    protected List<RestMockService> restMockServices = new ArrayList<RestMockService>();
     protected Set<ProjectListener> projectListeners = new HashSet<ProjectListener>();
     protected SoapuiProjectDocumentConfig projectDocument;
     private ImageIcon disabledIcon;
@@ -150,15 +150,15 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     private boolean remote;
     private boolean open = true;
     private boolean disabled;
-	private Boolean alwaysPreferContentFromProject = null;
-	private Boolean alwaysPreferContentFromExternalFile = null;
+    private Boolean alwaysPreferContentFromProject = null;
+    private Boolean alwaysPreferContentFromExternalFile = null;
 
     private SoapUIScriptEngine afterLoadScriptEngine;
     private SoapUIScriptEngine beforeSaveScriptEngine;
-	private ContentInExternalFileSupport afterLoadContentInExternalFile;
-	private ContentInExternalFileSupport beforeSaveContentInExternalFile;
-	private ContentInExternalFileSupport afterRunContentInExternalFile;
-	private ContentInExternalFileSupport beforeRunContentInExternalFile;
+    private ContentInExternalFileSupport afterLoadContentInExternalFile;
+    private ContentInExternalFileSupport beforeSaveContentInExternalFile;
+    private ContentInExternalFileSupport afterRunContentInExternalFile;
+    private ContentInExternalFileSupport beforeRunContentInExternalFile;
     private PropertyExpansionContext context = new DefaultPropertyExpansionContext(this);
     protected DefaultWssContainer wssContainer;
     protected OAuth2ProfileContainer oAuth2ProfileContainer;
@@ -416,62 +416,49 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             getConfig().setRunType(TestSuiteRunTypesConfig.SEQUENTIAL);
         }
 
-			alwaysPreferContentFromExternalFile = null;
-			alwaysPreferContentFromProject = null;
+            alwaysPreferContentFromExternalFile = null;
+            alwaysPreferContentFromProject = null;
 
-			ScriptConfig scriptConfig = null;
-			if( getConfig().isSetAfterLoadScript() )
-			{
-				scriptConfig = getConfig().getAfterLoadScript();
-			}
-			else
-			{
-				scriptConfig = ScriptConfig.Factory.newInstance();
-				scriptConfig.setStringValue( "" );
-			}
-			afterLoadContentInExternalFile = new ContentInExternalFileSupport( this, ScriptCategory.PROJECT_AFTER_LOAD, scriptConfig, getSettings() );
-			afterLoadContentInExternalFile.initExternalFilenameSupport();
+            ScriptConfig scriptConfig = null;
+            if (getConfig().isSetAfterLoadScript()) {
+                scriptConfig = getConfig().getAfterLoadScript();
+            } else {
+                scriptConfig = ScriptConfig.Factory.newInstance();
+                scriptConfig.setStringValue("");
+            }
+            afterLoadContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_AFTER_LOAD, scriptConfig, getSettings());
+            afterLoadContentInExternalFile.initExternalFilenameSupport();
 
-			if( getConfig().isSetAfterRunScript())
-			{
-				scriptConfig = getConfig().getAfterRunScript();
-			}
-			else
-			{
-				scriptConfig = ScriptConfig.Factory.newInstance();
-				scriptConfig.setStringValue( "" );
-			}
-			afterRunContentInExternalFile = new ContentInExternalFileSupport( this, ScriptCategory.PROJECT_AFTER_RUN, scriptConfig, getSettings() );
-			afterRunContentInExternalFile.initExternalFilenameSupport();
+            if (getConfig().isSetAfterRunScript()) {
+                scriptConfig = getConfig().getAfterRunScript();
+            } else {
+                scriptConfig = ScriptConfig.Factory.newInstance();
+                scriptConfig.setStringValue("");
+            }
+            afterRunContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_AFTER_RUN, scriptConfig, getSettings());
+            afterRunContentInExternalFile.initExternalFilenameSupport();
 
-			if( getConfig().isSetBeforeRunScript() )
-			{
-				scriptConfig = getConfig().getBeforeRunScript();
-			}
-			else
-			{
-				scriptConfig = ScriptConfig.Factory.newInstance();
-				scriptConfig.setStringValue( "" );
-			}
-			beforeRunContentInExternalFile = new ContentInExternalFileSupport( this, ScriptCategory.PROJECT_BEFORE_RUN, scriptConfig, getSettings() );
-			beforeRunContentInExternalFile.initExternalFilenameSupport();
+            if (getConfig().isSetBeforeRunScript()) {
+                scriptConfig = getConfig().getBeforeRunScript();
+            } else {
+                scriptConfig = ScriptConfig.Factory.newInstance();
+                scriptConfig.setStringValue("");
+            }
+            beforeRunContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_BEFORE_RUN, scriptConfig, getSettings());
+            beforeRunContentInExternalFile.initExternalFilenameSupport();
 
-			if( getConfig().isSetBeforeSaveScript() )
-			{
-				scriptConfig = getConfig().getBeforeSaveScript();
-			}
-			else
-			{
-				scriptConfig = ScriptConfig.Factory.newInstance();
-				scriptConfig.setStringValue( "" );
-			}
-			beforeSaveContentInExternalFile = new ContentInExternalFileSupport( this, ScriptCategory.PROJECT_BEFORE_SAVE, scriptConfig, getSettings() );
-			beforeSaveContentInExternalFile.initExternalFilenameSupport();
+            if (getConfig().isSetBeforeSaveScript()) {
+                scriptConfig = getConfig().getBeforeSaveScript();
+            } else {
+                scriptConfig = ScriptConfig.Factory.newInstance();
+                scriptConfig.setStringValue("");
+            }
+            beforeSaveContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_BEFORE_SAVE, scriptConfig, getSettings());
+            beforeSaveContentInExternalFile.initExternalFilenameSupport();
 
-			if( getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE  ) )
-			{
-				addProjectListener( new ContentInExternalFileProjectListener() );
-			}
+            if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+                addProjectListener(new ContentInExternalFileProjectListener());
+            }
 
         afterLoad();
 
@@ -728,18 +715,17 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     }
 
     public SaveStatus save() throws IOException {
-		boolean includeContent = getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) ? getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE ) : true;
-		return save( null, includeContent );
+        boolean includeContent = getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) ? getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE) : true;
+        return save(null, includeContent);
     }
 
     public SaveStatus save(String folder) throws IOException {
-        if (!isOpen() || isDisabled() || isRemote()) {
-		boolean includeContent = getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) ? getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE ) : true;
-		return save( folder, includeContent );
-	}
+        boolean includeContent = getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) ? getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE) : true;
+        return save(folder, includeContent);
+    }
 
-	public SaveStatus save( String folder, boolean includeContent ) throws IOException
-	{
+    public SaveStatus save(String folder, boolean includeContent) throws IOException {
+        if (!isOpen() || isDisabled() || isRemote()) {
             return SaveStatus.SUCCESS;
         }
 
@@ -782,7 +768,6 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                 if (projectFile == null) {
                     return SaveStatus.CANCELLED;
                 }
-
             }
         }
 
@@ -799,7 +784,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         }
 
 
-		SaveStatus saveStatus = saveIn( projectFile, includeContent );
+        SaveStatus saveStatus = saveIn(projectFile, includeContent);
 
         if (saveStatus == SaveStatus.SUCCESS) {
             path = projectFile.getAbsolutePath();
@@ -840,11 +825,10 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     }
 
     public SaveStatus saveIn(File projectFile) throws IOException {
-		return saveIn( projectFile, true );
-	}
+        return saveIn(projectFile, true);
+    }
 
-	public SaveStatus saveIn( File projectFile, boolean includeContent ) throws IOException
-	{
+    public SaveStatus saveIn(File projectFile, boolean includeContent) throws IOException {
         long size;
 
         beforeSave();
@@ -853,10 +837,9 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         // if user choose save project, save all etc.
         SoapuiProjectDocumentConfig projectDocument = (SoapuiProjectDocumentConfig) this.projectDocument.copy();
 
-		if( getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) )
-		{
-			updateConfigForContentInExternalFile( projectDocument, includeContent );
-		}
+        if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+            updateConfigForContentInExternalFile(projectDocument, includeContent);
+        }
 
         // check for caching
         if (!getSettings().getBoolean(WsdlSettings.CACHE_WSDLS)) {
@@ -1219,25 +1202,35 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         getSettings().setBoolean(WsdlSettings.CACHE_WSDLS, cacheDefinitions);
     }
 
-	public SaveStatus saveAs( String fileName ) throws IOException
-	{
-		boolean includeContent = getSettings().getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) ? getSettings().getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE ) : true;
-		return saveAs( fileName, includeContent );
-	}
+    public SaveStatus saveAs(String fileName) throws IOException {
+        boolean includeContent = getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) ? getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE) : true;
+        return saveAs(fileName, includeContent);
+    }
 
-	public SaveStatus saveAs( String fileName, boolean includeContent ) throws IOException
-	{
+    public SaveStatus saveAs(String fileName, boolean includeContent) throws IOException {
+
+        if (!
+
+                isOpen()
+
+                ||
+
+                isDisabled()
+
+                ) {
             return SaveStatus.FAILED;
         }
-		if( !isOpen() || isDisabled() )
-			return SaveStatus.FAILED;
 
         String oldPath = path;
         path = fileName;
-		SaveStatus result = save( null, includeContent ); // if remote is true this won't save the file
-        if (result == SaveStatus.SUCCESS) {
+        SaveStatus result = save(null, includeContent); // if remote is true this won't save the file
+        if (result == SaveStatus.SUCCESS)
+
+        {
             remote = false;
-        } else {
+        } else
+
+        {
             path = oldPath;
         }
 
@@ -1396,8 +1389,8 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     }
 
     public List<RestMockService> getRestMockServiceList() {
-		return restMockServices;
-	}
+        return restMockServices;
+    }
 
     public List<Interface> getInterfaceList() {
         return new ArrayList<Interface>(interfaces);
@@ -1459,7 +1452,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         }
 
         if (createCopy) {
-            ModelSupport.createNewIds(imported);
+            ModelSupport.unsetIds(imported);
         }
 
         imported.afterLoad();
@@ -1497,7 +1490,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         }
 
         if (createCopy) {
-            ModelSupport.createNewIds(testSuite);
+            ModelSupport.unsetIds(testSuite);
         }
 
         testSuite.afterLoad();
@@ -1526,7 +1519,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         mockService.setDescription(description);
         addWsdlMockService(mockService);
         if (createCopy) {
-            ModelSupport.createNewIds(mockService);
+            ModelSupport.unsetIds(mockService);
         }
 
         mockService.afterLoad();
@@ -1712,21 +1705,21 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         }
     }
 
-    public ProjectEncryptionStatus getEncryptionStatus() {
+    public int getEncrypted() {
         return this.encryptionStatus;
     }
 
-    public ProjectEncryptionStatus setEncryptionStatus(ProjectEncryptionStatus status) {
-        return this.encryptionStatus = status;
+    public int setEncrypted(int code) {
+        return this.encrypted = code;
     }
 
     public void propertyChange(PropertyChangeEvent evt) {
         if ("projectPassword".equals(evt.getPropertyName())) {
-            if (encryptionStatus == NOT_ENCRYPTED && (evt.getOldValue() == null || ((String) evt.getOldValue()).length() == 0)) {
-                encryptionStatus = ENCRYPTED_GOOD_PASSWORD;
+            if (encrypted == 0 & (evt.getOldValue() == null || ((String) evt.getOldValue()).length() == 0)) {
+                encrypted = 1;
             }
-            if (encryptionStatus == ENCRYPTED_GOOD_PASSWORD && (evt.getNewValue() == null || ((String) evt.getNewValue()).length() == 0)) {
-                encryptionStatus = NOT_ENCRYPTED;
+            if (encrypted == 1 & (evt.getNewValue() == null || ((String) evt.getNewValue()).length() == 0)) {
+                encrypted = 0;
             }
 
             if (SoapUI.getNavigator() != null) {
@@ -1784,7 +1777,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                     .set(newTestSuiteConfig.getTestSuite());
             WsdlTestSuite testSuite = buildTestSuite(config);
 
-            ModelSupport.createNewIds(testSuite);
+            ModelSupport.unsetIds(testSuite);
             testSuite.afterLoad();
 
 			/*
@@ -1883,7 +1876,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             beforeRunScriptEngine.setScript(script);
         }
 
-		notifyPropertyChanged( BEFORE_RUN_SCRIPT_PROPERTY, oldScript, script );
+        notifyPropertyChanged(BEFORE_RUN_SCRIPT_PROPERTY, oldScript, script);
     }
 
     public Object runBeforeRunScript(ProjectRunContext context, ProjectRunner runner) throws Exception {
@@ -1920,7 +1913,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             afterRunScriptEngine.setScript(script);
         }
 
-		notifyPropertyChanged( AFTER_RUN_SCRIPT_PROPERTY, oldScript, script );
+        notifyPropertyChanged(AFTER_RUN_SCRIPT_PROPERTY, oldScript, script);
     }
 
     public Object runAfterRunScript(ProjectRunContext context, ProjectRunner runner) throws Exception {
@@ -2064,7 +2057,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                     .set(newMockServiceConfig.getMockService());
             WsdlMockService mockService = new WsdlMockService(this, config);
 
-            ModelSupport.createNewIds(mockService);
+            ModelSupport.unsetIds(mockService);
             mockService.afterLoad();
 
             addWsdlMockService(mockService);
@@ -2089,147 +2082,117 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         environmentListeners.remove(listener);
     }
 
-	private void updateConfigForContentInExternalFile( SoapuiProjectDocumentConfig projectDocumentCopy, boolean includeContent )
-	{
-		// When UISettings have USE_EXTERNAL_FILE and step does not override it to NONE :
-		//
-		//   for elements having an 'externalFilename' attribute, modify the project copy to clear out the
-		//   textValue of element because we don't want to have that content in 2 places.  We let the in-memory
-		// `this.projectDocument` intact because we want this content to appear in the UI !
-		if( !includeContent )
-		{
-			SoapUI.log.debug( "Clearing the textValue of content using an external file (unless they are flagged as not using content in external file)." );
-		}
+    private void updateConfigForContentInExternalFile(SoapuiProjectDocumentConfig projectDocumentCopy, boolean includeContent) {
+        // When UISettings have USE_EXTERNAL_FILE and step does not override it to NONE :
+        //
+        //   for elements having an 'externalFilename' attribute, modify the project copy to clear out the
+        //   textValue of element because we don't want to have that content in 2 places.  We let the in-memory
+        // `this.projectDocument` intact because we want this content to appear in the UI !
+        if (!includeContent) {
+            SoapUI.log.debug("Clearing the textValue of content using an external file (unless they are flagged as not using content in external file).");
+        }
 
-		List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
-		for( String path : ALL_PATHS_IN_CONFIG )
-		{
-			xmlObjects.addAll( Arrays.asList( projectDocumentCopy.selectPath( CONFIG_NAMESPACE + "$this/" + path ) ) );
-		}
+        List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
+        for (String path : ALL_PATHS_IN_CONFIG) {
+            xmlObjects.addAll(Arrays.asList(projectDocumentCopy.selectPath(CONFIG_NAMESPACE + "$this/" + path)));
+        }
 
-		for( XmlObject xmlObject : xmlObjects )
-		{
-			XmlCursor contentCursor = xmlObject.newCursor();
-			XmlCursor parentCursor = xmlObject.selectPath( CONFIG_NAMESPACE + "$this/.." )[0].newCursor();
-			XmlCursor contentContainerCursor;
+        for (XmlObject xmlObject : xmlObjects) {
+            XmlCursor contentCursor = xmlObject.newCursor();
+            XmlCursor parentCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/..")[0].newCursor();
+            XmlCursor contentContainerCursor;
 
-			if( contentCursor == null || parentCursor == null )
-			{
-				continue;
-			}
+            if (contentCursor == null || parentCursor == null) {
+                continue;
+            }
 
-			String externalizableContentType;
+            String externalizableContentType;
 
-			// TODO (marcpa00) : regroup this into static methods in ContentInExternalFileSupport so we don't have the logic at two differen places
-			if( "config".equals( parentCursor.getName().getLocalPart() ) )
-			{
-				contentContainerCursor = xmlObject.selectPath( CONFIG_NAMESPACE + "$this/../.." )[0].newCursor();
-				externalizableContentType = contentContainerCursor.getAttributeText( TYPE_QNAME );
-			}
-			else if( "configuration".equals( parentCursor.getName().getLocalPart() ) && "assertion".equals( xmlObject.selectPath( CONFIG_NAMESPACE + "$this/../.." )[0].newCursor().getName().getLocalPart() ) )
-			{
-				contentContainerCursor = xmlObject.selectPath( CONFIG_NAMESPACE + "$this/../.." )[0].newCursor();
-				externalizableContentType = GROOVY_TYPE;
-			}
-			else
-			{
-				contentContainerCursor = parentCursor;
-				externalizableContentType = GROOVY_TYPE;
-			}
+// TODO (marcpa00) : regroup this into static methods in ContentInExternalFileSupport so we don't have the logic at two differen places
+            if ("config".equals(parentCursor.getName().getLocalPart())) {
+                contentContainerCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor();
+                externalizableContentType = contentContainerCursor.getAttributeText(TYPE_QNAME);
+            } else if ("configuration".equals(parentCursor.getName().getLocalPart()) && "assertion".equals(xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor().getName().getLocalPart())) {
+                contentContainerCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor();
+                externalizableContentType = GROOVY_TYPE;
+            } else {
+                contentContainerCursor = parentCursor;
+                externalizableContentType = GROOVY_TYPE;
+            }
 
 
-			String externalFilenameBuildModeValue = contentCursor.getAttributeText( EXTERNAL_FILENAME_BUILD_MODE_QNAME );
-			if( externalFilenameBuildModeValue != null && externalFilenameBuildModeValue.equals( ExternalFilenameBuildModeConfig.NONE.toString() ) )
-			{
-				continue;
-			}
-			if( externalFilenameBuildModeValue == null && !getSettings().getBoolean( UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE ) )
-			{
-				// skip this step, it does not use external filename and we are not in auto-convert mode
-				continue;
-			}
+            String externalFilenameBuildModeValue = contentCursor.getAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME);
+            if (externalFilenameBuildModeValue != null && externalFilenameBuildModeValue.equals(ExternalFilenameBuildModeConfig.NONE.toString())) {
+                continue;
+            }
+            if (externalFilenameBuildModeValue == null && !getSettings().getBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE)) {
+                // skip this step, it does not use external filename and we are not in auto-convert mode
+                continue;
+            }
 
-			if( externalizableContentType != null )
-			{
-				if( externalizableContentType.equals( REQUEST_TYPE ) )
-				{
-					WsdlRequestConfig wsdlRequestConfig = ( WsdlRequestConfig )xmlObject.changeType( WsdlRequestConfig.type );
-					if( !includeContent )
-					{
-						wsdlRequestConfig.getRequest().setStringValue( "" );
-					}
-				}
-				else if( externalizableContentType.equals( GROOVY_TYPE ) )
-				{
-					if( !includeContent )
-					{
-						contentCursor.setTextValue( "" );
-					}
-				}
-			}
-			contentCursor.dispose();
-		}
-	}
+            if (externalizableContentType != null) {
+                if (externalizableContentType.equals(REQUEST_TYPE)) {
+                    WsdlRequestConfig wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
+                    if (!includeContent) {
+                        wsdlRequestConfig.getRequest().setStringValue("");
+                    }
+                } else if (externalizableContentType.equals(GROOVY_TYPE)) {
+                    if (!includeContent) {
+                        contentCursor.setTextValue("");
+                    }
+                }
+            }
+            contentCursor.dispose();
+        }
+    }
 
 
-	public Boolean getAlwaysPreferContentFromProject()
-	{
-		return alwaysPreferContentFromProject;
-	}
+    public Boolean getAlwaysPreferContentFromProject() {
+        return alwaysPreferContentFromProject;
+    }
 
-	public void setAlwaysPreferContentFromProject( Boolean alwaysPreferContentFromProject )
-	{
-		this.alwaysPreferContentFromProject = alwaysPreferContentFromProject;
-	}
+    public void setAlwaysPreferContentFromProject(Boolean alwaysPreferContentFromProject) {
+        this.alwaysPreferContentFromProject = alwaysPreferContentFromProject;
+    }
 
-	public Boolean getAlwaysPreferContentFromExternalFile()
-	{
-		return alwaysPreferContentFromExternalFile;
-	}
+    public Boolean getAlwaysPreferContentFromExternalFile() {
+        return alwaysPreferContentFromExternalFile;
+    }
 
-	public void setAlwaysPreferContentFromExternalFile( Boolean alwaysPreferContentFromExternalFile )
-	{
-		this.alwaysPreferContentFromExternalFile = alwaysPreferContentFromExternalFile;
-	}
+    public void setAlwaysPreferContentFromExternalFile(Boolean alwaysPreferContentFromExternalFile) {
+        this.alwaysPreferContentFromExternalFile = alwaysPreferContentFromExternalFile;
+    }
 
-	public ContentInExternalFileSupport getBeforeSaveContentInExternalFile()
-	{
-		return beforeSaveContentInExternalFile;
-	}
+    public ContentInExternalFileSupport getBeforeSaveContentInExternalFile() {
+        return beforeSaveContentInExternalFile;
+    }
 
-	public void setBeforeSaveContentInExternalFile( ContentInExternalFileSupport beforeSaveContentInExternalFile )
-	{
-		this.beforeSaveContentInExternalFile = beforeSaveContentInExternalFile;
-	}
+    public void setBeforeSaveContentInExternalFile(ContentInExternalFileSupport beforeSaveContentInExternalFile) {
+        this.beforeSaveContentInExternalFile = beforeSaveContentInExternalFile;
+    }
 
-	public ContentInExternalFileSupport getAfterLoadContentInExternalFile()
-	{
-		return afterLoadContentInExternalFile;
-	}
+    public ContentInExternalFileSupport getAfterLoadContentInExternalFile() {
+        return afterLoadContentInExternalFile;
+    }
 
-	public void setAfterLoadContentInExternalFile( ContentInExternalFileSupport afterLoadContentInExternalFile )
-	{
-		this.afterLoadContentInExternalFile = afterLoadContentInExternalFile;
-	}
+    public void setAfterLoadContentInExternalFile(ContentInExternalFileSupport afterLoadContentInExternalFile) {
+        this.afterLoadContentInExternalFile = afterLoadContentInExternalFile;
+    }
 
-	public ContentInExternalFileSupport getAfterRunContentInExternalFile()
-	{
-		return afterRunContentInExternalFile;
-	}
+    public ContentInExternalFileSupport getAfterRunContentInExternalFile() {
+        return afterRunContentInExternalFile;
+    }
 
-	public void setAfterRunContentInExternalFile( ContentInExternalFileSupport afterRunContentInExternalFile )
-	{
-		this.afterRunContentInExternalFile = afterRunContentInExternalFile;
-	}
+    public void setAfterRunContentInExternalFile(ContentInExternalFileSupport afterRunContentInExternalFile) {
+        this.afterRunContentInExternalFile = afterRunContentInExternalFile;
+    }
 
-	public ContentInExternalFileSupport getBeforeRunContentInExternalFile()
-	{
-		return beforeRunContentInExternalFile;
-	}
+    public ContentInExternalFileSupport getBeforeRunContentInExternalFile() {
+        return beforeRunContentInExternalFile;
+    }
 
-	public void setBeforeRunContentInExternalFile( ContentInExternalFileSupport beforeRunContentInExternalFile )
-	{
-		this.beforeRunContentInExternalFile = beforeRunContentInExternalFile;
-	}
+    public void setBeforeRunContentInExternalFile(ContentInExternalFileSupport beforeRunContentInExternalFile) {
+        this.beforeRunContentInExternalFile = beforeRunContentInExternalFile;
+    }
 
 }

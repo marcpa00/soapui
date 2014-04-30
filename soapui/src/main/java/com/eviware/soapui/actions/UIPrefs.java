@@ -59,9 +59,9 @@ public class UIPrefs implements Prefs {
     public static final String WRAP_RAW_MESSAGES = "Wrap content in Raw Message Viewers";
     public static final String DISABLE_TOOLTIPS = "Disable Tooltips";
     public static final String DISABLE_ANALYTICS = "Disable Usage Statistics";
-	public static final String CONTENT_IN_EXTERNAL_FILE = "Content in external file";
-	public static final String ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE = "Also keep content in project file";
-	public static final String AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE = "Convert to content in external file" ;
+    public static final String CONTENT_IN_EXTERNAL_FILE = "Content in external file";
+    public static final String ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE = "Also keep content in project file";
+    public static final String AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE = "Convert to content in external file";
 
     private SimpleForm editorForm;
     private final String title;
@@ -101,13 +101,12 @@ public class UIPrefs implements Prefs {
             editorForm.appendTextField(AUTOSAVE_INTERVAL,
                     "Sets the autosave interval in minutes (0 means autosave is off)");
 
-			editorForm.appendSeparator();
-			editorForm.appendCheckBox( CONTENT_IN_EXTERNAL_FILE, "Save content of test steps in a file, outside the project file", false );
-			editorForm.appendCheckBox( ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, "Also keep step content in project file when saving (for backward compatibility)", true );
-			editorForm.appendCheckBox( AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, "Automatically convert steps to use an external file for content.", false );
+            editorForm.appendSeparator();
+            editorForm.appendCheckBox(CONTENT_IN_EXTERNAL_FILE, "Save content of test steps in a file, outside the project file", false);
+            editorForm.appendCheckBox(ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, "Also keep step content in project file when saving (for backward compatibility)", true);
+            editorForm.appendCheckBox(AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, "Automatically convert steps to use an external file for content.", false);
 
-			if( SoapUI.isStandalone() )
-			{
+            if (SoapUI.isStandalone()) {
                 editorForm.appendSeparator();
                 editorForm.appendComboBox(DESKTOP_TYPE, DesktopRegistry.getInstance().getNames(),
                         "Select the type of desktop to use");
@@ -159,9 +158,9 @@ public class UIPrefs implements Prefs {
         settings.setString(UISettings.AUTO_SAVE_INTERVAL, values.get(AUTOSAVE_INTERVAL));
         settings.setBoolean(UISettings.AUTO_SAVE_PROJECTS_ON_EXIT, values.getBoolean(AUTOSAVE_ONEXIT));
         settings.setBoolean(UISettings.LINEBREAK, values.getBoolean(LINEBREAK));
-		settings.setBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE, values.getBoolean( CONTENT_IN_EXTERNAL_FILE ) );
-		settings.setBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, values.getBoolean( ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE ) );
-		settings.setBoolean( UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, values.getBoolean( AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE ) );
+        settings.setBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, values.getBoolean(CONTENT_IN_EXTERNAL_FILE));
+        settings.setBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, values.getBoolean(ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE));
+        settings.setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, values.getBoolean(AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE));
 
         if (SoapUI.isStandalone()) {
             settings.setString(UISettings.DESKTOP_TYPE, values.get(DESKTOP_TYPE));
@@ -206,9 +205,9 @@ public class UIPrefs implements Prefs {
         values.put(AUTOSAVE_INTERVAL, settings.getString(UISettings.AUTO_SAVE_INTERVAL, "0"));
         values.put(AUTOSAVE_ONEXIT, settings.getBoolean(UISettings.AUTO_SAVE_PROJECTS_ON_EXIT));
         values.put(LINEBREAK, settings.getBoolean(UISettings.LINEBREAK));
-		values.put( CONTENT_IN_EXTERNAL_FILE, settings.getBoolean( UISettings.CONTENT_IN_EXTERNAL_FILE ) );
-		values.put( ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, settings.getBoolean( UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE ) );
-		values.put( AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, settings.getBoolean( UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE ) );
+        values.put(CONTENT_IN_EXTERNAL_FILE, settings.getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE));
+        values.put(ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, settings.getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE));
+        values.put(AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, settings.getBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE));
 
         if (SoapUI.isStandalone()) {
             values.put(DESKTOP_TYPE, settings.getString(UISettings.DESKTOP_TYPE, SoapUI.DEFAULT_DESKTOP));

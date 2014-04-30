@@ -76,7 +76,6 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
                 saveScript(config);
                 initTestRequestStepInExternalFile(config);
             }
-            }
         } else {
             readConfig(config);
         }
@@ -108,33 +107,32 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 
     /**
      * Read config to initialize current test step.
-     *
-     * This is a groovy script, but the 'script' element is *not* a 'Script' XML type as defined in the XSD, simply an instance of an anyType.
-     *
-     * However, when reading a config, we create an instance of ScriptConfig because its API is more natural than fiddling with XmlObject/XmlCursor
+     * This is a groovy script, but the 'script' element is *not* a 'Script' XML type as defined in the XSD, simply an
+     * instance of an anyType.
+     * However, when reading a config, we create an instance of ScriptConfig because its API is more natural than
+     * fiddling with XmlObject/XmlCursor
      * directly.  At the end, this test step config is set from the xml representation built up in ScriptConfig.
-     *
      * Therefore, the ScriptConfig object created here does not live past beyond the return point of this method.
      *
      * @param config
      */
-	private void readConfig(TestStepConfig config) {
-		if (! getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE )) {
-			XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader( config.getConfig() );
-			scriptText = reader.readString( SCRIPT_PROPERTY, "" );
-		} else {
-			initTestRequestStepInExternalFile(config);
-		}
-	}
+    private void readConfig(TestStepConfig config) {
+        if (!getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+            XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader(config.getConfig());
+            scriptText = reader.readString(SCRIPT_PROPERTY, "");
+        } else {
+            initTestRequestStepInExternalFile(config);
+        }
+    }
 
-	private void initTestRequestStepInExternalFile( TestStepConfig testStepConfig) {
-		contentInExternalFileSupport = new ContentInExternalFileSupport(this, testStepConfig, getSettings());
-		contentInExternalFileSupport.initExternalFilenameSupport();
-		scriptText = contentInExternalFileSupport.getContent();
+    private void initTestRequestStepInExternalFile(TestStepConfig testStepConfig) {
+        contentInExternalFileSupport = new ContentInExternalFileSupport(this, testStepConfig, getSettings());
+        contentInExternalFileSupport.initExternalFilenameSupport();
+        scriptText = contentInExternalFileSupport.getContent();
     }
 
     private void saveScript(TestStepConfig config) {
-        if (!getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE ) || (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE ) && getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE ))) {
+        if (!getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) || (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) && getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE))) {
 
             // XmlObjectConfigurationBuilder is providing a simpler API that manipulating XmlObject directly, but it wipes out attributes on 'script' element :
             // that is why we resort to bits and pieces instead when script exists already
@@ -147,26 +145,24 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
                 cursor.setTextValue(scriptText);
                 cursor.dispose();
             } else {
-        XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
-        builder.add(SCRIPT_PROPERTY, scriptText);
-        config.setConfig(builder.finish());
-    }
+                XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
+                builder.add(SCRIPT_PROPERTY, scriptText);
+                config.setConfig(builder.finish());
+            }
 
             //XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
             //builder.add( "script", scriptText );
             //config.setConfig( builder.finish() );
         }
         // when in step in external file mode, no need to "save" the content into config, scriptText will be written to file at save time
-	}
-
         super.resetConfigOnMove(config);
         readConfig(config);
     }
-	public void resetConfigOnMove( TestStepConfig config )
-	{
-		super.resetConfigOnMove( config );
-		readConfig( config );
-	}
+
+    public void resetConfigOnMove(TestStepConfig config) {
+        super.resetConfigOnMove(config);
+        readConfig(config);
+    }
 
     public String getDefaultSourcePropertyName() {
         return RESULT_PROPERTY;
@@ -195,7 +191,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
 
                     if (scriptResult != null) {
                         result.addMessage("Script-result: " + scriptResult.toString());
-                        // FIXME The property should not me hard coded
+// FIXME The property should not me hard coded
                         firePropertyValueChanged(RESULT_PROPERTY, null, String.valueOf(result));
                     }
 
@@ -247,7 +243,7 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
         String oldScript = this.scriptText;
         this.scriptText = scriptText;
         scriptEngine.setScript(scriptText);
-        contentInExternalFileSupport.setContent( scriptText );
+        contentInExternalFileSupport.setContent(scriptText);
         saveScript(getConfig());
 
         notifyPropertyChanged(SCRIPT_PROPERTY, oldScript, scriptText);
