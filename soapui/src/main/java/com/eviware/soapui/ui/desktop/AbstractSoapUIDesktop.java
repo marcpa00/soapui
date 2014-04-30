@@ -182,8 +182,6 @@ public abstract class AbstractSoapUIDesktop implements SoapUIDesktop {
             mockService.removeMockServiceListener(mockServiceListener);
             closeDependantPanels(mockService);
 		}
-
-        }
     }
 
     private class InternalInterfaceListener extends InterfaceListenerAdapter {
