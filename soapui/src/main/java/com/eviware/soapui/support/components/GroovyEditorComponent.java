@@ -119,69 +119,70 @@ public class GroovyEditorComponent extends JPanel implements PropertyChangeListe
 
         toolBar.addRelatedGap();
 
-        insertCodeButton = new JButton(new InsertCodeAction());
-        insertCodeButton.setIcon(UISupport.createImageIcon("/down_arrow.gif"));
-        insertCodeButton.setHorizontalTextPosition(SwingConstants.LEFT);
-    }
-
-    toolBar.addFixed(insertCodeButton);
-
-    toolBar.add(Box.createHorizontalGlue());
-
-    String[] args = editorModel.getKeywords();
-    if(args!=null&&args.length>0)
-
-    {
-        String scriptName = editorModel.getScriptName();
-        if (scriptName == null) {
-            scriptName = "";
-        } else {
-            scriptName = scriptName.trim() + " ";
+        if (insertCodeButton == null) {
+            insertCodeButton = new JButton(new InsertCodeAction());
+            insertCodeButton.setIcon(UISupport.createImageIcon("/down_arrow.gif"));
+            insertCodeButton.setHorizontalTextPosition(SwingConstants.LEFT);
         }
 
-        StringBuilder text = new StringBuilder("<html>" + scriptName + "Script is invoked with ");
-        for (int c = 0; c < args.length; c++) {
-            if (c > 0) {
-                text.append(", ");
+        toolBar.addFixed(insertCodeButton);
+
+        toolBar.add(Box.createHorizontalGlue());
+
+        String[] args = editorModel.getKeywords();
+        if (args != null && args.length > 0)
+
+        {
+            String scriptName = editorModel.getScriptName();
+            if (scriptName == null) {
+                scriptName = "";
+            } else {
+                scriptName = scriptName.trim() + " ";
             }
 
-            text.append("<font face=\"courier\">").append(args[c]).append("</font>");
+            StringBuilder text = new StringBuilder("<html>" + scriptName + "Script is invoked with ");
+            for (int c = 0; c < args.length; c++) {
+                if (c > 0) {
+                    text.append(", ");
+                }
+
+                text.append("<font face=\"courier\">").append(args[c]).append("</font>");
+            }
+            text.append(" variables</html>");
+
+            JLabel label = new JLabel(text.toString());
+            label.setToolTipText(label.getText());
+            label.setMaximumSize(label.getPreferredSize());
+
+            toolBar.addFixed(label);
+            toolBar.addUnrelatedGap();
         }
-        text.append(" variables</html>");
 
-        JLabel label = new JLabel(text.toString());
-        label.setToolTipText(label.getText());
-        label.setMaximumSize(label.getPreferredSize());
+        if (helpUrl != null)
 
-        toolBar.addFixed(label);
-        toolBar.addUnrelatedGap();
+        {
+            toolBar.addFixed(UISupport.createToolbarButton(new ShowOnlineHelpAction(helpUrl)));
+        }
+
+        add(toolBar, BorderLayout.NORTH);
+
+        revalidate();
+
+        repaint();
     }
 
-    if(helpUrl!=null)
+    public class InsertCodeAction extends AbstractAction {
+        public InsertCodeAction() {
+            super("Edit");
+            putValue(Action.SHORT_DESCRIPTION, "Inserts code at caret");
+        }
 
-    {
-        toolBar.addFixed(UISupport.createToolbarButton(new ShowOnlineHelpAction(helpUrl)));
+        public void actionPerformed(ActionEvent e) {
+            JPopupMenu popup = editor.getEditArea().getComponentPopupMenu();
+            popup.show(insertCodeButton, insertCodeButton.getWidth() / 2, insertCodeButton.getHeight() / 2);
+        }
+
     }
-
-    add(toolBar, BorderLayout.NORTH);
-
-    revalidate();
-
-    repaint();
-}
-
-public class InsertCodeAction extends AbstractAction {
-    public InsertCodeAction() {
-        super("Edit");
-        putValue(Action.SHORT_DESCRIPTION, "Inserts code at caret");
-    }
-
-    public void actionPerformed(ActionEvent e) {
-        JPopupMenu popup = editor.getEditArea().getComponentPopupMenu();
-        popup.show(insertCodeButton, insertCodeButton.getWidth() / 2, insertCodeButton.getHeight() / 2);
-    }
-
-}
 
     public void release() {
         editorModel.removePropertyChangeListener(this);
