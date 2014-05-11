@@ -1237,7 +1237,7 @@ public class ContentInExternalFileSupport implements ModelItem {
                 if (eventSource instanceof GroovyScriptAssertion && scriptCategory != null && scriptCategory.equals(ScriptCategory.TEST_STEP_ASSERTION)
                         && ((GroovyScriptAssertion) eventSource).hashCode() == testAssertion.hashCode()) {
                     renameFileAndUpdateConfig(propertyChangeEvent);
-                } else if (!(eventSource instanceof GroovyScriptAssertion) && scriptCategory != null && !scriptCategory.equals(ScriptCategory.TEST_STEP_ASSERTION)) {
+                } else if (!(eventSource instanceof GroovyScriptAssertion)) {
                     renameFileAndUpdateConfig(propertyChangeEvent);
                 }
             }
