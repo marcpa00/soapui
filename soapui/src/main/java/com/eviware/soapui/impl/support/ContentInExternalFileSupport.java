@@ -962,11 +962,7 @@ public class ContentInExternalFileSupport implements ModelItem {
     }
 
     public TestCase getTestCase() {
-        if (testStep == null) {
-            return null;
-        }
-
-        return testStep.getTestCase();
+        return testCase;
     }
 
     public String getTestCaseName() {
