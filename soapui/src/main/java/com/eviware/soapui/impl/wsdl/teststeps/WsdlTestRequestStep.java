@@ -34,6 +34,7 @@ import com.eviware.soapui.impl.wsdl.support.wsdl.WsdlUtils;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestRunContext;
 import com.eviware.soapui.impl.wsdl.teststeps.assertions.TestAssertionRegistry.AssertableType;
+import com.eviware.soapui.impl.wsdl.teststeps.assertions.basic.GroovyScriptAssertion;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.iface.Interface;
 import com.eviware.soapui.model.iface.Operation;
@@ -96,6 +97,7 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
     private WsdlOperation wsdlOperation;
     private final InternalProjectListener projectListener = new InternalProjectListener();
     private final InternalInterfaceListener interfaceListener = new InternalInterfaceListener();
+    private final InternalAssertionsListener assertionsListener = new InternalAssertionsListener();
     private WsdlSubmit<WsdlRequest> submit;
 
     private ContentInExternalFileSupport contentInExternalFileSupport;
@@ -123,6 +125,15 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
                         requestStepConfig.getRequest().getRequest().setStringValue(contentInExternalFileSupport.getContent());
                         testRequest.setRequestContent(contentInExternalFileSupport.getContent());
                         testRequest.updateConfig(requestStepConfig.getRequest());
+                        for (TestAssertion testAssertion : testRequest.getAssertionList()) {
+                            if (testAssertion instanceof GroovyScriptAssertion) {
+                                ContentInExternalFileSupport contentInExternalFileSupportOfAssertion = ((GroovyScriptAssertion) testAssertion).getContentInExternalFileSupport();
+                                // this one is for remove assertion events
+                                contentInExternalFileSupportOfAssertion.addAssertionsListener(testRequest);
+                            }
+                        }
+                        // this one is for add assertion events
+                        testRequest.addAssertionsListener(assertionsListener);
                     }
                 }
 
@@ -631,6 +642,11 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
     public TestAssertion addAssertion(String type) {
         WsdlMessageAssertion result = testRequest.addAssertion(type);
+        if (result instanceof GroovyScriptAssertion) {
+            ContentInExternalFileSupport contentInExternalFileSupportOfAssertion = ((GroovyScriptAssertion) result).getContentInExternalFileSupport();
+            contentInExternalFileSupportOfAssertion.addAssertionsListener(testRequest);
+        }
+
         return result;
     }
 
@@ -768,5 +784,26 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
     public ContentInExternalFileSupport getContentInExternalFileSupport() {
         return contentInExternalFileSupport;
+    }
+
+
+    private class InternalAssertionsListener implements AssertionsListener {
+
+        @Override
+        public void assertionAdded(TestAssertion assertion) {
+            if (assertion instanceof GroovyScriptAssertion) {
+                ContentInExternalFileSupport contentInExternalFileSupportOfAssertion = ((GroovyScriptAssertion) assertion).getContentInExternalFileSupport();
+                contentInExternalFileSupportOfAssertion.addAssertionsListener(testRequest);
+            }
+        }
+
+        @Override
+        public void assertionRemoved(TestAssertion assertion) {
+            testRequest.removeAssertionsListener(this);
+        }
+
+        @Override
+        public void assertionMoved(TestAssertion assertion, int ix, int offset) {
+        }
     }
 }
