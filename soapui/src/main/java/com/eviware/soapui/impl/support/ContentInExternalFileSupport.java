@@ -104,6 +104,7 @@ public class ContentInExternalFileSupport implements ModelItem {
     private PropertyChangeListener propertyChangeListener = new InternalPropertyChangeListener();
     private TestSuiteListener testSuiteListener = new InternalTestSuiteListener();
     private ProjectListener projectListener = new InternalProjectListener();
+    private AssertionsListener assertionsListener = new InternalAssertionsListener();
 
     private String content;
 
@@ -988,6 +989,10 @@ public class ContentInExternalFileSupport implements ModelItem {
         }
     }
 
+    public TestAssertion getTestAssertion() {
+        return testAssertion;
+    }
+
     public String getRequestContent() {
         return content;
     }
@@ -1272,6 +1277,33 @@ public class ContentInExternalFileSupport implements ModelItem {
         }
     }
 
+    // Assertions listener
+    public void addAssertionsListener(TestRequest testRequest) {
+        if (testRequest != null) {
+            testRequest.addAssertionsListener(this.assertionsListener);
+        }
+    }
+
+    private class InternalAssertionsListener implements AssertionsListener {
+
+        @Override
+        public void assertionAdded(TestAssertion assertion) {
+            // NoOp
+        }
+
+        @Override
+        public void assertionRemoved(TestAssertion assertion) {
+            modelItemRemoved(assertion);
+            assertion.getAssertable().removeAssertionsListener(this);
+        }
+
+        @Override
+        public void assertionMoved(TestAssertion assertion, int ix, int offset) {
+            // NoOp
+        }
+    }
+
+
 
     // utilities for listeners
     boolean isApplicable(ModelItem modelItem) {
@@ -1284,6 +1316,8 @@ public class ContentInExternalFileSupport implements ModelItem {
                 applicable = (modelItem == getTestCase());
             } else if (modelItem instanceof TestStep) {
                 applicable = (modelItem == getTestStep());
+            } else if (modelItem instanceof WsdlMessageAssertion) {
+                applicable = (modelItem == getTestAssertion());
             } else {
                 applicable = false;
             }
