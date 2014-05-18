@@ -399,8 +399,14 @@ public class ContentInExternalFileSupport implements ModelItem {
                             updateConfig();
                         }
                     }
-                } else if (content == null) {
-                    content = "";
+                } else {
+                    if (content == null) {
+                        content = "";
+                    }
+                    if (! StringUtils.isNullOrEmpty(content) && StringUtils.isNullOrEmpty(contentFromProjectDocument)) {
+                        // neeed to update config with external content
+                        updateConfig();
+                    }
                 }
             }
 
