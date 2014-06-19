@@ -33,21 +33,33 @@
     <build>
         <plugins>
             <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-clean-plugin</artifactId>
+              <version>2.5</version>
+              <configuration>
+                <filesets>
+                  <fileset>
+                    <includes>
+                      <include>target/soapui/output/converted/*</include>
+                    </includes>
+                  </fileset>
+                </filesets>
+              </configuration>
+              <executions>
+                <execution>
+                  <id>clean-converted</id>
+                  <phase>integration-test</phase>
+                  <goals>
+                    <goal>clean</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+            <plugin>
                 <groupId>com.smartbear.soapui</groupId>
                 <artifactId>soapui-maven-plugin</artifactId>
                 <version>${project.version}</version>
                 <configuration>
-                    <projectFile>${project.basedir}/src/test/soapui/SoapUI-Maven-Plugin-Tester-soapui-project.xml</projectFile>
-                    <testSuite>ShouldRun</testSuite>
-                    <testCase>ShouldRun</testCase>
-                    <loadTest>LoadTest</loadTest>
-                    <!-- TODO Disabled due to SOAP-804 -->
-                    <!-- <securityTest>SecurityTest</securityTest> -->
-                    <exportAll>true</exportAll>
-                    <junitReport>true</junitReport>
-                    <printReport>true</printReport>
-                    <outputFolder>${project.build.directory}/soapui/output</outputFolder>
-                    <sourceFolder>${basedir}/test-project-files</sourceFolder>
                     <soapuiProperties>
                       <property>
                           <name>soapui.logroot</name>
@@ -58,6 +70,18 @@
                 <executions>
                     <execution>
                         <id>soapui-test</id>
+                        <configuration>
+                          <projectFile>${project.basedir}/src/test/soapui/SoapUI-Maven-Plugin-Tester-soapui-project.xml</projectFile>
+                          <testSuite>ShouldRun</testSuite>
+                          <testCase>ShouldRun</testCase>
+                          <loadTest>LoadTest</loadTest>
+                          <!-- TODO Disabled due to SOAP-804 -->
+                          <!-- <securityTest>SecurityTest</securityTest> -->
+                          <exportAll>true</exportAll>
+                          <junitReport>true</junitReport>
+                          <printReport>true</printReport>
+                          <outputFolder>${project.build.directory}/soapui/output</outputFolder>
+                        </configuration>
                         <phase>integration-test</phase>
                         <goals>
                             <goal>test</goal>
@@ -68,6 +92,10 @@
                     </execution>
                     <execution>
                         <id>convert</id>
+                        <configuration>
+                          <sourceFolder>${basedir}/src/test/soapui/convert</sourceFolder>
+                          <outputFolder>${basedir}/target/soapui/output/converted</outputFolder>
+                        </configuration>
                         <phase>integration-test</phase>
                         <goals>
                             <goal>convert</goal>
