@@ -26,7 +26,7 @@ fi
 export SOAPUI_HOME
 
 SOAPUI_CLASSPATH=$SOAPUI_HOME/bin/soapui-5.1.0-SNAPSHOT.jar:$SOAPUI_HOME/lib/*
-JFXRTPATH=`$JAVA -cp $SOAPUI_CLASSPATH com.eviware.soapui.tools.JfxrtLocator`
+JFXRTPATH=`java -cp $SOAPUI_CLASSPATH com.eviware.soapui.tools.JfxrtLocator`
 SOAPUI_CLASSPATH=$JFXRTPATH:$SOAPUI_CLASSPATH
 
 export SOAPUI_CLASSPATH
@@ -55,4 +55,4 @@ echo = SOAPUI_HOME = $SOAPUI_HOME
 echo =
 echo ================================
 
-java $JAVA_OPTS -cp $SOAPUI_CLASSPATH com.eviware.soapui.tools.SoapUIConvertToFatProjectRunner "$@"
+java $JAVA_OPTS -cp $SOAPUI_CLASSPATH com.eviware.soapui.tools.SoapUIConvertToFatProjectRunner $@

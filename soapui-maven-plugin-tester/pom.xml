@@ -47,6 +47,7 @@
                     <junitReport>true</junitReport>
                     <printReport>true</printReport>
                     <outputFolder>${project.build.directory}/soapui/output</outputFolder>
+                    <sourceFolder>${basedir}/test-project-files</sourceFolder>
                     <soapuiProperties>
                       <property>
                           <name>soapui.logroot</name>
@@ -63,6 +64,13 @@
                             <goal>loadtest</goal>
                             <!-- TODO Disabled due to SOAP-804 -->
                             <!-- <goal>security-test</goal> -->
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>convert</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>convert</goal>
                         </goals>
                     </execution>
                 </executions>
