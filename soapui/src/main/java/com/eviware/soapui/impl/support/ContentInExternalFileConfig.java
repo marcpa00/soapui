@@ -269,7 +269,7 @@ public class ContentInExternalFileConfig {
 
     private void updateTestStepConfig(XmlObject configToUpdate, ScriptConfig scriptConfig) {
         XmlCursor cursor = configToUpdate.newCursor();
-        if (cursor.toChild(Script.SCRIPT_PROPERTY)) {
+        if (cursor.toChild(Script.SCRIPT_PROPERTY) || cursor.toChild(Script.SCRIPT_ALT_PROPERTY)) {
             cursor.setAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME, getExternalFilenameBuildMode().toString());
             cursor.setAttributeText(EXTERNAL_FILENAME_QNAME, PathUtils.normalizePath(getExternalFilename()));
             cursor.toFirstContentToken();
