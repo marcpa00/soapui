@@ -107,8 +107,6 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
 
         if (getConfig().getConfig() != null) {
             requestStepConfig = (RequestStepConfig) getConfig().getConfig().changeType(RequestStepConfig.type);
-            if (getConfig().getConfig() != null) {
-                requestStepConfig = (RequestStepConfig) getConfig().getConfig().changeType(RequestStepConfig.type);
 
                 wsdlOperation = findWsdlOperation();
                 if (wsdlOperation == null) {
@@ -136,14 +134,13 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
                         testRequest.addAssertionsListener(assertionsListener);
                     }
                 }
+        } else {
+            requestStepConfig = (RequestStepConfig) getConfig().addNewConfig().changeType(RequestStepConfig.type);
+        }
 
-                requestStepConfig = (RequestStepConfig) getConfig().addNewConfig().changeType(RequestStepConfig.type);
-            }
-
-            // init properties
-            if (testRequest != null) {
-                initRequestProperties();
-            }
+        // init properties
+        if (testRequest != null) {
+            initRequestProperties();
         }
     }
 
