@@ -489,7 +489,17 @@ public class SoapUIConvertToFatProjectRunner implements CmdLineRunner {
 
             String target;
             if (singleFileMode) {
-                target = outputProjectFile;
+                if (outputProjectFile == null && outputFolder != null) {
+                    ensureFolder(getOutputFolder());
+                    File f = new File(projectFile);
+                    if (f.isAbsolute()) {
+                        target = getOutputFolder() + File.separator + f.getName();
+                    } else {
+                        target = getOutputFolder() + File.separator + projectFile;
+                    }
+                } else {
+                    target = outputProjectFile;
+                }
             } else {
                 if (getOutputFolder() != null) {
                     ensureFolder(getOutputFolder());
