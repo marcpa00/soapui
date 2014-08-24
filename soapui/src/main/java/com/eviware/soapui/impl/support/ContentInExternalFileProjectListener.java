@@ -185,12 +185,6 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
                 needsConversion = true;
             }
 
-            // TODO (marcpa00) : when needsConversion, we also need to create an instance of ContentInExternalFileSupport
-            // for this element so it will be picked up in remainder of beforeSave() and saved to disk.  At the moment,
-            // this is not the case, therefor new content is not written to external file unless it was present at project
-            // load time !
-            // Ideally, creating an instance and initializing it should do everything it has to do and we should not
-            // have extra (duplicated) logic in here.
             if (externalizableContentType != null) {
                 StringBuilder stringBuilder = computePathInProject(contentContainerCursor, externalizableContentName);
                 if (needsConversion) {
