@@ -837,8 +837,8 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         // if user choose save project, save all etc.
         SoapuiProjectDocumentConfig projectDocument = (SoapuiProjectDocumentConfig) this.projectDocument.copy();
 
-        if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
-            updateConfigForContentInExternalFile(projectDocument, includeContent);
+        if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) && !includeContent) {
+            clearContentValuesForContentInExternalFile(projectDocument);
         }
 
         // check for caching
@@ -869,10 +869,10 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             projectDocument.save(tempOut, options);
             tempOut.close();
 
+            // now save it for real
             if (getSettings().getBoolean(UISettings.LINEBREAK)) {
                 normalizeLineBreak(projectFile, tempFile);
             } else {
-                // now save it for real
                 FileOutputStream projectOut = new FileOutputStream(projectFile);
                 projectDocument.save(projectOut, options);
                 projectOut.close();
@@ -1209,28 +1209,16 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 
     public SaveStatus saveAs(String fileName, boolean includeContent) throws IOException {
 
-        if (!
-
-                isOpen()
-
-                ||
-
-                isDisabled()
-
-                ) {
+        if (!isOpen() || isDisabled()) {
             return SaveStatus.FAILED;
         }
 
         String oldPath = path;
         path = fileName;
         SaveStatus result = save(null, includeContent); // if remote is true this won't save the file
-        if (result == SaveStatus.SUCCESS)
-
-        {
+        if (result == SaveStatus.SUCCESS) {
             remote = false;
-        } else
-
-        {
+        } else {
             path = oldPath;
         }
 
@@ -2082,15 +2070,19 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         environmentListeners.remove(listener);
     }
 
-    private void updateConfigForContentInExternalFile(SoapuiProjectDocumentConfig projectDocumentCopy, boolean includeContent) {
+    /**
+     * For every XML element supported by 'content-in-external-file' feature, clear that content's value in projectDocumentCopy when includeContent is false.
+     * This will make the project XML document "thin", requiring content stored externally to be complete.
+     *
+     * @param projectDocumentCopy The project XML document to modify
+     */
+    private void clearContentValuesForContentInExternalFile(SoapuiProjectDocumentConfig projectDocumentCopy) {
         // When UISettings have USE_EXTERNAL_FILE and step does not override it to NONE :
         //
         //   for elements having an 'externalFilename' attribute, modify the project copy to clear out the
         //   textValue of element because we don't want to have that content in 2 places.  We let the in-memory
         // `this.projectDocument` intact because we want this content to appear in the UI !
-        if (!includeContent) {
             SoapUI.log.debug("Clearing the textValue of content using an external file (unless they are flagged as not using content in external file).");
-        }
 
         List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
         for (String path : ALL_PATHS_IN_CONFIG) {
@@ -2100,26 +2092,10 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         for (XmlObject xmlObject : xmlObjects) {
             XmlCursor contentCursor = xmlObject.newCursor();
             XmlCursor parentCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/..")[0].newCursor();
-            XmlCursor contentContainerCursor;
 
             if (contentCursor == null || parentCursor == null) {
                 continue;
             }
-
-            String externalizableContentType;
-
-            // TODO (marcpa00) : regroup this into static methods in ContentInExternalFileSupport so we don't have the logic at two different places
-            if ("config".equals(parentCursor.getName().getLocalPart())) {
-                contentContainerCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor();
-                externalizableContentType = contentContainerCursor.getAttributeText(TYPE_QNAME);
-            } else if ("configuration".equals(parentCursor.getName().getLocalPart()) && "assertion".equals(xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor().getName().getLocalPart())) {
-                contentContainerCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor();
-                externalizableContentType = GROOVY_TYPE;
-            } else {
-                contentContainerCursor = parentCursor;
-                externalizableContentType = GROOVY_TYPE;
-            }
-
 
             String externalFilenameBuildModeValue = contentCursor.getAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME);
             if (externalFilenameBuildModeValue != null && externalFilenameBuildModeValue.equals(ExternalFilenameBuildModeConfig.NONE.toString())) {
@@ -2130,22 +2106,30 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                 continue;
             }
 
+            // At this point :
+            // * contentCursor is the XML element having the text to save to an external file
+            // * parentCursor is the parent XML element of contentCursor
+            // When we have 'NAME/config/CONTENT', the value TYPE_QNAME of NAME is the content's type.
+            // Otherwise, we assume type is GROOVY_TYPE
+            String externalizableContentType;
+            if ("config".equals(parentCursor.getName().getLocalPart())) {
+                externalizableContentType = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor().getAttributeText(TYPE_QNAME);
+            } else {
+                externalizableContentType = GROOVY_TYPE;
+            }
+
             if (externalizableContentType != null) {
                 if (externalizableContentType.equals(REQUEST_TYPE)) {
                     WsdlRequestConfig wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
-                    if (!includeContent) {
                         wsdlRequestConfig.getRequest().setStringValue("");
-                    }
                 } else if (externalizableContentType.equals(GROOVY_TYPE)) {
-                    if (!includeContent) {
                         contentCursor.setTextValue("");
                     }
-                }
+                // if we add support for other content type, we should set the value to "" here.
             }
             contentCursor.dispose();
         }
     }
-
 
     public Boolean getAlwaysPreferContentFromProject() {
         return alwaysPreferContentFromProject;
