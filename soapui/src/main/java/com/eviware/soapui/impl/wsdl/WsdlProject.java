@@ -1129,6 +1129,9 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 
         String oldPath = path;
         path = fileName;
+        if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+            ContentInExternalFileSupport.resetExternalFileRootPath(this);
+        }
         SaveStatus result = save(null, includeContent); // if remote is true this won't save the file
         if (result == SaveStatus.SUCCESS) {
             remote = false;
@@ -1991,7 +1994,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         //   for elements having an 'externalFilename' attribute, modify the project copy to clear out the
         //   textValue of element because we don't want to have that content in 2 places.  We let the in-memory
         // `this.projectDocument` intact because we want this content to appear in the UI !
-            SoapUI.log.debug("Clearing the textValue of content using an external file (unless they are flagged as not using content in external file).");
+        SoapUI.log.debug("Clearing the textValue of content using an external file (unless they are flagged as not using content in external file).");
 
         List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
         for (String path : ALL_PATHS_IN_CONFIG) {
@@ -2030,10 +2033,10 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             if (externalizableContentType != null) {
                 if (externalizableContentType.equals(REQUEST_TYPE)) {
                     WsdlRequestConfig wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
-                        wsdlRequestConfig.getRequest().setStringValue("");
+                    wsdlRequestConfig.getRequest().setStringValue("");
                 } else if (externalizableContentType.equals(GROOVY_TYPE)) {
-                        contentCursor.setTextValue("");
-                    }
+                    contentCursor.setTextValue("");
+                }
                 // if we add support for other content type, we should set the value to "" here.
             }
             contentCursor.dispose();

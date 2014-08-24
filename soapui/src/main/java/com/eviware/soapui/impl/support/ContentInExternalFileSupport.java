@@ -37,6 +37,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -911,6 +912,12 @@ public class ContentInExternalFileSupport implements ModelItem {
         return lastModified > lastLoadedFromExternalFile;
     }
 
+    public void makeDirty() {
+        lastModified = new Date().getTime();
+        if (lastModified == lastLoadedFromExternalFile) {
+            lastModified++;
+        }
+    }
 
     public String getExternalFilename() {
         return externalFilename;
@@ -1231,6 +1238,10 @@ public class ContentInExternalFileSupport implements ModelItem {
         return actualConfig.getScriptConfig();
     }
 
+    public void clearExternalFileRootPath() {
+        externalFileRootPath = null;
+    }
+
     // Listeners
 
     // Property Listener
@@ -1470,6 +1481,65 @@ public class ContentInExternalFileSupport implements ModelItem {
             GroovyScriptAssertion groovyScriptAssertion = (GroovyScriptAssertion) testAssertion;
             groovyScriptAssertion.setScriptText(getContent());
             groovyScriptAssertion.notifyPropertyChanged(GroovyScriptAssertion.GROOVY_ASSERTION_SCRIPT_PROPERTY_RELOAD, null, getContent());
+        }
+    }
+
+    /**
+     * Visit every instance of ContentInExternalFileSupport in this project and clear its externalFileRootPath.  Useful when moving project to
+     * some other place, such as when we do a saveAs().
+     */
+    public static void resetExternalFileRootPath(WsdlProject project) {
+        List<ContentInExternalFileSupport> externalContents = new ArrayList<ContentInExternalFileSupport>();
+
+        externalContents.add(project.getAfterLoadContentInExternalFile());
+        externalContents.add(project.getAfterRunContentInExternalFile());
+        externalContents.add(project.getBeforeSaveContentInExternalFile());
+        externalContents.add(project.getBeforeRunContentInExternalFile());
+
+        for (TestSuite testSuite : project.getTestSuiteList()) {
+            if (testSuite instanceof WsdlTestSuite) {
+                WsdlTestSuite wsdlTestSuite = (WsdlTestSuite) testSuite;
+                externalContents.add(wsdlTestSuite.getSetupScriptContentInExternalFile());
+                externalContents.add(wsdlTestSuite.getTearDownScriptContentInExternalFile());
+            }
+            for (TestCase testCase : testSuite.getTestCaseList()) {
+                if (testCase instanceof WsdlTestCase) {
+                    WsdlTestCase wsdlTestCase = (WsdlTestCase) testCase;
+                    externalContents.add(wsdlTestCase.getSetupScriptContentInExternalFile());
+                    externalContents.add(wsdlTestCase.getTearDownScriptContentInExternalFile());
+                }
+                for (TestStep testStep : testCase.getTestStepList()) {
+                    if (testStep instanceof WsdlGroovyScriptTestStep) {
+                        WsdlGroovyScriptTestStep step = (WsdlGroovyScriptTestStep) testStep;
+                        externalContents.add(step.getContentInExternalFileSupport());
+                    } else if (testStep instanceof WsdlTestRequestStep) {
+                        WsdlTestRequestStep step = (WsdlTestRequestStep) testStep;
+                        externalContents.add(step.getContentInExternalFileSupport());
+
+                        WsdlTestRequest wsdlTestRequest = step.getTestRequest();
+                        for (TestAssertion testAssertion : wsdlTestRequest.getAssertionList()) {
+                            if (testAssertion instanceof GroovyScriptAssertion) {
+                                GroovyScriptAssertion groovyScriptAssertion = (GroovyScriptAssertion) testAssertion;
+                                externalContents.add(groovyScriptAssertion.getContentInExternalFileSupport());
+                            }
+                        }
+                    } else if (testStep instanceof HttpTestRequestStep) {
+                        HttpTestRequestStep httpTestRequestStep = (HttpTestRequestStep) testStep;
+                        for (TestAssertion testAssertion : httpTestRequestStep.getTestRequest().getAssertionList()) {
+                            if (testAssertion instanceof GroovyScriptAssertion) {
+                                GroovyScriptAssertion groovyScriptAssertion = (GroovyScriptAssertion) testAssertion;
+                                externalContents.add(groovyScriptAssertion.getContentInExternalFileSupport());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (ContentInExternalFileSupport contentInExternalFileSupport : externalContents) {
+            if (contentInExternalFileSupport != null) {
+                contentInExternalFileSupport.clearExternalFileRootPath();
+                contentInExternalFileSupport.makeDirty();
+            }
         }
     }
 
