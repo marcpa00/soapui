@@ -132,29 +132,25 @@ public class WsdlGroovyScriptTestStep extends WsdlTestStepWithProperties impleme
     }
 
     private void saveScript(TestStepConfig config) {
-        if (!getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) || (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) && getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE))) {
-
-            // XmlObjectConfigurationBuilder is providing a simpler API that manipulating XmlObject directly, but it wipes out attributes on 'script' element :
-            // that is why we resort to bits and pieces instead when script exists already
-            XmlObject scriptConfig = config.getConfig();
-            XmlCursor cursor = null;
-            if (scriptConfig != null) {
-                cursor = scriptConfig.newCursor();
-            }
-            if (cursor != null && cursor.toFirstChild()) {
-                cursor.setTextValue(scriptText);
-                cursor.dispose();
-            } else {
-                XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
-                builder.add(SCRIPT_PROPERTY, scriptText);
-                config.setConfig(builder.finish());
-            }
-
-            //XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
-            //builder.add( "script", scriptText );
-            //config.setConfig( builder.finish() );
+        String content = scriptText;
+        if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE) && getSettings().getBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE)) {
+            content = "";
         }
-        // when in step in external file mode, no need to "save" the content into config, scriptText will be written to file at save time
+        // XmlObjectConfigurationBuilder is providing a simpler API that manipulating XmlObject directly, but it wipes out attributes on 'script' element :
+        // that is why we resort to bits and pieces instead when script exists already
+        XmlObject scriptConfig = config.getConfig();
+        XmlCursor cursor = null;
+        if (scriptConfig != null) {
+            cursor = scriptConfig.newCursor();
+        }
+        if (cursor != null && cursor.toFirstChild()) {
+            cursor.setTextValue(content);
+            cursor.dispose();
+        } else {
+            XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
+            builder.add(SCRIPT_PROPERTY, content);
+            config.setConfig(builder.finish());
+        }
     }
 
     public void resetConfigOnMove(TestStepConfig config) {
