@@ -3,6 +3,7 @@ package com.eviware.soapui.impl.support;
 import com.eviware.soapui.config.*;
 import com.eviware.soapui.impl.wsdl.support.PathUtils;
 import com.eviware.soapui.impl.wsdl.teststeps.Script;
+import com.eviware.soapui.support.xml.XmlObjectConfigurationBuilder;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlObject;
 
@@ -260,21 +261,40 @@ public class ContentInExternalFileConfig {
             return;
         }
         if (GROOVY_STEP.equals(contentInExternalFileCategory)) {
-            updateTestStepConfig(testStepConfig.getConfig(), scriptConfig);
+            if (testStepConfig.getConfig() == null) {
+                XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
+                builder.add(Script.SCRIPT_PROPERTY, scriptConfig.getStringValue());
+                testStepConfig.setConfig(builder.finish());
+            } else {
+                updateTestStepConfig(testStepConfig.getConfig(), scriptConfig);
+            }
         }
         if (GROOVY_ASSERTION.equals(contentInExternalFileCategory)) {
-            updateTestStepConfig(testAssertionConfig.getConfiguration(), scriptConfig);
+            if (testAssertionConfig.getConfiguration() == null) {
+                XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
+                builder.add(Script.SCRIPT_ALT_PROPERTY, scriptConfig.getStringValue());
+                testAssertionConfig.setConfiguration(builder.finish());
+            } else {
+                updateTestStepConfig(testAssertionConfig.getConfiguration(), scriptConfig);
+            }
         }
     }
 
     private void updateTestStepConfig(XmlObject configToUpdate, ScriptConfig scriptConfig) {
+        if (configToUpdate == null) {
+            return;
+        }
         XmlCursor cursor = configToUpdate.newCursor();
         if (cursor.toChild(Script.SCRIPT_PROPERTY) || cursor.toChild(Script.SCRIPT_ALT_PROPERTY)) {
             cursor.setAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME, getExternalFilenameBuildMode().toString());
             cursor.setAttributeText(EXTERNAL_FILENAME_QNAME, PathUtils.normalizePath(getExternalFilename()));
             cursor.toFirstContentToken();
             cursor.removeXml();
-            cursor.insertChars(scriptConfig.getStringValue());
+            if (scriptConfig == null) {
+                cursor.insertChars("");
+            } else {
+                cursor.insertChars(scriptConfig.getStringValue());
+            }
             cursor.dispose();
         }
     }
