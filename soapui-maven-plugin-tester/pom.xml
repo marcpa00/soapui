@@ -93,8 +93,8 @@
                     <execution>
                         <id>convert</id>
                         <configuration>
-                          <sourceFolder>${basedir}/src/test/soapui/convert</sourceFolder>
-                          <outputFolder>${basedir}/target/soapui/output/converted</outputFolder>
+                          <sourceFolder>${project.basedir}/src/test/soapui/convert</sourceFolder>
+                          <outputFolder>${project.basedir}/target/soapui/output/converted</outputFolder>
                         </configuration>
                         <phase>integration-test</phase>
                         <goals>
