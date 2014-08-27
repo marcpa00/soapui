@@ -1,0 +1,14 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://ws.app4test.eviware.com/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ws:addItem>
+         <!--Optional:-->
+         <sessionId>notuse</sessionId>
+         <!--Optional:-->
+         <name>${oneNewItem#name}</name>
+         <!--Optional:-->
+         <description>${oneNewItem#description}</description>
+         <cost>${oneNewItem#cost}</cost>
+      </ws:addItem>
+   </soapenv:Body>
+</soapenv:Envelope>

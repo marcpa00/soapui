@@ -1,0 +1,11 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ws="http://ws.app4test.eviware.com/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ws:login>
+         <!--Optional:-->
+         <username>admin</username>
+         <!--Optional:-->
+         <password>truepwd</password>
+      </ws:login>
+   </soapenv:Body>
+</soapenv:Envelope>
