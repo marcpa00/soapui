@@ -19,6 +19,7 @@ package com.eviware.soapui.impl.wsdl.teststeps.assertions.basic;
 import javax.xml.namespace.QName;
 
 import com.eviware.soapui.impl.support.ContentInExternalFileSupport;
+import com.eviware.soapui.impl.support.http.HttpRequest;
 import com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction;
 import com.eviware.soapui.impl.wsdl.actions.request.ReloadExternalFileAction;
 import com.eviware.soapui.impl.wsdl.teststeps.*;
