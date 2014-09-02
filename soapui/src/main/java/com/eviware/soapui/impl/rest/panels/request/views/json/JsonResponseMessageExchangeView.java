@@ -16,17 +16,16 @@
 
 package com.eviware.soapui.impl.rest.panels.request.views.json;
 
-import com.eviware.soapui.impl.rest.support.handlers.JsonMediaTypeHandler;
 import com.eviware.soapui.impl.support.panels.AbstractHttpXmlRequestDesktopPanel.HttpResponseDocument;
 import com.eviware.soapui.impl.wsdl.support.MessageExchangeModelItem;
 import com.eviware.soapui.model.iface.MessageExchange;
+import com.eviware.soapui.support.JsonUtil;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.components.JXToolBar;
 import com.eviware.soapui.support.editor.views.AbstractXmlEditorView;
 import com.eviware.soapui.support.editor.xml.XmlEditor;
 import com.eviware.soapui.support.xml.SyntaxEditorUtil;
 import net.sf.json.JSON;
-import net.sf.json.JSONSerializer;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
@@ -100,9 +99,9 @@ public class JsonResponseMessageExchangeView extends AbstractXmlEditorView<HttpR
         } else {
             String content = "<Not JSON content>";
 
-            if (JsonMediaTypeHandler.seemsToBeJsonContentType(me.getResponseHeaders().get("Content-Type", ""))) {
+            if (JsonUtil.seemsToBeJsonContentType(me.getResponseHeaders().get("Content-Type", ""))) {
                 try {
-                    JSON json = JSONSerializer.toJSON(me.getResponseContent());
+                    JSON json = new JsonUtil().parseTrimmedText(me.getResponseContent());
                     if (json.isEmpty()) {
                         content = "<Empty JSON content>";
                     } else {
@@ -133,10 +132,6 @@ public class JsonResponseMessageExchangeView extends AbstractXmlEditorView<HttpR
         if (evt.getPropertyName().equals("messageExchange") && !updatingRequest) {
             setEditorContent(((MessageExchange) evt.getNewValue()));
         }
-    }
-
-    @Override
-    public void setXml(String xml) {
     }
 
     public boolean saveDocument(boolean validate) {

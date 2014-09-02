@@ -17,6 +17,8 @@
 package com.eviware.soapui.impl.wsdl.panels.teststeps;
 
 import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.analytics.Analytics;
+import com.eviware.soapui.analytics.SoapUIActions;
 import com.eviware.soapui.impl.rest.RestRequestInterface;
 import com.eviware.soapui.impl.support.AbstractHttpRequest;
 import com.eviware.soapui.impl.support.HttpUtils;
@@ -223,7 +225,7 @@ public class HttpTestRequestDesktopPanel extends
 
                 updating = true;
                 String text = pathTextField.getText();
-                getRequest().setEndpoint(HttpUtils.ensureEndpointStartsWithProtocol(text));
+                getRequest().setEndpoint(HttpUtils.completeUrlWithHttpIfProtocolIsNotHttpOrHttpsOrPropertyExpansion(text));
                 if (!text.equals(getRequest().getEndpoint())) {
                     SwingUtilities.invokeLater(new Runnable() {
                         public void run() {
@@ -322,6 +324,8 @@ public class HttpTestRequestDesktopPanel extends
 
     @Override
     protected Submit doSubmit() throws SubmitException {
+        Analytics.trackAction(SoapUIActions.RUN_TEST_STEP.getActionName(), "StepType", "HTTP");
+
         return getRequest().submit(new WsdlTestRunContext(getModelItem()), true);
     }
 

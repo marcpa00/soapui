@@ -22,9 +22,9 @@ import com.eviware.soapui.actions.SoapUIPreferencesAction;
 import com.eviware.soapui.actions.StartHermesJMSButtonAction;
 import com.eviware.soapui.actions.SwitchDesktopPanelAction;
 import com.eviware.soapui.actions.VersionUpdateAction;
+import com.eviware.soapui.analytics.Analytics;
 import com.eviware.soapui.impl.WorkspaceImpl;
 import com.eviware.soapui.impl.actions.ImportWsdlProjectAction;
-import com.eviware.soapui.impl.actions.NewGenericProjectAction;
 import com.eviware.soapui.impl.actions.NewWsdlProjectAction;
 import com.eviware.soapui.impl.rest.actions.project.NewRestServiceAction;
 import com.eviware.soapui.impl.support.actions.ShowOnlineHelpAction;
@@ -167,6 +167,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.prefs.BackingStoreException;
 
 import static com.eviware.soapui.impl.support.HttpUtils.urlEncodeWithUtf8;
@@ -189,11 +190,13 @@ public class SoapUI {
     private static final String PROXY_DISABLED_ICON = "/proxyDisabled.png";
     public static final String BUILDINFO_PROPERTIES = "/buildinfo.properties";
     public static final String SOAPUI_WELCOME_PAGE = "http://www.soapui.org/Downloads/thank-you-for-downloading-soapui.html";
-    public static String PUSH_PAGE_URL = "http://soapui.org/Appindex/soapui-starterpage.html?version="
+    public static final String STARTER_PAGE_HEADER = "SoapUI Starter Page";
+    public static final String STARTER_PAGE_TOOL_TIP = "Info on SoapUI";
+    public static String STARTER_PAGE_URL = "http://soapui.org/Appindex/soapui-starterpage.html?version="
             + urlEncodeWithUtf8(SOAPUI_VERSION);
     public static String FRAME_ICON = "/soapui-icon-16.png;/soapui-icon-24.png;/soapui-icon-32.png;/soapui-icon-48.png;/soapui-icon-256.png";
 
-    public static String PUSH_PAGE_ERROR_URL = "file://" + System.getProperty("soapui.home", ".")
+    public static String STARTER_PAGE_ERROR_URL = "file://" + System.getProperty("soapui.home", ".")
             + "/starter-page.html";
 
     private static final int DEFAULT_DESKTOP_ACTIONS_COUNT = 3;
@@ -232,7 +235,7 @@ public class SoapUI {
     private static AutoSaveTimerTask autoSaveTimerTask;
     private static String workspaceName;
     private static StringToStringMap projectOptions = new StringToStringMap();
-    private static URLDesktopPanel urlDesktopPanel;
+    private static URLDesktopPanel starterPageDesktopPanel;
     private static JXToolBar mainToolbar;
     private static String[] mainArgs;
     private static GCTimerTask gcTimerTask;
@@ -433,7 +436,7 @@ public class SoapUI {
         JMenu helpMenu = new JMenu("Help");
         helpMenu.setMnemonic(KeyEvent.VK_H);
 
-        helpMenu.add(new ShowPushPageAction());
+        helpMenu.add(new ShowStarterPageAction());
         helpMenu.addSeparator();
         helpMenu.add(new ShowOnlineHelpAction("API Testing Dojo", HelpUrls.API_TESTING_DOJO_HELP_URL));
         helpMenu.add(new ShowOnlineHelpAction("Getting Started", HelpUrls.GETTINGSTARTED_HELP_URL));
@@ -527,6 +530,21 @@ public class SoapUI {
         desktop.addDesktopListener(recentItemsListener);
 
         return recentMenu;
+    }
+
+    static void addStandardPreferencesShortcutOnMac() {
+        if (UISupport.isMac()) {
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
+                @Override
+                public boolean dispatchKeyEvent(KeyEvent e) {
+                    int modifiers = e.getModifiers();
+                    if (e.getKeyChar() == ',' && (modifiers == InputEvent.META_DOWN_MASK || modifiers == InputEvent.META_MASK)) {
+                        SoapUIPreferencesAction.getInstance().actionPerformed(new ActionEvent(frame, 1, "ShowPreferences"));
+                    }
+                    return false;
+                }
+            });
+        }
     }
 
     public static JFrame getFrame() {
@@ -648,7 +666,7 @@ public class SoapUI {
                 if (getSettings().getBoolean(UISettings.SHOW_STARTUP_PAGE) && !isBrowserDisabled()) {
                     SwingUtilities.invokeLater(new Runnable() {
                         public void run() {
-                            showPushPage();
+                            showStarterPage();
                         }
                     });
                 }
@@ -666,24 +684,13 @@ public class SoapUI {
                 if (isFirstLaunch) {
                     Tools.openURL(SOAPUI_WELCOME_PAGE);
                 }
+
+                if (isCommandLine()) {
+                    Analytics.trackAction("CmdLine");
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
-            }
-        }
-
-        private void addStandardPreferencesShortcutOnMac() {
-            if (UISupport.isMac()) {
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
-                    @Override
-                    public boolean dispatchKeyEvent(KeyEvent e) {
-                        int modifiers = e.getModifiers();
-                        if (e.getKeyChar() == ',' && (modifiers == InputEvent.META_DOWN_MASK || modifiers == InputEvent.META_MASK)) {
-                            SoapUIPreferencesAction.getInstance().actionPerformed(new ActionEvent(frame, 1, "ShowPreferences"));
-                        }
-                        return false;
-                    }
-                });
             }
         }
 
@@ -751,7 +758,15 @@ public class SoapUI {
         }
 
         @Override
-        public void windowClosed(WindowEvent e) {
+        public void windowClosed(WindowEvent event) {
+            threadPool.shutdown();
+            try {
+                threadPool.awaitTermination(1500, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                threadPool.shutdownNow();
+                // Preserve interrupt status
+                Thread.currentThread().interrupt();
+            }
             System.out.println("exiting..");
             SoapUI.getSoapUITimer().cancel();
             System.exit(0);
@@ -759,6 +774,12 @@ public class SoapUI {
     }
 
     public static void main(String[] args) throws Exception {
+        boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean().
+                getInputArguments().toString().indexOf("-agentlib:jdwp") > 0;
+        if (isDebug) {
+            Analytics.trackAction("DebuggingMode");
+        }
+
         WebstartUtilCore.init();
 
         mainArgs = args;
@@ -796,7 +817,6 @@ public class SoapUI {
         if (!processCommandLineArgs(cmd)) {
             System.exit(1);
         }
-
         if (workspaceName != null) {
             workspace = WorkspaceFactory.getInstance().openWorkspace(workspaceName, projectOptions);
             soapUICore.getSettings().setString(CURRENT_SOAPUI_WORKSPACE, workspaceName);
@@ -980,12 +1000,17 @@ public class SoapUI {
             } catch (Exception e1) {
                 SoapUI.logError(e1);
             }
+
+            Analytics.trackAction("Exit");
         } else {
             if (!UISupport.confirm("Exit SoapUI without saving?", "Question")) {
                 saveOnExit = true;
                 return false;
             }
+            Analytics.trackAction("ExitWithoutSave");
         }
+
+        Analytics.trackSessionStop();
 
         shutdown();
 
@@ -1163,14 +1188,14 @@ public class SoapUI {
         applyProxyButton.setSelected(ProxyUtils.isProxyEnabled());
     }
 
-    private static class ShowPushPageAction extends AbstractAction {
-        public ShowPushPageAction() {
+    private static class ShowStarterPageAction extends AbstractAction {
+        public ShowStarterPageAction() {
             super("Starter Page");
             putValue(Action.SHORT_DESCRIPTION, "Shows the starter page");
         }
 
         public void actionPerformed(ActionEvent e) {
-            showPushPage();
+            showStarterPage();
         }
     }
 
@@ -1201,18 +1226,18 @@ public class SoapUI {
         }
     }
 
-    public static void showPushPage() {
-        if (urlDesktopPanel == null || urlDesktopPanel.isClosed()) {
+    public static void showStarterPage() {
+        if (starterPageDesktopPanel == null || starterPageDesktopPanel.isClosed()) {
             try {
-                urlDesktopPanel = new URLDesktopPanel("SoapUI Starter Page", "Info on SoapUI", null);
-            } catch (Throwable t) {
-                t.printStackTrace();
+                starterPageDesktopPanel = new URLDesktopPanel(STARTER_PAGE_HEADER, STARTER_PAGE_TOOL_TIP, null);
+            } catch (Exception e) {
+                logError(e);
                 return;
             }
         }
 
-        UISupport.showDesktopPanel(urlDesktopPanel);
-        urlDesktopPanel.navigate(PUSH_PAGE_URL, PUSH_PAGE_ERROR_URL, true);
+        UISupport.showDesktopPanel(starterPageDesktopPanel);
+        starterPageDesktopPanel.navigate(STARTER_PAGE_URL, STARTER_PAGE_ERROR_URL, true);
     }
 
     private static class AboutAction extends AbstractAction {
@@ -1344,14 +1369,18 @@ public class SoapUI {
         SoapUI.isStandalone = standalone;
     }
 
-    private static class NewWsdlProjectActionDelegate extends AbstractAction {
+    static class NewWsdlProjectActionDelegate extends AbstractAction {
         public NewWsdlProjectActionDelegate() {
             putValue(Action.SMALL_ICON, UISupport.createImageIcon("/project.gif"));
-            putValue(Action.SHORT_DESCRIPTION, "Creates a new generic project");
+            putValue(Action.SHORT_DESCRIPTION, "Creates a new SOAP project");
+        }
+
+        public void setShortDescription(String description) {
+            putValue(Action.SHORT_DESCRIPTION, description);
         }
 
         public void actionPerformed(ActionEvent e) {
-            SoapUI.getActionRegistry().getAction(NewGenericProjectAction.SOAPUI_ACTION_ID).perform(workspace, null);
+            SoapUI.getActionRegistry().getAction(NewWsdlProjectAction.SOAPUI_ACTION_ID).perform(workspace, null);
         }
     }
 

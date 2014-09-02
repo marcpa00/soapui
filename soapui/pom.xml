@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- TODO Go through the list of dependencies and remove unused -->
-<!-- TODO Check if there is some artifacts witht he wrong group and artifacts id that is in maven central and could be removed from eviware public repo -->
+<!-- TODO Check if there is some artifacts with the wrong group and artifacts id that is in maven central and could be removed from eviware public repo -->
 <!-- TODO Check the xorg.apache jar -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -12,7 +12,7 @@
     <parent>
         <groupId>com.smartbear.soapui</groupId>
         <artifactId>soapui-project</artifactId>
-        <version>5.1.0-SNAPSHOT</version>
+        <version>5.2.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>soapui</artifactId>
@@ -124,6 +124,12 @@
             <version>1.3</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.spockframework</groupId>
+            <artifactId>spock-core</artifactId>
+            <version>0.7-groovy-2.0</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- XML Beans -->
 
@@ -199,6 +205,19 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>1.1.1</version>
+        </dependency>
+
+        <!-- In-app analytics -->
+        <dependency>
+            <groupId>com.smartbear.utils.analytics</groupId>
+            <artifactId>analytics-core</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.smartbear.utils.analytics</groupId>
+            <artifactId>out-app-analytics-provider</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <!-- JGoodies -->
@@ -514,11 +533,6 @@
             <version>1.142</version>
         </dependency>
         <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>1.6.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.ws.commons.util</groupId>
             <artifactId>ws-commons-util</artifactId>
             <version>1.0.2</version>
@@ -528,7 +542,11 @@
             <artifactId>proxy-vole</artifactId>
             <version>20131209</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>0.9.1</version>
+        </dependency>
 
         <!--  old http client needed by some 3rd party components -->
 

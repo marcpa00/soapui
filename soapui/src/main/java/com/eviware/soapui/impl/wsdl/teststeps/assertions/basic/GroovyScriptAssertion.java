@@ -19,6 +19,7 @@ package com.eviware.soapui.impl.wsdl.teststeps.assertions.basic;
 import javax.xml.namespace.QName;
 
 import com.eviware.soapui.impl.support.ContentInExternalFileSupport;
+import com.eviware.soapui.impl.support.http.HttpRequest;
 import com.eviware.soapui.impl.wsdl.actions.request.ConfigureExternalFileAction;
 import com.eviware.soapui.impl.wsdl.actions.request.ReloadExternalFileAction;
 import com.eviware.soapui.impl.wsdl.teststeps.*;
@@ -29,7 +30,6 @@ import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.TestAssertionConfig;
 import com.eviware.soapui.impl.rest.RestRequestInterface;
 import com.eviware.soapui.impl.support.actions.ShowOnlineHelpAction;
-import com.eviware.soapui.impl.support.http.HttpRequest;
 import com.eviware.soapui.impl.wsdl.panels.assertions.AssertionCategoryMapping;
 import com.eviware.soapui.impl.wsdl.panels.assertions.AssertionListEntry;
 import com.eviware.soapui.impl.wsdl.panels.mockoperation.WsdlMockResponseMessageExchange;

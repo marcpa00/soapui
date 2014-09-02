@@ -16,11 +16,14 @@
 
 package com.eviware.soapui.impl.wsdl.panels.teststeps;
 
+import com.eviware.soapui.analytics.Analytics;
+import com.eviware.soapui.analytics.SoapUIActions;
 import com.eviware.soapui.impl.support.actions.ShowOnlineHelpAction;
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunContext;
 import com.eviware.soapui.impl.wsdl.panels.support.MockTestRunner;
 import com.eviware.soapui.impl.wsdl.panels.support.TestRunComponentEnabler;
 import com.eviware.soapui.impl.wsdl.support.HelpUrls;
+import com.eviware.soapui.impl.wsdl.teststeps.PathLanguage;
 import com.eviware.soapui.impl.wsdl.teststeps.PropertyTransfer;
 import com.eviware.soapui.impl.wsdl.teststeps.PropertyTransfersTestStep;
 import com.eviware.soapui.impl.wsdl.teststeps.PropertyTransfersTestStep.PropertyTransferResult;
@@ -98,6 +101,7 @@ import java.util.List;
 
 public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<PropertyTransfersTestStep> {
     private final PropertyTransfersTestStep transferStep;
+    private final PropertyChangeListener transferListListener;
     private DefaultListModel listModel;
     private JList transferList;
     private JTextArea sourceArea;
@@ -106,7 +110,9 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
     private JButton deleteButton;
     private JButton declareButton;
     private JComboBox sourcePropertyCombo;
+    private JComboBox sourceTransferLanguageCombo;
     private JComboBox targetPropertyCombo;
+    private JComboBox targetTransferLanguageCombo;
     private JComboBox sourceStepCombo;
     private JComboBox targetStepCombo;
     private DefaultComboBoxModel sourceStepModel;
@@ -129,7 +135,6 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
     private TransfersTableModel transferLogTableModel;
     private InternalTestRunListener testRunListener;
     private JComponentInspector<JComponent> logInspector;
-    private JCheckBox useXQueryCheckBox;
     private JButton runAllButton;
     private JInspectorPanel inspectorPanel;
     private JXTable logTable;
@@ -147,21 +152,14 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
 
         testRunListener = new InternalTestRunListener();
         transferStep.getTestCase().addTestRunListener(testRunListener);
+        transferListListener = new ListUpdater();
+        transferStep.addPropertyChangeListener(PropertyTransfersTestStep.TRANSFERS, transferListListener);
     }
 
     protected void buildUI() {
         JSplitPane splitPane = UISupport.createHorizontalSplit();
 
-        listModel = new DefaultListModel();
-
-        for (int c = 0; c < transferStep.getTransferCount(); c++) {
-            String name = transferStep.getTransferAt(c).getName();
-            if (transferStep.getTransferAt(c).isDisabled()) {
-                name += " (disabled)";
-            }
-
-            listModel.addElement(name);
-        }
+        listModel = createListModel();
 
         transferList = new JList(listModel);
         transferList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -246,10 +244,23 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
         componentEnabler.add(transferTextContentCheckBox);
         componentEnabler.add(ignoreEmptyCheckBox);
         componentEnabler.add(transferAllCheckBox);
-        componentEnabler.add(useXQueryCheckBox);
         componentEnabler.add(entitizeCheckBox);
         componentEnabler.add(transferChildNodesCheckBox);
 
+    }
+
+    private DefaultListModel createListModel() {
+        DefaultListModel listModel = new DefaultListModel();
+
+        for (int c = 0; c < transferStep.getTransferCount(); c++) {
+            String name = transferStep.getTransferAt(c).getName();
+            if (transferStep.getTransferAt(c).isDisabled()) {
+                name += " (disabled)";
+            }
+
+            listModel.addElement(name);
+        }
+        return listModel;
     }
 
     private JComponent buildLog() {
@@ -393,18 +404,6 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
             }
         });
 
-        useXQueryCheckBox = new JCheckBox("Use XQuery", false);
-        useXQueryCheckBox.setToolTipText("Interprets the source xpath as an XQuery expression");
-        useXQueryCheckBox.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
-                PropertyTransfer currentTransfer = getCurrentTransfer();
-                if (currentTransfer != null) {
-                    currentTransfer.setUseXQuery(useXQueryCheckBox.isSelected());
-                }
-            }
-        });
-
         entitizeCheckBox = new JCheckBox("Entitize transferred value(s)", false);
         entitizeCheckBox.setToolTipText("Entitize transferred values when possible");
         entitizeCheckBox.addChangeListener(new ChangeListener() {
@@ -435,9 +434,8 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
         panel.add(transferTextContentCheckBox);
         panel.add(ignoreEmptyCheckBox);
         panel.add(transferAllCheckBox);
-        panel.add(useXQueryCheckBox);
-        panel.add(entitizeCheckBox);
         panel.add(transferChildNodesCheckBox);
+        panel.add(entitizeCheckBox);
         panel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         return panel;
     }
@@ -501,10 +499,29 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
                 }
             }
         });
+        String context = "Target";
+        targetTransferLanguageCombo = createTransferLanguageComboBox(context);
+        targetTransferLanguageCombo.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    getCurrentTransfer().setTargetPathLanguage((PathLanguage) e.getItem());
+                }
+            }
+        });
+
 
         toolbar.add(UISupport.setFixedSize(targetPropertyCombo, 130, 21));
+        toolbar.addRelatedGap();
+        toolbar.addFixed(new JLabel("Path language: "));
+        toolbar.add(UISupport.setFixedSize(targetTransferLanguageCombo, 115, 21));
         customizeTargetToolbar(toolbar);
         return toolbar;
+    }
+
+    private JComboBox createTransferLanguageComboBox(String context) {
+        DefaultComboBoxModel transferLanguageModel = new DefaultComboBoxModel(PathLanguage.values());
+        return UISupport.addTooltipListener(new JComboBox(transferLanguageModel), context + " Transfer Path Language");
     }
 
     protected void customizeTargetToolbar(JXToolBar toolbar) {
@@ -523,9 +540,11 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
                 "Source Step or Property Container");
         sourceStepCombo.setRenderer(new StepComboRenderer());
         sourcePropertyCombo.setRenderer(new PropertyComboRenderer());
+        sourceTransferLanguageCombo = createTransferLanguageComboBox("Source");
 
         componentEnabler.add(sourcePropertyCombo);
         componentEnabler.add(sourceStepCombo);
+        componentEnabler.add(sourceTransferLanguageCombo);
 
         targetPropertyCombo = UISupport.addTooltipListener(new JComboBox(), "Target Property");
         targetStepModel = new DefaultComboBoxModel();
@@ -611,6 +630,18 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
         });
 
         toolbar.add(UISupport.setFixedSize(sourcePropertyCombo, 130, 21));
+        toolbar.addRelatedGap();
+        toolbar.addFixed(new JLabel("Path language: "));
+        sourceTransferLanguageCombo.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    getCurrentTransfer().setSourcePathLanguage((PathLanguage) e.getItem());
+                }
+            }
+        });
+        toolbar.add(UISupport.setFixedSize(sourceTransferLanguageCombo, 115, 21));
+
         customizeSourceToolbar(toolbar);
         return toolbar;
     }
@@ -831,7 +862,7 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
         }
     }
 
-    private void setSelectedTransfer(PropertyTransfer transfer) {
+    protected void setSelectedTransfer(PropertyTransfer transfer) {
         if (transfer == null) {
             sourceArea.setText("");
             targetArea.setText("");
@@ -851,16 +882,17 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
 
             sourceStepCombo.setSelectedItem(transfer.getSourceStep());
             sourcePropertyCombo.setSelectedItem(transfer.getSourceProperty());
+            sourceTransferLanguageCombo.setSelectedItem(transfer.getSourcePathLanguage());
 
             targetStepCombo.setSelectedItem(transfer.getTargetStep());
             targetPropertyCombo.setSelectedItem(transfer.getTargetProperty());
+            targetTransferLanguageCombo.setSelectedItem(transfer.getTargetPathLanguage());
 
             failTransferCheckBox.setSelected(transfer.getFailOnError());
             setNullCheckBox.setSelected(transfer.getSetNullOnMissingSource());
             transferTextContentCheckBox.setSelected(transfer.getTransferTextContent());
             ignoreEmptyCheckBox.setSelected(transfer.getIgnoreEmpty());
             transferAllCheckBox.setSelected(transfer.getTransferToAll());
-            useXQueryCheckBox.setSelected(transfer.getUseXQuery());
             entitizeCheckBox.setSelected(transfer.getEntitize());
             transferChildNodesCheckBox.setSelected(transfer.getTransferChildNodes());
 
@@ -881,7 +913,6 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
         transferTextContentCheckBox.setEnabled(transfer != null);
         ignoreEmptyCheckBox.setEnabled(transfer != null);
         transferAllCheckBox.setEnabled(transfer != null);
-        useXQueryCheckBox.setEnabled(transfer != null);
         entitizeCheckBox.setEnabled(transfer != null);
         transferChildNodesCheckBox.setEnabled(transfer != null);
 
@@ -945,14 +976,15 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
         }
 
         public void actionPerformed(ActionEvent e) {
+
+            Analytics.trackAction(SoapUIActions.ADD_PROPERTY_TRASNFER_IN_PROPERTY_TRANSFER_TEST_STEP.getActionName());
+
             String name = UISupport.prompt("Specify name for value transfer", "Add Transfer", "");
             if (name == null || name.trim().length() == 0) {
                 return;
             }
 
             transferStep.addTransfer(name);
-
-            listModel.addElement(name);
             transferList.setSelectedIndex(listModel.getSize() - 1);
         }
     }
@@ -965,33 +997,37 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
 
         public void actionPerformed(ActionEvent e) {
             int ix = transferList.getSelectedIndex();
-            PropertyTransfer config = transferStep.getTransferAt(ix);
+            PropertyTransfer originalTransfer = transferStep.getTransferAt(ix);
 
-            String name = UISupport.prompt("Specify name for value transfer", "Copy Transfer", config.getName());
+            String name = UISupport.prompt("Specify name for value transfer", "Copy Transfer", originalTransfer.getName());
             if (name == null || name.trim().length() == 0) {
                 return;
             }
 
             PropertyTransfer transfer = transferStep.addTransfer(name);
-            transfer.setSourceStepName(config.getSourceStepName());
-            transfer.setSourcePropertyName(config.getSourcePropertyName());
-            transfer.setSourcePath(config.getSourcePath());
-            transfer.setTargetStepName(config.getTargetStepName());
-            transfer.setTargetPropertyName(config.getTargetPropertyName());
-            transfer.setTargetPath(config.getTargetPath());
-            transfer.setDisabled(config.isDisabled());
-            transfer.setEntitize(config.getEntitize());
-            transfer.setFailOnError(config.getFailOnError());
-            transfer.setIgnoreEmpty(config.getIgnoreEmpty());
-            transfer.setSetNullOnMissingSource(config.getSetNullOnMissingSource());
-            transfer.setTransferChildNodes(config.getTransferChildNodes());
-            transfer.setTransferTextContent(config.getTransferTextContent());
-            transfer.setTransferToAll(config.getTransferToAll());
-            transfer.setUseXQuery(config.getUseXQuery());
+            transfer.setSourceStepName(originalTransfer.getSourceStepName());
+            transfer.setSourcePropertyName(originalTransfer.getSourcePropertyName());
+            transfer.setSourcePath(originalTransfer.getSourcePath());
+            transfer.setSourcePathLanguage(originalTransfer.getSourcePathLanguage());
+            transfer.setTargetStepName(originalTransfer.getTargetStepName());
+            transfer.setTargetPropertyName(originalTransfer.getTargetPropertyName());
+            transfer.setTargetPath(originalTransfer.getTargetPath());
+            transfer.setTargetPathLanguage(originalTransfer.getTargetPathLanguage());
+            transfer.setDisabled(originalTransfer.isDisabled());
+            transfer.setEntitize(originalTransfer.getEntitize());
+            transfer.setFailOnError(originalTransfer.getFailOnError());
+            transfer.setIgnoreEmpty(originalTransfer.getIgnoreEmpty());
+            transfer.setSetNullOnMissingSource(originalTransfer.getSetNullOnMissingSource());
+            transfer.setTransferChildNodes(originalTransfer.getTransferChildNodes());
+            transfer.setTransferTextContent(originalTransfer.getTransferTextContent());
+            transfer.setTransferToAll(originalTransfer.getTransferToAll());
+            transfer.setUseXQuery(originalTransfer.getUseXQuery());
 
             listModel.addElement(name);
             transferList.setSelectedIndex(listModel.getSize() - 1);
         }
+
+
     }
 
     private final class DeleteAction extends AbstractAction {
@@ -1006,7 +1042,6 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
 
                 int ix = transferList.getSelectedIndex();
                 transferStep.removeTransferAt(ix);
-                listModel.remove(ix);
 
                 if (listModel.getSize() > 0) {
                     transferList.setSelectedIndex(ix > listModel.getSize() - 1 ? listModel.getSize() - 1 : ix);
@@ -1133,6 +1168,8 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
                 return;
             }
 
+            Analytics.trackAction(SoapUIActions.RUN_TEST_STEP.getActionName(), "RequestType", "PropertyTransfer");
+
             MockTestRunner mockRunner = new MockTestRunner(transferStep.getTestCase());
             MockTestRunContext context = new MockTestRunContext(mockRunner, transferStep);
             PropertyTransferResult result = (PropertyTransferResult) transferStep.run(mockRunner, context,
@@ -1159,6 +1196,10 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
         item = (TestPropertyHolder) targetStepCombo.getSelectedItem();
         if (item != null) {
             item.removeTestPropertyListener(targetStepPropertiesListener);
+        }
+
+        if (transferListListener != null) {
+            transferStep.removePropertyChangeListener(transferListListener);
         }
 
         componentEnabler.release();
@@ -1317,6 +1358,14 @@ public class PropertyTransfersDesktopPanel extends ModelItemDesktopPanel<Propert
             setToolTipText(getText());
 
             return result;
+        }
+    }
+
+    private class ListUpdater implements PropertyChangeListener {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            listModel = createListModel();
+            transferList.setModel(listModel);
         }
     }
 }

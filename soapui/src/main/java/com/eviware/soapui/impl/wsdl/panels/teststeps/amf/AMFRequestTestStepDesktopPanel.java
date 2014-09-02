@@ -17,6 +17,8 @@
 package com.eviware.soapui.impl.wsdl.panels.teststeps.amf;
 
 import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.analytics.Analytics;
+import com.eviware.soapui.analytics.SoapUIActions;
 import com.eviware.soapui.config.AMFRequestTestStepConfig;
 import com.eviware.soapui.impl.support.actions.ShowOnlineHelpAction;
 import com.eviware.soapui.impl.support.components.ModelItemXmlEditor;
@@ -29,6 +31,7 @@ import com.eviware.soapui.impl.wsdl.panels.teststeps.support.DefaultPropertyHold
 import com.eviware.soapui.impl.wsdl.panels.teststeps.support.GroovyEditor;
 import com.eviware.soapui.impl.wsdl.panels.teststeps.support.GroovyEditorModel;
 import com.eviware.soapui.impl.wsdl.panels.teststeps.support.PropertyHolderTable;
+import com.eviware.soapui.impl.wsdl.submit.transports.http.DocumentContent;
 import com.eviware.soapui.impl.wsdl.support.HelpUrls;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestRunContext;
 import com.eviware.soapui.impl.wsdl.teststeps.AMFRequestTestStep;
@@ -41,8 +44,12 @@ import com.eviware.soapui.model.iface.Submit.Status;
 import com.eviware.soapui.model.iface.SubmitContext;
 import com.eviware.soapui.model.iface.SubmitListener;
 import com.eviware.soapui.model.settings.Settings;
-import com.eviware.soapui.model.testsuite.*;
+import com.eviware.soapui.model.testsuite.Assertable;
 import com.eviware.soapui.model.testsuite.Assertable.AssertionStatus;
+import com.eviware.soapui.model.testsuite.AssertionsListener;
+import com.eviware.soapui.model.testsuite.LoadTestRunner;
+import com.eviware.soapui.model.testsuite.TestAssertion;
+import com.eviware.soapui.model.testsuite.TestCaseRunner;
 import com.eviware.soapui.monitor.support.TestMonitorListenerAdapter;
 import com.eviware.soapui.security.SecurityTestRunner;
 import com.eviware.soapui.settings.UISettings;
@@ -50,7 +57,13 @@ import com.eviware.soapui.support.DocumentListenerAdapter;
 import com.eviware.soapui.support.StringUtils;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.actions.ChangeSplitPaneOrientationAction;
-import com.eviware.soapui.support.components.*;
+import com.eviware.soapui.support.components.JComponentInspector;
+import com.eviware.soapui.support.components.JEditorStatusBarWithProgress;
+import com.eviware.soapui.support.components.JInspectorPanel;
+import com.eviware.soapui.support.components.JInspectorPanelFactory;
+import com.eviware.soapui.support.components.JUndoableTextField;
+import com.eviware.soapui.support.components.JXToolBar;
+import com.eviware.soapui.support.components.SimpleForm;
 import com.eviware.soapui.support.editor.Editor;
 import com.eviware.soapui.support.editor.EditorView;
 import com.eviware.soapui.support.editor.support.AbstractEditorView;
@@ -62,11 +75,26 @@ import com.eviware.soapui.support.swing.SoapUISplitPaneUI;
 import com.eviware.soapui.ui.support.ModelItemDesktopPanel;
 import org.apache.log4j.Logger;
 
-import javax.swing.*;
+import javax.annotation.Nonnull;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.Document;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -574,18 +602,20 @@ public class AMFRequestTestStepDesktopPanel extends ModelItemDesktopPanel<AMFReq
         }
 
         public void propertyChange(PropertyChangeEvent evt) {
-            fireXmlChanged(evt.getOldValue() == null ? null : ((AMFResponse) evt.getOldValue()).getContentAsString(),
-                    getXml());
+            fireContentChanged();
         }
 
-        public String getXml() {
+        @Override
+        @Nonnull
+        public DocumentContent getDocumentContent(Format format) {
             AMFResponse response = amfRequestTestStep.getAMFRequest().getResponse();
-            return response == null ? null : response.getResponseContentXML();
+            return new DocumentContent(response == null ? null : response.getContentType(), response == null ? null : response.getResponseContentXML());
         }
 
-        public void setXml(String xml) {
+        @Override
+        public void setDocumentContent(DocumentContent documentContent) {
             if (amfRequestTestStep.getAMFRequest().getResponse() != null) {
-                amfRequestTestStep.getAMFRequest().getResponse().setResponseContentXML(xml);
+                amfRequestTestStep.getAMFRequest().getResponse().setResponseContentXML(documentContent.getContentAsString());
             }
         }
 
@@ -601,16 +631,18 @@ public class AMFRequestTestStepDesktopPanel extends ModelItemDesktopPanel<AMFReq
         }
 
         public void propertyChange(PropertyChangeEvent evt) {
-            fireXmlChanged(evt.getOldValue() == null ? null : ((AMFRequest) evt.getOldValue()).requestAsXML(),
-                    getXml());
+            fireContentChanged();
         }
 
-        public String getXml() {
+        @Override
+        @Nonnull
+        public DocumentContent getDocumentContent(Format format) {
             AMFRequest request = amfRequestTestStep.getAMFRequest();
-            return request == null ? null : request.requestAsXML();
+            return new DocumentContent(null, request == null ? null : request.requestAsXML());
         }
 
-        public void setXml(String xml) {
+        @Override
+        public void setDocumentContent(DocumentContent documentContent) {
         }
 
         public void release() {
@@ -685,6 +717,8 @@ public class AMFRequestTestStepDesktopPanel extends ModelItemDesktopPanel<AMFReq
         if (!amfRequestTestStep.initAmfRequest(submitContext)) {
             throw new SubmitException("AMF request is not initialised properly !");
         }
+
+        Analytics.trackAction(SoapUIActions.RUN_TEST_STEP.getActionName(), "StepType", "AMF");
 
         return amfRequestTestStep.getAMFRequest().submit(submitContext, true);
     }

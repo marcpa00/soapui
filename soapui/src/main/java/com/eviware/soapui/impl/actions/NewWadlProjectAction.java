@@ -90,6 +90,7 @@ public class NewWadlProjectAction extends AbstractSoapUIAction<WorkspaceImpl> {
                             }
                         }
                         showDeepestEditor(project);
+
                         break;
                     }
                 }

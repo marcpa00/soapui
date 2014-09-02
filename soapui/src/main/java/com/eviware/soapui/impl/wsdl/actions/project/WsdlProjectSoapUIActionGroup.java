@@ -42,7 +42,7 @@ public class WsdlProjectSoapUIActionGroup extends AbstractSoapUIActionGroup<Wsdl
                     "DisabledWsdlProjectActions");
             return actionGroup.getActionMappings(project);
         } else if (!project.isOpen()) {
-            if (project.getEncrypted() != 0) {
+            if (project.getEncryptionStatus() != WsdlProject.ProjectEncryptionStatus.NOT_ENCRYPTED) {
                 SoapUIActionGroup<WsdlProject> actionGroup = SoapUI.getActionRegistry().getActionGroup(
                         "EncryptedWsdlProjectActions");
                 return actionGroup.getActionMappings(project);
@@ -57,7 +57,7 @@ public class WsdlProjectSoapUIActionGroup extends AbstractSoapUIActionGroup<Wsdl
             SoapUIActionMappingList<WsdlProject> mappings = actionGroup.getActionMappings(project);
 
             mappings.getMapping(SaveProjectAction.SOAPUI_ACTION_ID).setEnabled(
-                    !project.isRemote() && project.getPath() != null);
+                    !project.isRemote());
             mappings.getMapping(StartHermesJMS.SOAPUI_ACTION_ID).setEnabled(HermesUtils.isHermesJMSSupported());
 
             mappings.getMapping(SaveProjectIncludingContentAction.SOAPUI_ACTION_ID).setEnabled(

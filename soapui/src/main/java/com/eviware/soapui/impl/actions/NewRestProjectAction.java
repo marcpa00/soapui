@@ -17,6 +17,8 @@
 package com.eviware.soapui.impl.actions;
 
 import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.analytics.Analytics;
+import com.eviware.soapui.analytics.SoapUIActions;
 import com.eviware.soapui.impl.WorkspaceImpl;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
 import com.eviware.soapui.support.MessageSupport;
@@ -57,6 +59,7 @@ public class NewRestProjectAction extends AbstractSoapUIAction<WorkspaceImpl> {
             public void actionPerformed(ActionEvent e) {
                 dialog.setVisible(false);
                 SoapUI.getActionRegistry().getAction(NewWadlProjectAction.SOAPUI_ACTION_ID).perform(SoapUI.getWorkspace(), null);
+                Analytics.trackAction(SoapUIActions.IMPORT_WADL.getActionName());
             }
         });
         while (dialog.show()) {
@@ -68,6 +71,8 @@ public class NewRestProjectAction extends AbstractSoapUIAction<WorkspaceImpl> {
                     serviceBuilder.createRestService(project, uri);
                 }
                 // If there is no exception or error we break out
+
+                Analytics.trackAction(SoapUIActions.CREATE_REST_PROJECT.getActionName());
                 break;
 
             } catch (Exception ex) {

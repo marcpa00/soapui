@@ -59,4 +59,6 @@ public interface XDialogs {
     Boolean confirmOrCancleExtendedInfo(String title, String description, String content, Dimension size);
 
     String selectXPath(String title, String info, String xml, String xpath);
+
+    String selectJsonPath(String title, String info, String json, String jsonPath);
 }

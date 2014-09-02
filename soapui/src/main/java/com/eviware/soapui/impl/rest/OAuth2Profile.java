@@ -16,17 +16,26 @@
 
 package com.eviware.soapui.impl.rest;
 
-import com.eviware.soapui.config.*;
+import com.eviware.soapui.config.AccessTokenPositionConfig;
+import com.eviware.soapui.config.AccessTokenStatusConfig;
+import com.eviware.soapui.config.OAuth2FlowConfig;
+import com.eviware.soapui.config.OAuth2ProfileConfig;
+import com.eviware.soapui.config.RefreshAccessTokenMethodConfig;
+import com.eviware.soapui.config.StringListConfig;
+import com.eviware.soapui.config.TimeUnitConfig;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansion;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContainer;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansionsResult;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nonnull;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.eviware.soapui.impl.rest.OAuth2Profile.RefreshAccessTokenMethods.AUTOMATIC;
 
@@ -71,6 +80,7 @@ public class OAuth2Profile implements PropertyExpansionContainer {
     }
 
     public enum AccessTokenStatus {
+        UNKNOWN("Unknown"),
         ENTERED_MANUALLY("Entered Manually"),
         WAITING_FOR_AUTHORIZATION("Waiting for Authorization"),
         RECEIVED_AUTHORIZATION_CODE("Received authorization code"),
@@ -151,6 +161,7 @@ public class OAuth2Profile implements PropertyExpansionContainer {
 
         setDefaultAccessTokenPosition();
         setDefaultRefreshMethod();
+        setDefaultAccessTokenStatus();
     }
 
     public String getName() {
@@ -223,9 +234,10 @@ public class OAuth2Profile implements PropertyExpansionContainer {
 
     private boolean doSetAccessToken(String accessToken) {
         String oldValue = configuration.getAccessToken();
-        if (!StringUtils.equals(oldValue, accessToken)) {
-            configuration.setAccessToken(accessToken);
-            pcs.firePropertyChange(ACCESS_TOKEN_PROPERTY, oldValue, accessToken);
+        String newValue = accessToken == null ? null : accessToken.trim();
+        if (!StringUtils.equals(oldValue, newValue)) {
+            configuration.setAccessToken(newValue);
+            pcs.firePropertyChange(ACCESS_TOKEN_PROPERTY, oldValue, newValue);
             return true;
         }
         return false;
@@ -237,10 +249,15 @@ public class OAuth2Profile implements PropertyExpansionContainer {
 
     public void setAuthorizationURI(String authorizationURI) {
         String oldValue = configuration.getAuthorizationURI();
-        if (!StringUtils.equals(oldValue, authorizationURI)) {
-            configuration.setAuthorizationURI(authorizationURI);
-            pcs.firePropertyChange(AUTHORIZATION_URI_PROPERTY, oldValue, authorizationURI);
+        String newValue = nullSafeTrim(authorizationURI);
+        if (!StringUtils.equals(oldValue, newValue)) {
+            configuration.setAuthorizationURI(newValue);
+            pcs.firePropertyChange(AUTHORIZATION_URI_PROPERTY, oldValue, newValue);
         }
+    }
+
+    private String nullSafeTrim(String inputString) {
+        return inputString == null ? null : inputString.trim();
     }
 
     public String getClientID() {
@@ -249,9 +266,10 @@ public class OAuth2Profile implements PropertyExpansionContainer {
 
     public void setClientID(String clientID) {
         String oldValue = configuration.getClientID();
-        if (!StringUtils.equals(oldValue, clientID)) {
-            configuration.setClientID(clientID);
-            pcs.firePropertyChange(CLIENT_ID_PROPERTY, oldValue, clientID);
+        String newValue = nullSafeTrim(clientID);
+        if (!StringUtils.equals(oldValue, newValue)) {
+            configuration.setClientID(newValue);
+            pcs.firePropertyChange(CLIENT_ID_PROPERTY, oldValue, newValue);
         }
     }
 
@@ -301,9 +319,10 @@ public class OAuth2Profile implements PropertyExpansionContainer {
 
     public void setAccessTokenURI(String accessTokenURI) {
         String oldValue = configuration.getAccessTokenURI();
-        if (!StringUtils.equals(oldValue, accessTokenURI)) {
-            configuration.setAccessTokenURI(accessTokenURI);
-            pcs.firePropertyChange(ACCESS_TOKEN_URI_PROPERTY, oldValue, accessTokenURI);
+        String newValue = nullSafeTrim(accessTokenURI);
+        if (!StringUtils.equals(oldValue, newValue)) {
+            configuration.setAccessTokenURI(newValue);
+            pcs.firePropertyChange(ACCESS_TOKEN_URI_PROPERTY, oldValue, newValue);
         }
     }
 
@@ -322,10 +341,6 @@ public class OAuth2Profile implements PropertyExpansionContainer {
 
         if (isAStartingStatus(newStatus)) {
             setAccessTokenStartingStatus(newStatus);
-        }
-
-        synchronized (this) {
-            notifyAll();
         }
 
         pcs.firePropertyChange(ACCESS_TOKEN_STATUS_PROPERTY, oldStatus, newStatus);
@@ -397,10 +412,9 @@ public class OAuth2Profile implements PropertyExpansionContainer {
         return configuration.getManualAccessTokenExpirationTime();
     }
 
-    public void setManualAccessTokenExpirationTime(String newExpirationTime) {
+    public void setManualAccessTokenExpirationTime(@Nonnull String newExpirationTime) {
         String oldExpirationTime = configuration.getManualAccessTokenExpirationTime();
-
-        if (oldExpirationTime != newExpirationTime) {
+        if (!Objects.equal(oldExpirationTime, newExpirationTime)) {
             configuration.setManualAccessTokenExpirationTime(newExpirationTime);
             pcs.firePropertyChange(MANUAL_ACCESS_TOKEN_EXPIRATION_TIME, oldExpirationTime, newExpirationTime);
         }
@@ -517,13 +531,17 @@ public class OAuth2Profile implements PropertyExpansionContainer {
         }
     }
 
+    private void setDefaultAccessTokenStatus() {
+        setAccessTokenStatus(AccessTokenStatus.UNKNOWN);
+    }
+
     private AccessTokenStatus getSavedAccessTokenStartingStatusEnum(AccessTokenStatusConfig.Enum persistedEnum) {
         return getSavedAccessTokenStatusEnum(persistedEnum);
     }
 
     private AccessTokenStatus getSavedAccessTokenStatusEnum(AccessTokenStatusConfig.Enum persistedEnum) {
         if (persistedEnum == null) {
-            return null;
+            return AccessTokenStatus.UNKNOWN;
         } else {
             return AccessTokenStatus.valueOf(persistedEnum.toString());
         }
@@ -560,4 +578,5 @@ public class OAuth2Profile implements PropertyExpansionContainer {
     private void saveRefreshTokenMethodsEnum(RefreshAccessTokenMethods enumToBePersisted, OAuth2ProfileConfig configuration) {
         configuration.setRefreshAccessTokenMethod(RefreshAccessTokenMethodConfig.Enum.forString(enumToBePersisted.name()));
     }
+
 }

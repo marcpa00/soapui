@@ -14,6 +14,7 @@
  * under the Licence.
 */
 package com.eviware.soapui.impl.wsdl.support;
+
 /**
  * Help URLS in SoapUI documentation
  *
@@ -96,7 +97,7 @@ public interface HelpUrls {
     public static final String MOCKSERVICEOPTIONS_HELP_URL = "http://www.soapui.org/Service-Mocking/mock-service-editor.html";
     public static final String MOCKSERVICE_HELP_URL = "http://www.soapui.org/Service-Mocking/mocking-soap-services.html";
 
-    public static final String NEWPROJECT_HELP_URL = "http://www.soapui.org/Working-with-Projects/creating-soap-project.html";
+    public static final String NEWPROJECT_HELP_URL = "http://www.soapui.org/Working-with-Projects/new-project.html";
     public static final String NEWRESTPROJECT_HELP_URL = "http://www.soapui.org/REST-Testing/getting-started.html";
     public static final String NEWRESTSERVICE_HELP_URL = "http://www.soapui.org/REST-Testing/working-with-rest-services.html";
     public static final String NEW_WADL_PROJECT_HELP_URL = "http://www.soapui.org/REST-Testing/working-with-rest-services.html";
@@ -114,6 +115,7 @@ public interface HelpUrls {
     public static final String PREPAREDPROPERTIES_HELP_URL = "http://www.soapui.org/Functional-Testing/datasource-jdbc.html";
     public static final String PROJECT_OVERVIEW_HELP_URL = "http://www.soapui.org/Working-with-Projects/working-with-soapui-projects.html";
     public static final String PROPERTIESSTEPEDITOR_HELP_URL = "http://www.soapui.org/Functional-Testing/properties-teststep.html";
+    public static final String PROPERTY_TRANSFER_HELP_URL = "http://www.soapui.org/Functional-Testing/transferring-property-values.html";
 
     public static final String REQUESTEDITOR_HELP_URL = "http://www.soapui.org/Soap-and-WSDL/request-editor.html";
     public static final String RESPONSE_ASSERTIONS_HELP_URL = "http://www.soapui.org/Functional-Testing/getting-started-with-assertions.html";
@@ -181,4 +183,6 @@ public interface HelpUrls {
     public static final String XMLBEANS_HELP_URL = "http://xmlbeans.apache.org/docs/2.0.0/guide/tools.html#scomp";
     public static final String XPATHASSERTIONEDITOR_HELP_URL = "http://www.soapui.org/Assertions/xpath-match-assertion.html";
     public static final String XQUERYASSERTIONEDITOR_HELP_URL = "http://www.soapui.org/Assertions/xquery-match-assertion.html";
+
+    public static final String REST_DISCOVERY_WITH_INTERNAL_BROWSER = "http://www.soapui.org/REST-Discovery/api-with-internal-browser.html";
 }

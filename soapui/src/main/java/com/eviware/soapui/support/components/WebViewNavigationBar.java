@@ -15,6 +15,7 @@
 */
 package com.eviware.soapui.support.components;
 
+import com.eviware.soapui.impl.support.HttpUtils;
 import com.eviware.soapui.support.DocumentListenerAdapter;
 import com.eviware.soapui.support.StringUtils;
 import com.eviware.soapui.support.UISupport;
@@ -24,9 +25,16 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebHistory;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -45,6 +53,7 @@ class WebViewNavigationBar {
     private ForwardAction forwardAction;
     private BackAction backAction;
     private Color originalFontColor;
+    private String hintText = "Enter URL here";
 
     WebViewNavigationBar() {
         this.toolbar = createNavigationBar();
@@ -103,7 +112,7 @@ class WebViewNavigationBar {
         toolbar.add(new ReloadAction());
         toolbar.add(urlField);
         urlField.addActionListener(new UrlEnteredActionListener());
-        urlField.setText("Enter URL here");
+        urlField.setText(hintText);
         urlField.setFont(urlField.getFont().deriveFont(Font.ITALIC));
         originalFontColor = urlField.getForeground();
         urlField.setForeground(new Color(170, 170, 170));
@@ -125,9 +134,18 @@ class WebViewNavigationBar {
     }
 
     private void removeHintText() {
-        if (urlField.getText().equals("Enter URL here")) {
-            urlField.setText("");
+
+        String urlFieldText = urlField.getText();
+
+        if (urlFieldText.contains(hintText)) {
+            final String textWithOutHint = urlFieldText.replaceFirst(hintText, "");
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    urlField.setText(textWithOutHint);
+                }
+            });
         }
+
         resetTextFieldDefaults();
     }
 
@@ -211,9 +229,7 @@ class WebViewNavigationBar {
         @Override
         public void actionPerformed(ActionEvent e) {
             String url = urlField.getText();
-            if (!urlField.getText().contains("://")) {
-                url = "http://" + url;
-            }
+            url = HttpUtils.completeUrlWithHttpIfProtocolIsMissing(url);
             webViewBasedBrowserComponent.navigate(url);
         }
     }

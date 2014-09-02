@@ -16,21 +16,6 @@
 
 package com.eviware.soapui.impl.wsdl.teststeps;
 
-import java.beans.PropertyChangeEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.ImageIcon;
-import javax.xml.namespace.QName;
-
-import org.apache.log4j.Logger;
-import org.apache.xmlbeans.SchemaType;
-import org.w3c.dom.Document;
-
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.RestRequestStepConfig;
 import com.eviware.soapui.config.TestStepConfig;
@@ -85,6 +70,21 @@ import com.eviware.soapui.support.resolver.ResolveContext;
 import com.eviware.soapui.support.resolver.ResolveContext.PathToResolve;
 import com.eviware.soapui.support.types.StringToStringsMap;
 import com.eviware.soapui.support.xml.XmlUtils;
+import org.apache.log4j.Logger;
+import org.apache.xmlbeans.SchemaType;
+import org.w3c.dom.Document;
+
+import javax.swing.ImageIcon;
+import javax.xml.namespace.QName;
+import java.beans.PropertyChangeEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.eviware.soapui.support.JsonUtil.seemsToBeJsonContentType;
 
 public class RestTestRequestStep extends WsdlTestStepWithProperties implements RestTestRequestStepInterface, Securable {
     private final static Logger log = Logger.getLogger(RestTestRequestStep.class);
@@ -727,6 +727,10 @@ public class RestTestRequestStep extends WsdlTestStepWithProperties implements R
         return testRequest.cloneAssertion(source, name);
     }
 
+    public String getAssertableContentAsXml() {
+        return testRequest.getAssertableContentAsXml();
+    }
+
     public String getAssertableContent() {
         return testRequest.getAssertableContent();
     }
@@ -773,6 +777,13 @@ public class RestTestRequestStep extends WsdlTestStepWithProperties implements R
 
     public String getDefaultAssertableContent() {
         return testRequest.getDefaultAssertableContent();
+    }
+
+    @Override
+    public String getDefaultSourcePropertyName() {
+        HttpResponse response = testRequest.getResponse();
+        return response != null && seemsToBeJsonContentType(response.getContentType()) ? WsdlTestStepWithProperties.RESPONSE :
+                WsdlTestStepWithProperties.RESPONSE_AS_XML;
     }
 
     public TestStepResult run(TestCaseRunner runner, TestCaseRunContext runContext) {

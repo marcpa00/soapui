@@ -17,7 +17,7 @@ package com.eviware.soapui.utils;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.junit.internal.matchers.TypeSafeMatcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -190,6 +190,20 @@ public class CommonMatchers {
             @Override
             public void describeTo(Description description) {
                 description.appendText("an existing file");
+            }
+        };
+    }
+
+    public static Matcher<Object> aNumber() {
+        return new org.hamcrest.TypeSafeMatcher<Object>() {
+            @Override
+            protected boolean matchesSafely(Object o) {
+                return o instanceof Number;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("a number");
             }
         };
     }

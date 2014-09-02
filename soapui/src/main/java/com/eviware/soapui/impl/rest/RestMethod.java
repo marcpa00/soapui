@@ -29,6 +29,7 @@ import com.eviware.soapui.impl.wsdl.AbstractWsdlModelItem;
 import com.eviware.soapui.impl.wsdl.MutableTestPropertyHolder;
 import com.eviware.soapui.model.ModelItem;
 import com.eviware.soapui.model.iface.Attachment;
+import com.eviware.soapui.model.iface.Request;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansion;
 import com.eviware.soapui.model.testsuite.TestProperty;
 import com.eviware.soapui.model.testsuite.TestPropertyListener;
@@ -171,7 +172,7 @@ public class RestMethod extends AbstractWsdlModelItem<RestMethodConfig> implemen
     public boolean hasRequestBody() {
         RestRequestInterface.HttpMethod method = getMethod();
         return method == RestRequestInterface.HttpMethod.POST || method == RestRequestInterface.HttpMethod.PUT
-                || method == RestRequestInterface.HttpMethod.PATCH;
+                || method == RestRequestInterface.HttpMethod.PATCH || method == RestRequestInterface.HttpMethod.DELETE;
     }
 
     public void propertyChange(PropertyChangeEvent arg0) {
@@ -380,7 +381,7 @@ public class RestMethod extends AbstractWsdlModelItem<RestMethodConfig> implemen
 
     private class RepresentationPropertyChangeListener implements PropertyChangeListener {
         public void propertyChange(PropertyChangeEvent evt) {
-            if (evt.getPropertyName().equals("mediaType")
+            if (evt.getPropertyName().equals(Request.MEDIA_TYPE)
                     && ((RestRepresentation) evt.getSource()).getType() == Type.RESPONSE) {
                 RestMethod.this.notifyPropertyChanged("responseMediaTypes", null, getResponseMediaTypes());
             }

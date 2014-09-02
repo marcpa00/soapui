@@ -37,6 +37,30 @@ public class OAuth2ProfileTest {
     }
 
     @Test
+    public void trimsAccessTokenWhenSettingIt() throws Exception {
+        String accessTokenWithoutWhitespace = "wuryew2347234987";
+        profile.setAccessToken("\t" + accessTokenWithoutWhitespace + " \n");
+
+        assertThat(profile.getAccessToken(), is(accessTokenWithoutWhitespace));
+    }
+
+    @Test
+    public void trimsAccessTokenUriWhenSettingIt() throws Exception {
+        String accessTokenUriWithoutWhitespace = "wuryew2347234987";
+        profile.setAccessTokenURI("\t" + accessTokenUriWithoutWhitespace + " \n");
+
+        assertThat(profile.getAccessTokenURI(), is(accessTokenUriWithoutWhitespace));
+    }
+
+    @Test
+    public void trimsAuthorizationUriWhenSettingIt() throws Exception {
+        String authorizationUriWithoutWhitespace = "wuryew2347234987";
+        profile.setAuthorizationURI("\t" + authorizationUriWithoutWhitespace + " \n");
+
+        assertThat(profile.getAuthorizationURI(), is(authorizationUriWithoutWhitespace));
+    }
+
+    @Test
     public void waitsForAccessTokenStatusChange() throws Exception {
         final String accessToken = "mock token";
         profile.setAccessTokenStatus(OAuth2Profile.AccessTokenStatus.WAITING_FOR_AUTHORIZATION);

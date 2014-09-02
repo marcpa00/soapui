@@ -1,4 +1,4 @@
-@Automated @Acceptance
+@AutomatedWithFest @Acceptance
 Feature: Manual access token refresh
 
   Scenario: Refresh button is not showing when the refresh token is not present

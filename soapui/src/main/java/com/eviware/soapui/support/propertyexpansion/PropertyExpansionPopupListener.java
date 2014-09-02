@@ -16,14 +16,34 @@
 
 package com.eviware.soapui.support.propertyexpansion;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DropTarget;
-import java.awt.event.ActionEvent;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.eviware.soapui.impl.support.AbstractHttpRequest;
+import com.eviware.soapui.impl.support.AbstractHttpRequestInterface;
+import com.eviware.soapui.impl.wsdl.MutableTestPropertyHolder;
+import com.eviware.soapui.impl.wsdl.WsdlProject;
+import com.eviware.soapui.impl.wsdl.WsdlTestSuite;
+import com.eviware.soapui.impl.wsdl.mock.WsdlMockService;
+import com.eviware.soapui.impl.wsdl.panels.teststeps.support.GroovyEditor;
+import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
+import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestStep;
+import com.eviware.soapui.model.ModelItem;
+import com.eviware.soapui.model.TestModelItem;
+import com.eviware.soapui.model.TestPropertyHolder;
+import com.eviware.soapui.model.iface.Operation;
+import com.eviware.soapui.model.mock.MockResponse;
+import com.eviware.soapui.model.mock.MockService;
+import com.eviware.soapui.model.propertyexpansion.PropertyExpansion;
+import com.eviware.soapui.model.propertyexpansion.PropertyExpansionImpl;
+import com.eviware.soapui.model.propertyexpansion.PropertyExpansionUtils;
+import com.eviware.soapui.model.testsuite.TestProperty;
+import com.eviware.soapui.security.SecurityTest;
+import com.eviware.soapui.support.JsonUtil;
+import com.eviware.soapui.support.StringUtils;
+import com.eviware.soapui.support.UISupport;
+import com.eviware.soapui.support.components.GroovyEditorComponent;
+import com.eviware.soapui.support.components.ShowPopupAction;
+import com.eviware.soapui.support.propertyexpansion.scrollmenu.ScrollableMenu;
+import com.eviware.soapui.support.xml.XmlUtils;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -36,34 +56,14 @@ import javax.swing.JTextField;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.JTextComponent;
-
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-
-import com.eviware.soapui.impl.support.AbstractHttpRequest;
-import com.eviware.soapui.impl.support.AbstractHttpRequestInterface;
-import com.eviware.soapui.impl.wsdl.MutableTestPropertyHolder;
-import com.eviware.soapui.impl.wsdl.WsdlProject;
-import com.eviware.soapui.impl.wsdl.WsdlTestSuite;
-import com.eviware.soapui.impl.wsdl.mock.WsdlMockResponse;
-import com.eviware.soapui.impl.wsdl.mock.WsdlMockService;
-import com.eviware.soapui.impl.wsdl.panels.teststeps.support.GroovyEditor;
-import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
-import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestStep;
-import com.eviware.soapui.model.ModelItem;
-import com.eviware.soapui.model.TestModelItem;
-import com.eviware.soapui.model.TestPropertyHolder;
-import com.eviware.soapui.model.iface.Operation;
-import com.eviware.soapui.model.propertyexpansion.PropertyExpansion;
-import com.eviware.soapui.model.propertyexpansion.PropertyExpansionImpl;
-import com.eviware.soapui.model.propertyexpansion.PropertyExpansionUtils;
-import com.eviware.soapui.model.testsuite.TestProperty;
-import com.eviware.soapui.security.SecurityTest;
-import com.eviware.soapui.support.StringUtils;
-import com.eviware.soapui.support.UISupport;
-import com.eviware.soapui.support.components.GroovyEditorComponent;
-import com.eviware.soapui.support.components.ShowPopupAction;
-import com.eviware.soapui.support.propertyexpansion.scrollmenu.ScrollableMenu;
-import com.eviware.soapui.support.xml.XmlUtils;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.event.ActionEvent;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PropertyExpansionPopupListener implements PopupMenuListener {
     private final Container targetMenu;
@@ -90,12 +90,12 @@ public class PropertyExpansionPopupListener implements PopupMenuListener {
         // create transfer menus
         targetMenu.removeAll();
 
-        WsdlTestStep testStep = null;
+        WsdlTestStep testStep;
         WsdlTestCase testCase = null;
         WsdlTestSuite testSuite = null;
         WsdlProject project = null;
-        WsdlMockService mockService = null;
-        WsdlMockResponse mockResponse = null;
+        MockService mockService = null;
+        MockResponse mockResponse = null;
         SecurityTest securityTest = null;
 
         if (modelItem instanceof WsdlTestStep) {
@@ -112,8 +112,8 @@ public class PropertyExpansionPopupListener implements PopupMenuListener {
             project = testSuite.getProject();
         } else if (modelItem instanceof WsdlMockService) {
             project = ((WsdlMockService) modelItem).getProject();
-        } else if (modelItem instanceof WsdlMockResponse) {
-            mockResponse = (WsdlMockResponse) modelItem;
+        } else if (modelItem instanceof MockResponse) {
+            mockResponse = (MockResponse) modelItem;
             mockService = (mockResponse).getMockOperation().getMockService();
             project = mockService.getProject();
         } else if (modelItem instanceof WsdlProject) {
@@ -203,7 +203,7 @@ public class PropertyExpansionPopupListener implements PopupMenuListener {
         }
 
         public TransferFromPropertyActionInvoker(MutableTestPropertyHolder testStep) {
-            super("Create new..");
+            super("Create new...");
             this.sourceStep = testStep;
         }
 
@@ -249,12 +249,14 @@ public class PropertyExpansionPopupListener implements PopupMenuListener {
                 }
 
                 if (XmlUtils.seemsToBeXml(val)) {
-                    // XmlObject.Factory.parse( val );
                     XmlUtils.createXmlObject(val);
-                    sourceXPath = UISupport.selectXPath("Select XPath", "Select source xpath for property transfer", val,
+                    sourceXPath = UISupport.selectXPath("Select XPath", "Select source xpath", val,
                             null);
+                } else if (JsonUtil.isValidJson(val)) {
+                    sourceXPath = UISupport.selectJsonPath("Select JSON", "Select JSON value", val, null);
                 }
-            } catch (Throwable e) {
+            } catch (Exception e) {
+                e.printStackTrace();
                 // just ignore.. this wasn't xml..
             }
 
@@ -283,7 +285,7 @@ public class PropertyExpansionPopupListener implements PopupMenuListener {
 
     private static final Pattern pattern = Pattern.compile("^\\$\\{(.*)\\}$");
 
-    private static final boolean userInputIsPropertyExpansion(String userSelectedValue) {
+    private static boolean userInputIsPropertyExpansion(String userSelectedValue) {
         if (userSelectedValue == null) {
             return false;
         }
@@ -315,7 +317,7 @@ public class PropertyExpansionPopupListener implements PopupMenuListener {
         textField.setComponentPopupMenu(popup);
 
         if (popup != null) {
-            PropertyExpansionPopupListener.addMenu(popup, "Get Data..", target.getContextModelItem(), target);
+            PropertyExpansionPopupListener.addMenu(popup, "Get Data...", target.getContextModelItem(), target);
         }
     }
 
@@ -372,9 +374,6 @@ public class PropertyExpansionPopupListener implements PopupMenuListener {
         }
 
         enable(textField, modelItem, popupMenu);
-    }
-
-    public static void disable(GroovyEditor editor) {
     }
 
     public static void enable(GroovyEditorComponent gec, ModelItem modelItem) {
