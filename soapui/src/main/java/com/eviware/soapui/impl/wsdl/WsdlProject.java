@@ -449,7 +449,6 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
                 addProjectListener(new ContentInExternalFileProjectListener());
             }
 
-            }
             afterLoadContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_AFTER_LOAD, scriptConfig, getSettings());
             afterLoadContentInExternalFile.initExternalFilenameSupport();
 
