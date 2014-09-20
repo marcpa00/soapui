@@ -409,43 +409,55 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             alwaysPreferContentFromProject = null;
 
             ScriptConfig scriptConfig = null;
+        // AFTER_LOAD
             if (getConfig().isSetAfterLoadScript()) {
                 scriptConfig = getConfig().getAfterLoadScript();
-            } else {
+        } else if (ContentInExternalFileSupport.isEnabled()) {
                 scriptConfig = ScriptConfig.Factory.newInstance();
                 scriptConfig.setStringValue("");
             }
+        if (ContentInExternalFileSupport.isEnabled()) {
             afterLoadContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_AFTER_LOAD, scriptConfig, getSettings());
             afterLoadContentInExternalFile.initExternalFilenameSupport();
+        }
 
+        // AFTER_RUN
             if (getConfig().isSetAfterRunScript()) {
                 scriptConfig = getConfig().getAfterRunScript();
-            } else {
+        } else if (ContentInExternalFileSupport.isEnabled()) {
                 scriptConfig = ScriptConfig.Factory.newInstance();
                 scriptConfig.setStringValue("");
             }
+        if (ContentInExternalFileSupport.isEnabled()) {
             afterRunContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_AFTER_RUN, scriptConfig, getSettings());
             afterRunContentInExternalFile.initExternalFilenameSupport();
+        }
 
+        // BEFORE_RUN
             if (getConfig().isSetBeforeRunScript()) {
                 scriptConfig = getConfig().getBeforeRunScript();
-            } else {
+        } else if (ContentInExternalFileSupport.isEnabled()) {
                 scriptConfig = ScriptConfig.Factory.newInstance();
                 scriptConfig.setStringValue("");
             }
+        if (ContentInExternalFileSupport.isEnabled()) {
             beforeRunContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_BEFORE_RUN, scriptConfig, getSettings());
             beforeRunContentInExternalFile.initExternalFilenameSupport();
+        }
 
+        // BEFORE_SAVE
             if (getConfig().isSetBeforeSaveScript()) {
                 scriptConfig = getConfig().getBeforeSaveScript();
-            } else {
+        } else if (ContentInExternalFileSupport.isEnabled()) {
                 scriptConfig = ScriptConfig.Factory.newInstance();
                 scriptConfig.setStringValue("");
             }
+        if (ContentInExternalFileSupport.isEnabled()) {
             beforeSaveContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_BEFORE_SAVE, scriptConfig, getSettings());
             beforeSaveContentInExternalFile.initExternalFilenameSupport();
+        }
 
-            if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+        if (ContentInExternalFileSupport.isEnabled()) {
                 addProjectListener(new ContentInExternalFileProjectListener());
             }
 
