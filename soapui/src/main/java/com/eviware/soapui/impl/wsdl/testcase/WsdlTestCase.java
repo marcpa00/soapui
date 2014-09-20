@@ -120,22 +120,26 @@ public class WsdlTestCase extends AbstractTestPropertyHolderWsdlModelItem<TestCa
         ScriptConfig scriptConfig = null;
         if (getConfig().isSetSetupScript()) {
             scriptConfig = getConfig().getSetupScript();
-        } else {
+        } else if (ContentInExternalFileSupport.isEnabled()) {
             scriptConfig = ScriptConfig.Factory.newInstance();
             scriptConfig.setStringValue("");
         }
 
-        setupScriptContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.TEST_CASE_SETUP, scriptConfig, getSettings());
-        setupScriptContentInExternalFile.initExternalFilenameSupport();
+        if (ContentInExternalFileSupport.isEnabled()) {
+            setupScriptContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.TEST_CASE_SETUP, scriptConfig, getSettings());
+            setupScriptContentInExternalFile.initExternalFilenameSupport();
+        }
 
         if (getConfig().isSetTearDownScript()) {
             scriptConfig = getConfig().getTearDownScript();
-        } else {
+        } else if (ContentInExternalFileSupport.isEnabled()) {
             scriptConfig = ScriptConfig.Factory.newInstance();
             scriptConfig.setStringValue("");
         }
-        tearDownScriptContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.TEST_CASE_TEARDOWN, scriptConfig, getSettings());
-        tearDownScriptContentInExternalFile.initExternalFilenameSupport();
+        if (ContentInExternalFileSupport.isEnabled()) {
+            tearDownScriptContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.TEST_CASE_TEARDOWN, scriptConfig, getSettings());
+            tearDownScriptContentInExternalFile.initExternalFilenameSupport();
+        }
 
         List<TestStepConfig> testStepConfigs = config.getTestStepList();
         List<TestStepConfig> removed = new ArrayList<TestStepConfig>();
