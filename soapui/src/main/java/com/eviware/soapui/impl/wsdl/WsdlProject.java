@@ -95,6 +95,7 @@ import java.security.GeneralSecurityException;
 import java.util.*;
 
 import static com.eviware.soapui.impl.support.ContentInExternalFile.*;
+
 import java.util.UUID;
 
 import static com.eviware.soapui.impl.wsdl.WsdlProject.ProjectEncryptionStatus.*;
@@ -405,61 +406,61 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             getConfig().setRunType(TestSuiteRunTypesConfig.SEQUENTIAL);
         }
 
-            alwaysPreferContentFromExternalFile = null;
-            alwaysPreferContentFromProject = null;
+        alwaysPreferContentFromExternalFile = null;
+        alwaysPreferContentFromProject = null;
 
-            ScriptConfig scriptConfig = null;
+        ScriptConfig scriptConfig = null;
         // AFTER_LOAD
-            if (getConfig().isSetAfterLoadScript()) {
-                scriptConfig = getConfig().getAfterLoadScript();
+        if (getConfig().isSetAfterLoadScript()) {
+            scriptConfig = getConfig().getAfterLoadScript();
         } else if (ContentInExternalFileSupport.isEnabled()) {
-                scriptConfig = ScriptConfig.Factory.newInstance();
-                scriptConfig.setStringValue("");
-            }
+            scriptConfig = ScriptConfig.Factory.newInstance();
+            scriptConfig.setStringValue("");
+        }
         if (ContentInExternalFileSupport.isEnabled()) {
             afterLoadContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_AFTER_LOAD, scriptConfig, getSettings());
             afterLoadContentInExternalFile.initExternalFilenameSupport();
         }
 
         // AFTER_RUN
-            if (getConfig().isSetAfterRunScript()) {
-                scriptConfig = getConfig().getAfterRunScript();
+        if (getConfig().isSetAfterRunScript()) {
+            scriptConfig = getConfig().getAfterRunScript();
         } else if (ContentInExternalFileSupport.isEnabled()) {
-                scriptConfig = ScriptConfig.Factory.newInstance();
-                scriptConfig.setStringValue("");
-            }
+            scriptConfig = ScriptConfig.Factory.newInstance();
+            scriptConfig.setStringValue("");
+        }
         if (ContentInExternalFileSupport.isEnabled()) {
             afterRunContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_AFTER_RUN, scriptConfig, getSettings());
             afterRunContentInExternalFile.initExternalFilenameSupport();
         }
 
         // BEFORE_RUN
-            if (getConfig().isSetBeforeRunScript()) {
-                scriptConfig = getConfig().getBeforeRunScript();
+        if (getConfig().isSetBeforeRunScript()) {
+            scriptConfig = getConfig().getBeforeRunScript();
         } else if (ContentInExternalFileSupport.isEnabled()) {
-                scriptConfig = ScriptConfig.Factory.newInstance();
-                scriptConfig.setStringValue("");
-            }
+            scriptConfig = ScriptConfig.Factory.newInstance();
+            scriptConfig.setStringValue("");
+        }
         if (ContentInExternalFileSupport.isEnabled()) {
             beforeRunContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_BEFORE_RUN, scriptConfig, getSettings());
             beforeRunContentInExternalFile.initExternalFilenameSupport();
         }
 
         // BEFORE_SAVE
-            if (getConfig().isSetBeforeSaveScript()) {
-                scriptConfig = getConfig().getBeforeSaveScript();
+        if (getConfig().isSetBeforeSaveScript()) {
+            scriptConfig = getConfig().getBeforeSaveScript();
         } else if (ContentInExternalFileSupport.isEnabled()) {
-                scriptConfig = ScriptConfig.Factory.newInstance();
-                scriptConfig.setStringValue("");
-            }
+            scriptConfig = ScriptConfig.Factory.newInstance();
+            scriptConfig.setStringValue("");
+        }
         if (ContentInExternalFileSupport.isEnabled()) {
             beforeSaveContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_BEFORE_SAVE, scriptConfig, getSettings());
             beforeSaveContentInExternalFile.initExternalFilenameSupport();
         }
 
         if (ContentInExternalFileSupport.isEnabled()) {
-                addProjectListener(new ContentInExternalFileProjectListener());
-            }
+            addProjectListener(new ContentInExternalFileProjectListener());
+        }
 
         afterLoad();
 
