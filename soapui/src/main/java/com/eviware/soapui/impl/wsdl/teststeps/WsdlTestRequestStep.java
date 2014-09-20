@@ -117,9 +117,9 @@ public class WsdlTestRequestStep extends WsdlTestStepWithProperties implements O
                     setDisabled(true);
                 } else {
                     initTestRequest(config, forLoadTest);
-                    contentInExternalFileSupport = new ContentInExternalFileSupport(this, testRequest, requestStepConfig, getSettings());
-                    contentInExternalFileSupport.initExternalFilenameSupport();
                     if (getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE)) {
+                        contentInExternalFileSupport = new ContentInExternalFileSupport(this, testRequest, requestStepConfig, getSettings());
+                        contentInExternalFileSupport.initExternalFilenameSupport();
                         requestStepConfig.getRequest().getRequest().setStringValue(contentInExternalFileSupport.getContent());
                         testRequest.setRequestContent(contentInExternalFileSupport.getContent());
                         testRequest.updateConfig(requestStepConfig.getRequest());
