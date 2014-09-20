@@ -123,6 +123,16 @@ public class ContentInExternalFileSupport implements ModelItem {
     }
 
     /**
+     * Utility static method that checks if the content in external file feature is selected by user settings.  Enabled mean the feature should be used
+     * globally, but individual content holders (groovy test steps, groovy assertion, wsdl test steps, groovy scripts) may override it.
+     *
+     * @return true if it is enabled, false otherwise.
+     */
+    public static boolean isEnabled() {
+        return SoapUI.getSettings().getBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, false);
+    }
+
+    /**
      * Base common constructor
      *
      * @param baseModelItem
