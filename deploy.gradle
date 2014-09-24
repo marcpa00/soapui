@@ -34,6 +34,8 @@ artifacts {
     archives soapuiJar
 }
 
+task wrapper(type:Wrapper){ gradleVersion = '1.12' }
+
 def getMavenSettingsCredentials = {
     String m2Repo = System.getProperty( "M2_REPO" ) ?: System.getProperty("user.home") + "/.m2/repository"
     String m3Repo = System.getProperty( "M3_REPO" ) ?: System.getProperty("user.home") + "/.m3/repository"
