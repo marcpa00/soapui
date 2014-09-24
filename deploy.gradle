@@ -1,0 +1,93 @@
+apply plugin: 'maven'
+
+// handle overrides from system properties
+String deployUrl = System.getProperty('deploy.url', 'file://build')
+String targetServerId = System.getProperty('deploy.targetServerId', 'localhost')
+String version = System.getProperty('deploy.version')
+String groupId = System.getProperty('deploy.groupId')
+String artifactId = System.getProperty('deploy.artifactId')
+
+// get values from the pom if it was not specified with a system property
+def mavenParentProject = new XmlSlurper().parse('pom.xml')
+def mavenSoapuiProject = new XmlSlurper().parse('soapui/pom.xml')
+
+if (!version) { version = mavenParentProject.version }
+if (!groupId) { groupId = mavenParentProject.groupId }
+if (!artifactId) { artifactId = mavenSoapuiProject.artifactId }
+
+logger.quiet "version : $version"
+logger.quiet "groupId : $groupId"
+logger.quiet "artifactId : $artifactId"
+
+repositories {
+    mavenLocal()
+    maven {
+        name 'Maven deploy on local network'
+        url deployUrl
+    }
+    mavenCentral()
+}
+
+def soapuiJar = file("soapui/target/soapui-${version}.jar")
+
+artifacts {
+    archives soapuiJar
+}
+
+def getMavenSettingsCredentials = {
+    String m2Repo = System.getProperty( "M2_REPO" ) ?: System.getProperty("user.home") + "/.m2/repository"
+    String m3Repo = System.getProperty( "M3_REPO" ) ?: System.getProperty("user.home") + "/.m3/repository"
+    File mavenRepoDir = new File(m3Repo)
+    if (!mavenRepoDir.exists()) {
+        mavenRepoDir = new File(m2Repo)
+    }
+    if (!mavenRepoDir.exists()) {
+        logger.warn("WARNING : didn't find a maven local repository folder, tried ${m3Repo} and then ${m2Repo}")
+        return []
+    }
+    File mavenSettings = new File(mavenRepoDir.parentFile, "settings.xml")
+    if (! mavenSettings.exists()) {
+        logger.warn("WARNING : tried to load maven settings from '${mavenSettings.absolutePath}', but that file does not exist.")
+        return []
+    }
+    logger.quiet("Using maven settings from ${mavenSettings.canonicalPath}")
+    return new XmlSlurper().parse(mavenSettings).output."servers"."server"
+}
+
+def getCredentials = {
+    def entries = getMavenSettingsCredentials()
+    def credentials = [:]
+    for (entry in entries) {
+        logger.quiet("looking at ${entry.id.text()}")
+        if ( entry."id".text() == targetServerId ) {
+            credentials = [username: entry.username.text(), password: entry.password.text()]
+        }
+    }
+    if (credentials.isEmpty()) {
+        logger.warn("WARNING: could not find an entry for server id '${targetServerId}' in maven settings.")
+        return [:]
+    } else {
+        return credentials
+    }
+}
+
+def creds = getCredentials()
+logger.quiet("Uploading to $targetServerId")
+if (! creds.isEmpty()) {
+    logger.quiet "   connecting as user '${creds.username}'"
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: deployUrl) {
+                if (!creds.isEmpty()) {
+                    authentication(userName: creds.username, password: creds.password)
+                }
+            }
+            pom.groupId = groupId
+            pom.artifactId = artifactId
+            pom.version = version
+        }
+    }
+}
