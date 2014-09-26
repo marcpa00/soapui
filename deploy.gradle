@@ -53,7 +53,7 @@ def getMavenSettingsCredentials = {
         return []
     }
     logger.quiet("Using maven settings from ${mavenSettings.canonicalPath}")
-    return new XmlSlurper().parse(mavenSettings).output."servers"."server"
+    return new XmlSlurper().parse(mavenSettings)."servers"."server"
 }
 
 def getCredentials = {
