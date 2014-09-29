@@ -1,23 +1,28 @@
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
-// handle overrides from system properties
-String deployUrl = System.getProperty('deploy.url', 'file://build')
+// handle overrides from system properties : url where to deploy, targetServerId to look for in local maven settings.xml, version of artifacts, group id of artifacts
+String deployUrl = System.getProperty('deploy.url', 'file:///tmp/soapui-build')
 String targetServerId = System.getProperty('deploy.targetServerId', 'localhost')
-String version = System.getProperty('deploy.version')
-String groupId = System.getProperty('deploy.groupId')
-String artifactId = System.getProperty('deploy.artifactId')
+String soapuiVersion = System.getProperty('deploy.version')
+String soapuiGroupId = System.getProperty('deploy.groupId')
 
 // get values from the pom if it was not specified with a system property
 def mavenParentProject = new XmlSlurper().parse('pom.xml')
-def mavenSoapuiProject = new XmlSlurper().parse('soapui/pom.xml')
+String mavenSoapuiProjectSubdir = 'soapui'
+String mavenSoapuiMavenPluginProjectSubdir = 'soapui-maven-plugin'
+def mavenSoapuiProject = new XmlSlurper().parse("$mavenSoapuiProjectSubdir/pom.xml")
+def mavenSoapuiMavenPluginProject = new XmlSlurper().parse("$mavenSoapuiMavenPluginProjectSubdir/pom.xml")
 
-if (!version) { version = mavenParentProject.version }
-if (!groupId) { groupId = mavenParentProject.groupId }
-if (!artifactId) { artifactId = mavenSoapuiProject.artifactId }
+if (!soapuiVersion) { soapuiVersion = mavenParentProject.version }
+if (!soapuiGroupId) { soapuiGroupId = mavenParentProject.groupId }
+String soapuiArtifactId = mavenSoapuiProject.artifactId
+String soapuiMavenPluginArtifactId = mavenSoapuiMavenPluginProject.artifactId
 
-logger.quiet "version : $version"
-logger.quiet "groupId : $groupId"
-logger.quiet "artifactId : $artifactId"
+logger.quiet "soapuiVersion : $soapuiVersion"
+logger.quiet "soapuiGroupId : $soapuiGroupId"
+logger.quiet "soapuiArtifactId : $soapuiArtifactId"
+logger.quiet "soapuiMavenPluginArtifactId : $soapuiMavenPluginArtifactId"
 
 repositories {
     mavenLocal()
@@ -26,12 +31,6 @@ repositories {
         url deployUrl
     }
     mavenCentral()
-}
-
-def soapuiJar = file("soapui/target/soapui-${version}.jar")
-
-artifacts {
-    archives soapuiJar
 }
 
 task wrapper(type:Wrapper){ gradleVersion = '1.12' }
@@ -79,17 +78,37 @@ if (! creds.isEmpty()) {
     logger.quiet "   connecting as user '${creds.username}'"
 }
 
-uploadArchives {
+def soapuiJar = file("${mavenSoapuiProjectSubdir}/target/${soapuiArtifactId}-${soapuiVersion}.jar")
+def soapuiMavenPluginJar = file("${mavenSoapuiMavenPluginProjectSubdir}/target/${soapuiMavenPluginArtifactId}-${soapuiVersion}.jar")
+
+publishing {
+    publications {
+        soapuiProject(MavenPublication) {
+            groupId soapuiGroupId
+            artifactId 'soapui-project'
+            version soapuiVersion
+        }
+        soapui(MavenPublication) {
+            groupId soapuiGroupId
+            artifactId soapuiArtifactId
+            version soapuiVersion
+
+            artifact soapuiJar
+        }
+        soapuiMavenPlugin(MavenPublication) {
+            groupId soapuiGroupId
+            artifactId soapuiMavenPluginArtifactId
+            version soapuiVersion
+
+            artifact soapuiMavenPluginJar
+        }
+    }
     repositories {
-        mavenDeployer {
-            repository(url: deployUrl) {
-                if (!creds.isEmpty()) {
-                    authentication(userName: creds.username, password: creds.password)
-                }
+        maven {
+            url deployUrl
+            if (!creds.isEmpty()) {
+                authentication(userName: creds.username, password: creds.password)
             }
-            pom.groupId = groupId
-            pom.artifactId = artifactId
-            pom.version = version
         }
     }
 }
