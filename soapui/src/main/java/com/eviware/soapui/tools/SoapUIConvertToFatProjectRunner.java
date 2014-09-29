@@ -480,6 +480,10 @@ public class SoapUIConvertToFatProjectRunner implements CmdLineRunner {
         for (String projectFile : projectFiles) {
             System.out.println("... processing project " + projectFile);
 
+            // Conversion is done by reading as if content-in-external-file feature was enabled and then
+            // saving as if content-in-external-file feature was disabled
+            SoapUI.getSettings().setBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, true);
+
             WsdlProject project = (WsdlProject) ProjectFactoryRegistry.getProjectFactory("wsdl").createNew(projectFile,
                     getProjectPassword());
 
@@ -521,6 +525,9 @@ public class SoapUIConvertToFatProjectRunner implements CmdLineRunner {
                 }
             }
 
+
+            // save as if content-in-external-file feature was not selected, effectively converting the project to "fat" format.
+            SoapUI.getSettings().setBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, false);
             SaveStatus saveStatus = project.saveAs(target, true);
             if (saveStatus == SaveStatus.SUCCESS) {
                 log.info("Project '" + project.getName() + "' converted to single XML document containing all contents and saved in '" + target + "'");
