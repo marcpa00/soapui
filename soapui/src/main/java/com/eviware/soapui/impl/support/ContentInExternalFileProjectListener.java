@@ -39,7 +39,6 @@ import static com.eviware.soapui.impl.support.ContentInExternalFile.*;
 public class ContentInExternalFileProjectListener extends ProjectListenerAdapter {
 
     public void beforeSave(Project project) {
-        SoapUI.log.info("In ContentInExternalFileProjectListener.beforeSave(" + project.getName() + ")");
         List<ContentInExternalFileSupport> externalContents = new ArrayList<ContentInExternalFileSupport>();
         ContentInExternalFileSaveStatus saveStatus;
 

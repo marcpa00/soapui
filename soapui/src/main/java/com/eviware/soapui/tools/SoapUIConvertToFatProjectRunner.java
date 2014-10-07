@@ -478,12 +478,14 @@ public class SoapUIConvertToFatProjectRunner implements CmdLineRunner {
         }
 
         for (String projectFile : projectFiles) {
-            System.out.println("... processing project " + projectFile);
+            log.debug("... processing project " + projectFile);
 
             // Conversion is done by reading as if content-in-external-file feature was enabled and then
             // saving as if content-in-external-file feature was disabled
             SoapUI.getSettings().setBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, true);
 
+            // TODO (marcpa) : handle other kind of projects, at least, do not assume we always get wsdl project and skip a file if
+            // it is a type of project that we don't handle.
             WsdlProject project = (WsdlProject) ProjectFactoryRegistry.getProjectFactory("wsdl").createNew(projectFile,
                     getProjectPassword());
 
