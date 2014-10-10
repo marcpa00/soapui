@@ -439,10 +439,7 @@ public class ContentInExternalFileSupport implements ModelItem {
         } else if (GROOVY_ASSERTION.equals(actualConfig.getContentInExternalFileCategory())) {
             actualConfig.getScriptConfig().setStringValue(content);
         } else if (WSDL_STEP.equals(actualConfig.getContentInExternalFileCategory())) {
-            SoapUI.log.debug("actualConfig is for a WSDL_STEP, calling changeType(WsdlRequestConfig.type) on actualConfig.getConfig().");
             WsdlRequestConfig wsdlRequestConfig = (WsdlRequestConfig) actualConfig.getConfig().changeType(WsdlRequestConfig.type);
-            SoapUI.log.debug("setting request string value to :");
-            SoapUI.log.debug(content);
             wsdlRequestConfig.getRequest().setStringValue(content);
         }
     }
