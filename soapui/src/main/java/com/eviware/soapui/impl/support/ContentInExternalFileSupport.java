@@ -37,6 +37,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -582,17 +583,30 @@ public class ContentInExternalFileSupport implements ModelItem {
         }
 
         SoapUI.log.debug("loadContent() : current dir (user.dir) is : " + System.getProperty("user.dir"));
-        try {
-            byte[] bytesOfFilename = externalFilename.getBytes("UTF-8");
-            StringBuffer buf = new StringBuffer();
-            for (byte b : bytesOfFilename) {
-                buf.append(String.format("%x", b)).append(" ");
-            }
-            SoapUI.log.debug("loadContent() : externalFilename : " + externalFilename);
-            SoapUI.log.debug("loadContent() : externalFilename.getBytes('UTF-8') is : '" + buf.toString());
-        } catch (Exception e) {}
 
         File contentFile = new File(toAbsolutePath(externalFilename));
+        String externalContentFilename = toAbsolutePath(externalFilename);
+
+        File file = new File(externalContentFilename);
+        if (file.exists()) {
+            contentFile = file;
+        } else {
+            // Maybe the filename on filesystem is encoded with a different unicode normalization form : try with explicit normalization to NFC then NFD before giving up
+            externalContentFilename = Normalizer.normalize(toAbsolutePath(externalFilename), Normalizer.Form.NFC);
+            file = new File(externalContentFilename);
+            if (file.exists()) {
+                contentFile = file;
+            } else {
+                externalContentFilename = Normalizer.normalize(toAbsolutePath(externalFilename), Normalizer.Form.NFD);
+                file = new File(externalContentFilename);
+                if (file.exists()) {
+                    contentFile = file;
+                } else {
+                    SoapUI.log.debug("File with external filename '" + externalFilename + "' does not exists, tried with unicode normalization forms C and D.");
+                }
+            }
+        }
+
         if (!contentFile.exists()) {
             SoapUI.log.debug("file referenced by externalFilename does not exists...");
             if (content == null) {
