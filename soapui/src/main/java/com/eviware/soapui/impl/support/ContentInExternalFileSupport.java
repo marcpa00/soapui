@@ -438,7 +438,10 @@ public class ContentInExternalFileSupport implements ModelItem {
         } else if (GROOVY_ASSERTION.equals(actualConfig.getContentInExternalFileCategory())) {
             actualConfig.getScriptConfig().setStringValue(content);
         } else if (WSDL_STEP.equals(actualConfig.getContentInExternalFileCategory())) {
+            SoapUI.log.debug("actualConfig is for a WSDL_STEP, calling changeType(WsdlRequestConfig.type) on actualConfig.getConfig().");
             WsdlRequestConfig wsdlRequestConfig = (WsdlRequestConfig) actualConfig.getConfig().changeType(WsdlRequestConfig.type);
+            SoapUI.log.debug("setting request string value to :");
+            SoapUI.log.debug(content);
             wsdlRequestConfig.getRequest().setStringValue(content);
         }
     }
@@ -578,8 +581,20 @@ public class ContentInExternalFileSupport implements ModelItem {
             externalFilename = DEFAULT_STEP_FILENAME + actualConfig.getExternalFilenameSuffix();
         }
 
+        SoapUI.log.debug("loadContent() : current dir (user.dir) is : " + System.getProperty("user.dir"));
+        try {
+            byte[] bytesOfFilename = externalFilename.getBytes("UTF-8");
+            StringBuffer buf = new StringBuffer();
+            for (byte b : bytesOfFilename) {
+                buf.append(String.format("%x", b)).append(" ");
+            }
+            SoapUI.log.debug("loadContent() : externalFilename : " + externalFilename);
+            SoapUI.log.debug("loadContent() : externalFilename.getBytes('UTF-8') is : '" + buf.toString());
+        } catch (Exception e) {}
+
         File contentFile = new File(toAbsolutePath(externalFilename));
         if (!contentFile.exists()) {
+            SoapUI.log.debug("file referenced by externalFilename does not exists...");
             if (content == null) {
                 return ContentInExternalFileLoadStatus.NOT_LOADED;
             } else {
