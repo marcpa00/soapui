@@ -22,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,9 +39,7 @@ import java.util.UUID;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -68,9 +67,8 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
         SoapUI.getSettings().setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, true);
     }
 
-    @AfterClass
-    public static void teardown() throws IOException {
-        FileUtils.deleteDirectory(TEMPORARY_FOLDER);
+    @After
+    public void testTeardown() throws IOException {
         File projectFile = new File(SAMPLE_PROJECT_ABSOLUTE_PATH);
         File backupFile = new File(SAMPLE_PROJECT_ABSOLUTE_PATH + "-backup");
         if (backupFile.exists()) {
@@ -83,6 +81,11 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
         if (contentTopDir.exists()) {
             FileUtils.deleteQuietly(contentTopDir);
         }
+    }
+
+    @AfterClass
+    public static void teardown() throws IOException {
+        FileUtils.deleteDirectory(TEMPORARY_FOLDER);
     }
 
     @Test
@@ -257,7 +260,7 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
             }
         }
         // No nodes should have 'externalFilenameMode' attribute when auto-convert is false
-        assertThat(nodesHavingExternalFilenameAttribute, is(0));
+        assertEquals(0, nodesHavingExternalFilenameAttribute);
 
     }
 
