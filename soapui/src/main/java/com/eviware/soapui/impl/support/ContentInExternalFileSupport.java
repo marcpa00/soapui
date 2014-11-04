@@ -341,6 +341,7 @@ public class ContentInExternalFileSupport implements ModelItem {
         boolean autoConvert = getSettings().getBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE);
         if (!actualConfig.isSetExternalFilenameBuildMode() && autoConvert) {
             actualConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+            externalFilenameBuildMode = ExternalFilenameBuildModeConfig.AUTO;
         } else if (actualConfig.isSetExternalFilenameBuildMode()) {
             externalFilenameBuildMode = actualConfig.getExternalFilenameBuildMode();
         } else {
