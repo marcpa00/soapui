@@ -62,6 +62,7 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
     @Before
     public void setup() throws IOException {
         resetSampleProjectFileToWritable();
+        FileUtils.copyFile(new File(SAMPLE_PROJECT_ABSOLUTE_PATH), new File(SAMPLE_PROJECT_ABSOLUTE_PATH + "-backup"), true);
         SoapUI.getSettings().setBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, true);
         SoapUI.getSettings().setBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, true);
         SoapUI.getSettings().setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, true);
@@ -70,6 +71,18 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
     @AfterClass
     public static void teardown() throws IOException {
         FileUtils.deleteDirectory(TEMPORARY_FOLDER);
+        File projectFile = new File(SAMPLE_PROJECT_ABSOLUTE_PATH);
+        File backupFile = new File(SAMPLE_PROJECT_ABSOLUTE_PATH + "-backup");
+        if (backupFile.exists()) {
+            if (projectFile.exists()) {
+                FileUtils.deleteQuietly(projectFile);
+            }
+            FileUtils.moveFile(backupFile, projectFile);
+        }
+        File contentTopDir = computeContentTopDir();
+        if (contentTopDir.exists()) {
+            FileUtils.deleteQuietly(contentTopDir);
+        }
     }
 
     @Test
@@ -91,7 +104,7 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
     public void projectLoadedFromFileCreatesExternalContentWhenSaved() throws IOException {
         Project project = new WsdlProject(SAMPLE_PROJECT_ABSOLUTE_PATH, (WorkspaceImpl) null);
         SaveStatus status = project.save();
-        File contentTopDir = new File(SAMPLE_PROJECT_ABSOLUTE_PATH.replaceAll("\\.xml$", ContentInExternalFile.EXTERNAL_FILE_ROOT_PATH_SUFFIX));
+        File contentTopDir = computeContentTopDir();
         assertTrue(contentTopDir.exists());
         assertTrue(contentTopDir.isDirectory());
 
@@ -289,4 +302,9 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
     private void resetSampleProjectFileToWritable() throws IOException {
         setFileWritePermission(SAMPLE_PROJECT_ABSOLUTE_PATH, true);
     }
+
+    private static File computeContentTopDir() {
+        return new File(SAMPLE_PROJECT_ABSOLUTE_PATH.replaceAll("\\.xml$", ContentInExternalFile.EXTERNAL_FILE_ROOT_PATH_SUFFIX));
+    }
+
 }
