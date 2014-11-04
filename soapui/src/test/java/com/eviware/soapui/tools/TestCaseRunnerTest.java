@@ -16,8 +16,11 @@
 
 package com.eviware.soapui.tools;
 
+import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
+import com.eviware.soapui.settings.UISettings;
 import com.eviware.soapui.support.Tools;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -28,6 +31,13 @@ import static org.junit.Assert.assertFalse;
 public class TestCaseRunnerTest {
 
     private String projectFilePath = TestCaseRunnerTest.class.getResource("/sample-soapui-project.xml").getPath();
+
+    @Before
+    public void setup() {
+        SoapUI.getSettings().setBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, false);
+        SoapUI.getSettings().setBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, false);
+        SoapUI.getSettings().setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, false);
+    }
 
     @Test
     public void testReplaceHost() throws Exception {
