@@ -338,12 +338,15 @@ public class ContentInExternalFileSupport implements ModelItem {
             this.externalFilename = actualConfig.getExternalFilename();
         }
 
-        if (!actualConfig.isSetExternalFilenameBuildMode()) {
-            boolean autoConvert = getSettings().getBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE);
-            actualConfig.setExternalFilenameBuildMode(autoConvert ? ExternalFilenameBuildModeConfig.AUTO : ExternalFilenameBuildModeConfig.NONE);
+        boolean autoConvert = getSettings().getBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE);
+        if (!actualConfig.isSetExternalFilenameBuildMode() && autoConvert) {
+            actualConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+            externalFilenameBuildMode = ExternalFilenameBuildModeConfig.AUTO;
+        } else if (actualConfig.isSetExternalFilenameBuildMode()) {
+            externalFilenameBuildMode = actualConfig.getExternalFilenameBuildMode();
+        } else {
+            externalFilenameBuildMode = ExternalFilenameBuildModeConfig.NONE;
         }
-
-        externalFilenameBuildMode = actualConfig.getExternalFilenameBuildMode();
 
         String contentFromProjectDocument = null;
         if (testRequest != null) {
@@ -415,7 +418,7 @@ public class ContentInExternalFileSupport implements ModelItem {
                     if (content == null) {
                         content = "";
                     }
-                    if (! StringUtils.isNullOrEmpty(content) && StringUtils.isNullOrEmpty(contentFromProjectDocument)) {
+                    if (!StringUtils.isNullOrEmpty(content) && StringUtils.isNullOrEmpty(contentFromProjectDocument)) {
                         // neeed to update config with external content
                         updateConfig();
                     }
@@ -432,15 +435,15 @@ public class ContentInExternalFileSupport implements ModelItem {
                 actualConfig.setExternalFilename(PathUtils.normalizePath(externalFilename));
                 SoapUI.log.debug("attribute externalFilename of XML config object set to '" + actualConfig.getExternalFilename() + "'");
             }
-        }
 
-        if (SCRIPT.equals(actualConfig.getContentInExternalFileCategory())) {
-            updateScript();
-        } else if (GROOVY_ASSERTION.equals(actualConfig.getContentInExternalFileCategory())) {
-            actualConfig.getScriptConfig().setStringValue(content);
-        } else if (WSDL_STEP.equals(actualConfig.getContentInExternalFileCategory())) {
-            WsdlRequestConfig wsdlRequestConfig = (WsdlRequestConfig) actualConfig.getConfig().changeType(WsdlRequestConfig.type);
-            wsdlRequestConfig.getRequest().setStringValue(content);
+            if (SCRIPT.equals(actualConfig.getContentInExternalFileCategory())) {
+                updateScript();
+            } else if (GROOVY_ASSERTION.equals(actualConfig.getContentInExternalFileCategory())) {
+                actualConfig.getScriptConfig().setStringValue(content);
+            } else if (WSDL_STEP.equals(actualConfig.getContentInExternalFileCategory())) {
+                WsdlRequestConfig wsdlRequestConfig = (WsdlRequestConfig) actualConfig.getConfig().changeType(WsdlRequestConfig.type);
+                wsdlRequestConfig.getRequest().setStringValue(content);
+            }
         }
     }
 
@@ -1351,7 +1354,6 @@ public class ContentInExternalFileSupport implements ModelItem {
             // NoOp
         }
     }
-
 
 
     // utilities for listeners

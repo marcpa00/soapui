@@ -1,6 +1,7 @@
 package com.eviware.soapui.impl.wsdl;
 
 import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.config.SoapuiProjectDocumentConfig;
 import com.eviware.soapui.impl.WorkspaceImpl;
 import com.eviware.soapui.impl.support.ContentInExternalFile;
 import com.eviware.soapui.impl.wsdl.support.PathUtils;
@@ -18,24 +19,32 @@ import com.eviware.soapui.support.SoapUIException;
 import com.eviware.soapui.utils.StubbedDialogsTestBase;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
+import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlObject;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.xml.namespace.QName;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static com.eviware.soapui.impl.support.ContentInExternalFile.*;
+
 
 /**
  * Load and save unit tests for the case where "content in external file" feature is enabled.
@@ -52,9 +61,26 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
     @Before
     public void setup() throws IOException {
         resetSampleProjectFileToWritable();
+        FileUtils.copyFile(new File(SAMPLE_PROJECT_ABSOLUTE_PATH), new File(SAMPLE_PROJECT_ABSOLUTE_PATH + "-backup"), true);
         SoapUI.getSettings().setBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, true);
         SoapUI.getSettings().setBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, true);
         SoapUI.getSettings().setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, true);
+    }
+
+    @After
+    public void testTeardown() throws IOException {
+        File projectFile = new File(SAMPLE_PROJECT_ABSOLUTE_PATH);
+        File backupFile = new File(SAMPLE_PROJECT_ABSOLUTE_PATH + "-backup");
+        if (backupFile.exists()) {
+            if (projectFile.exists()) {
+                FileUtils.deleteQuietly(projectFile);
+            }
+            FileUtils.moveFile(backupFile, projectFile);
+        }
+        File contentTopDir = computeContentTopDir();
+        if (contentTopDir.exists()) {
+            FileUtils.deleteQuietly(contentTopDir);
+        }
     }
 
     @AfterClass
@@ -81,7 +107,7 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
     public void projectLoadedFromFileCreatesExternalContentWhenSaved() throws IOException {
         Project project = new WsdlProject(SAMPLE_PROJECT_ABSOLUTE_PATH, (WorkspaceImpl) null);
         SaveStatus status = project.save();
-        File contentTopDir = new File(SAMPLE_PROJECT_ABSOLUTE_PATH.replaceAll("\\.xml$", ContentInExternalFile.EXTERNAL_FILE_ROOT_PATH_SUFFIX));
+        File contentTopDir = computeContentTopDir();
         assertTrue(contentTopDir.exists());
         assertTrue(contentTopDir.isDirectory());
 
@@ -206,6 +232,37 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
         assertThat(status, is(SaveStatus.CANCELLED));
     }
 
+    @Test
+    public void savingWithoutAutoConvertDoesNotAddAttributesInXmlProject() throws IOException {
+        SoapUI.getSettings().setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, false);
+
+        WsdlProject wsdlProject  = new WsdlProject(sampleProjectInputSteam, null);
+        answerYesWhenTheOverwriteDialogIsShown();
+        wsdlProject.save();
+        String savedPath = wsdlProject.getPath();
+        wsdlProject.release();
+
+        WsdlProject wsdlProjectAfterSave = new WsdlProject(savedPath, (WorkspaceImpl)null);
+
+        SoapuiProjectDocumentConfig projectDocumentConfig = wsdlProjectAfterSave.getProjectDocument();
+
+        List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
+        for (String path : ALL_PATHS_IN_CONFIG) {
+            xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(CONFIG_NAMESPACE + "$this/" + path)));
+        }
+
+        int nodesHavingExternalFilenameAttribute = 0;
+        for (XmlObject xmlObject : xmlObjects) {
+            XmlCursor xmlCursor = xmlObject.newCursor();
+            String externalFilenameBuildModeValue = xmlCursor. getAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME);
+            if (externalFilenameBuildModeValue != null) {
+                nodesHavingExternalFilenameAttribute++;
+            }
+        }
+        // No nodes should have 'externalFilenameMode' attribute when auto-convert is false
+        assertEquals(0, nodesHavingExternalFilenameAttribute);
+
+    }
 
     private void answerYesWhenTheOverwriteDialogIsShown() {
         stubbedDialogs.mockConfirmWithReturnValue(true);
@@ -248,4 +305,9 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
     private void resetSampleProjectFileToWritable() throws IOException {
         setFileWritePermission(SAMPLE_PROJECT_ABSOLUTE_PATH, true);
     }
+
+    private static File computeContentTopDir() {
+        return new File(SAMPLE_PROJECT_ABSOLUTE_PATH.replaceAll("\\.xml$", ContentInExternalFile.EXTERNAL_FILE_ROOT_PATH_SUFFIX));
+    }
+
 }

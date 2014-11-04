@@ -22,6 +22,7 @@ import com.eviware.soapui.impl.rest.mock.RestMockAction;
 import com.eviware.soapui.impl.rest.mock.RestMockResponse;
 import com.eviware.soapui.impl.rest.mock.RestMockService;
 import com.eviware.soapui.model.mock.MockService;
+import com.eviware.soapui.settings.UISettings;
 import com.eviware.soapui.support.SoapUIException;
 import com.eviware.soapui.utils.ModelItemFactory;
 import org.junit.Before;
@@ -42,6 +43,10 @@ public class WsdlProjectWithRestMockTest {
 
     @Before
     public void setUp() throws Exception {
+        SoapUI.getSettings().setBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, false);
+        SoapUI.getSettings().setBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, false);
+        SoapUI.getSettings().setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, false);
+
         String fileName = SoapUI.class.getResource(TEST_PROJECT_PATH).toURI().toString();
         project = new WsdlProject(fileName);
     }

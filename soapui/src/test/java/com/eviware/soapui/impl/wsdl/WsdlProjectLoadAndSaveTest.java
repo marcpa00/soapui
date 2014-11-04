@@ -1,8 +1,10 @@
 package com.eviware.soapui.impl.wsdl;
 
+import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.impl.WorkspaceImpl;
 import com.eviware.soapui.model.project.Project;
 import com.eviware.soapui.model.project.SaveStatus;
+import com.eviware.soapui.settings.UISettings;
 import com.eviware.soapui.support.SoapUIException;
 import com.eviware.soapui.utils.StubbedDialogsTestBase;
 import com.google.common.io.Files;
@@ -36,6 +38,9 @@ public class WsdlProjectLoadAndSaveTest extends StubbedDialogsTestBase {
     @Before
     public void setup() throws IOException {
         resetSampleProjectFileToWritable();
+        SoapUI.getSettings().setBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, false);
+        SoapUI.getSettings().setBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, false);
+        SoapUI.getSettings().setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, false);
     }
 
     @AfterClass
