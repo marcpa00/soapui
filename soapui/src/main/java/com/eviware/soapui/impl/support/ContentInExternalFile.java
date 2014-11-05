@@ -45,7 +45,8 @@ public final class ContentInExternalFile {
     public final static String PATH_TO_AFTER_RUN_SCRIPT_IN_CONFIG = "con:soapui-project/con:afterRunScript";
 
     public final static String PATH_TO_SCRIPT_IN_CONFIG = "con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/script";
-    public final static String PATH_TO_REQUEST_IN_CONFIG = "con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/con:request";
+    public final static String PATH_TO_REQUEST_IN_CONFIG     = "con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/con:request";
+    public final static String PATH_TO_IFC_REQUEST_IN_CONFIG = "con:soapui-project/con:interface/con:operation/con:call/con:request";
 
     public final static String PATH_TO_TESTSUITE_SETUP_SCRIPT_IN_CONFIG = "con:soapui-project/con:testSuite/con:setupScript";
     public final static String PATH_TO_TESTSUITE_TEARDOWN_SCRIPT_IN_CONFIG = "con:soapui-project/con:testSuite/con:tearDownScript";
@@ -85,6 +86,7 @@ public final class ContentInExternalFile {
             PATH_TO_AFTER_RUN_SCRIPT_IN_CONFIG,
             PATH_TO_SCRIPT_IN_CONFIG,
             PATH_TO_REQUEST_IN_CONFIG,
+            PATH_TO_IFC_REQUEST_IN_CONFIG,
             PATH_TO_TESTSUITE_SETUP_SCRIPT_IN_CONFIG,
             PATH_TO_TESTSUITE_TEARDOWN_SCRIPT_IN_CONFIG,
             PATH_TO_TESTSUITE_REPORT_SCRIPT_IN_CONFIG,

@@ -142,7 +142,7 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             String externalizableContentType;
 
             // TODO (marcpa00) : regroup this into static methods in ContentInExternalFileSupport so we don't have the logic at two different places
-            if ("config".equals(parentCursor.getName().getLocalPart())) {
+            if ("config".equals(parentCursor.getName().getLocalPart()) || "call".equals(parentCursor.getName().getLocalPart())) {
                 contentContainerCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor();
                 externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME);
                 externalizableContentType = contentContainerCursor.getAttributeText(TYPE_QNAME);
