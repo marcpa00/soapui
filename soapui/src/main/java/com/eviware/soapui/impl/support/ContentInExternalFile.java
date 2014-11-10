@@ -37,6 +37,7 @@ public final class ContentInExternalFile {
     // XML processing constants
     //
     public final static String CONFIG_NAMESPACE = "declare namespace con='http://eviware.com/soapui/config';";
+    public final static String WSDL_NAMESPACE = "declare namespace wsdl='http://schemas.xmlsoap.org/wsdl/';";
 
     public final static String PATH_TO_AFTER_LOAD_SCRIPT_IN_CONFIG = "con:soapui-project/con:afterLoadScript";
     public final static String PATH_TO_BEFORE_SAVE_SCRIPT_IN_CONFIG = "con:soapui-project/con:beforeSaveScript";
@@ -46,7 +47,13 @@ public final class ContentInExternalFile {
 
     public final static String PATH_TO_SCRIPT_IN_CONFIG = "con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/script";
     public final static String PATH_TO_REQUEST_IN_CONFIG     = "con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/con:request";
+
     public final static String PATH_TO_IFC_REQUEST_IN_CONFIG = "con:soapui-project/con:interface/con:operation/con:call/con:request";
+    public final static String PATH_TO_IFC_OPERATION_DOCUMENTATION_IN_CONFIG = "con:soapui-project/con:interface/con:definitionCache/con:part/con:content/wsdl:definitions/wsdl:portType/wsdl:operation/documentation";
+
+    public final static String PATH_TO_MOCK_RESPONSECONTENT_IN_CONFIG = "con:soapui-project/con:mockService/con:mockOperation/con:response/con:responseContent";
+
+    public final static String PATH_TO_REPORTING_DATA = "con:soapui-project/con:reporting/con:reportTemplates/con:data";
 
     public final static String PATH_TO_TESTSUITE_SETUP_SCRIPT_IN_CONFIG = "con:soapui-project/con:testSuite/con:setupScript";
     public final static String PATH_TO_TESTSUITE_TEARDOWN_SCRIPT_IN_CONFIG = "con:soapui-project/con:testSuite/con:tearDownScript";
@@ -87,6 +94,9 @@ public final class ContentInExternalFile {
             PATH_TO_SCRIPT_IN_CONFIG,
             PATH_TO_REQUEST_IN_CONFIG,
             PATH_TO_IFC_REQUEST_IN_CONFIG,
+            PATH_TO_IFC_OPERATION_DOCUMENTATION_IN_CONFIG,
+            PATH_TO_MOCK_RESPONSECONTENT_IN_CONFIG,
+            PATH_TO_REPORTING_DATA,
             PATH_TO_TESTSUITE_SETUP_SCRIPT_IN_CONFIG,
             PATH_TO_TESTSUITE_TEARDOWN_SCRIPT_IN_CONFIG,
             PATH_TO_TESTSUITE_REPORT_SCRIPT_IN_CONFIG,
@@ -119,4 +129,8 @@ public final class ContentInExternalFile {
 
     public final static String REQUEST_TYPE = "request";
     public final static String GROOVY_TYPE = "groovy";
+    public final static String REQUEST_RESPONSE_TYPE = "Request-Response";
+    public final static String RESPONSE_CONTENT_TYPE = "responseContent";
+    public final static String DOCUMENTATION_CONTENT_TYPE = "documentation";
+    public final static String REPORT_DATA_TYPE = "data";
 }
