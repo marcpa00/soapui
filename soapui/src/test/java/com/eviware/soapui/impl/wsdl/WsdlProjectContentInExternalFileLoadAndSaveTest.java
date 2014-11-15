@@ -236,6 +236,8 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
     public void savingWithoutAutoConvertDoesNotAddAttributesInXmlProject() throws IOException {
         SoapUI.getSettings().setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, false);
 
+        String namespace = CONFIG_NAMESPACE + " " + WSDL_NAMESPACE + " ";
+
         WsdlProject wsdlProject  = new WsdlProject(sampleProjectInputSteam, null);
         answerYesWhenTheOverwriteDialogIsShown();
         wsdlProject.save();
@@ -248,7 +250,7 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
 
         List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
         for (String path : ALL_PATHS_IN_CONFIG) {
-            xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(CONFIG_NAMESPACE + "$this/" + path)));
+            xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
         }
 
         int nodesHavingExternalFilenameAttribute = 0;

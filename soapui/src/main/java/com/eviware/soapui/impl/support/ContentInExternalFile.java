@@ -46,7 +46,7 @@ public final class ContentInExternalFile {
     public final static String PATH_TO_AFTER_RUN_SCRIPT_IN_CONFIG = "con:soapui-project/con:afterRunScript";
 
     public final static String PATH_TO_SCRIPT_IN_CONFIG = "con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/script";
-    public final static String PATH_TO_REQUEST_IN_CONFIG     = "con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/con:request";
+    public final static String PATH_TO_REQUEST_IN_CONFIG = "con:soapui-project/con:testSuite/con:testCase/con:testStep/con:config/con:request";
 
     public final static String PATH_TO_IFC_REQUEST_IN_CONFIG = "con:soapui-project/con:interface/con:operation/con:call/con:request";
     public final static String PATH_TO_IFC_OPERATION_DOCUMENTATION_IN_CONFIG = "con:soapui-project/con:interface/con:definitionCache/con:part/con:content/wsdl:definitions/wsdl:portType/wsdl:operation/documentation";
@@ -138,6 +138,7 @@ public final class ContentInExternalFile {
     public final static String CONFIGURATION_NODENAME = "configuration";
     public final static String SCRIPT_NODENAME = "script";
     public final static String ASSERTION_NODENAME = "assertion";
+    public final static String CALL_NODENAME = "call";
 
 
 }
