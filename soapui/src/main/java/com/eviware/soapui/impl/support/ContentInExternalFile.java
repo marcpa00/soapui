@@ -133,4 +133,11 @@ public final class ContentInExternalFile {
     public final static String RESPONSE_CONTENT_TYPE = "responseContent";
     public final static String DOCUMENTATION_CONTENT_TYPE = "documentation";
     public final static String REPORT_DATA_TYPE = "data";
+
+    public final static String CONFIG_NODENAME = "config";
+    public final static String CONFIGURATION_NODENAME = "configuration";
+    public final static String SCRIPT_NODENAME = "script";
+    public final static String ASSERTION_NODENAME = "assertion";
+
+
 }

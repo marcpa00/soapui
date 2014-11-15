@@ -145,37 +145,25 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             String externalizableContentName;
             String externalizableContentType;
 
-            // TODO (marcpa00) : regroup this into static methods in ContentInExternalFileSupport so we don't have the logic at two different places
-            if ("config".equals(parentCursor.getName().getLocalPart()) || "call".equals(parentCursor.getName().getLocalPart())) {
-                String pathToContainer;
-                if ("call".equals(parentCursor.getName().getLocalPart())) {
-                    pathToContainer = "$this/..";
-                } else {
-                    pathToContainer = "$this/../..";
-                }
-                contentContainerCursor = xmlObject.selectPath(namespace + pathToContainer)[0].newCursor();
-                if ("call".equals(parentCursor.getName().getLocalPart())) {
-                    contentContainerTypeCursor = xmlObject.selectPath(namespace + pathToContainer + "/..")[0].newCursor();
-                } else {
-                    contentContainerTypeCursor = contentContainerCursor;
-                }
+            if (ContentInExternalFileConfigUtils.nodeIs(xmlObject, "..", CONFIG_NODENAME)) {
+                contentContainerCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor();
                 externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME);
-                externalizableContentType = contentContainerTypeCursor.getAttributeText(TYPE_QNAME);
-                if (REQUEST_TYPE.equals(contentCursor.getName().getLocalPart())) {
+                externalizableContentType = contentContainerCursor.getAttributeText(TYPE_QNAME);
+                if (ContentInExternalFileConfigUtils.cursorIsAt(contentCursor, REQUEST_TYPE)) {
                     if (StringUtils.isNullOrEmpty(contentCursor.getTextValue())) {
                         // a request without content, nothing to do
                         continue;
                     }
-                    if ("config".equals(parentCursor.getName().getLocalPart()) && !contentCursor.toChild(innerRequestQName)) {
+                    if (!contentCursor.toChild(innerRequestQName)) {
                         SoapUI.log.debug("could not advance to child 'con:request' !");
                     }
-                } else if ("script".equals(contentCursor.getName())) {
+                } else if (ContentInExternalFileConfigUtils.cursorIsAt(contentCursor, SCRIPT_NODENAME)) {
                     if (!contentCursor.toChild(scriptRequestQName)) {
                         SoapUI.log.debug("could not advance to child 'script' !");
                     }
                 }
-            } else if ("configuration".equals(parentCursor.getName().getLocalPart()) && "assertion".equals(xmlObject.selectPath(namespace + "$this/../..")[0].newCursor().getName().getLocalPart())) {
-                contentContainerCursor = xmlObject.selectPath(namespace + "$this/../..")[0].newCursor();
+            } else if (ContentInExternalFileConfigUtils.nodeIs(xmlObject, "..", CONFIGURATION_NODENAME) && ContentInExternalFileConfigUtils.nodeIs(xmlObject, "../..", ASSERTION_NODENAME)) {
+                contentContainerCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor();
                 externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME);
                 externalizableContentType = GROOVY_TYPE;
             } else {
@@ -183,7 +171,6 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
                 externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME) + "-" + contentInExternalFileConfigurationCursor.getName().getLocalPart();
                 externalizableContentType = GROOVY_TYPE;
             }
-
 
             String externalFilenameBuildModeValue = contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME);
             if (externalFilenameBuildModeValue != null && externalFilenameBuildModeValue.equals(ExternalFilenameBuildModeConfig.NONE.toString())) {
@@ -208,8 +195,7 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
                 ContentInExternalFileSupport contentInExternalFileSupport;
 
                 WsdlRequestConfig wsdlRequestConfig;
-                WsdlInterfaceConfig wsdlInterfaceConfig;
-                if (externalizableContentType.equals(REQUEST_TYPE) ) {
+                if (externalizableContentType.equals(REQUEST_TYPE)) {
                     wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
 
                     if (!wsdlRequestConfig.isSetExternalFilename()) {
@@ -232,31 +218,6 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
                         if (!normalizedFilename.equals(wsdlRequestConfig.getExternalFilename())) {
                             wsdlRequestConfig.setExternalFilename(normalizedFilename);
                             SoapUI.log.debug("   normalized externalFilename to '" + wsdlRequestConfig.getExternalFilename() + "'");
-                        }
-                    }
-                } else if (externalizableContentType.equals(REQUEST_RESPONSE_TYPE)) {
-                    wsdlInterfaceConfig = (WsdlInterfaceConfig) xmlObject.selectPath(namespace + "$this/../../..")[0].changeType(WsdlInterfaceConfig.type);
-
-                    if (!wsdlInterfaceConfig.isSetExternalFilename()) {
-                        stringBuilder.append(WSDL_REQUEST_SUFFIX);
-
-                        // step does not yet use a file element, add it
-                        wsdlInterfaceConfig.setExternalFilename(PathUtils.normalizePath(stringBuilder.toString()));
-                        contentInExternalFileSupport = new ContentInExternalFileSupport(wsdlProject, wsdlInterfaceConfig.getExternalFilename(), settings);
-                        contentInExternalFileSupport.setContent(contentCursor.getTextValue());
-                        contentInExternalFileSupport.saveToExternalFile(false, false);
-
-                        SoapUI.log.debug("   external filename is '" + stringBuilder.toString() + "'");
-                        SoapUI.log.debug("   request externalFilename attribute set to '" + wsdlInterfaceConfig.getExternalFilename());
-                        if (needsConversion) {
-                            wsdlInterfaceConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
-                        }
-                    } else {
-                        // check that filename is normalized and update config if not
-                        String normalizedFilename = PathUtils.normalizePath(wsdlInterfaceConfig.getExternalFilename());
-                        if (!normalizedFilename.equals(wsdlInterfaceConfig.getExternalFilename())) {
-                            wsdlInterfaceConfig.setExternalFilename(normalizedFilename);
-                            SoapUI.log.debug("   normalized externalFilename to '" + wsdlInterfaceConfig.getExternalFilename() + "'");
                         }
                     }
                 } else if (externalizableContentType.equals(GROOVY_TYPE)) {
@@ -288,9 +249,6 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             contentInExternalFileConfigurationCursor.dispose();
             parentCursor.dispose();
             contentContainerCursor.dispose();
-            if (contentContainerTypeCursor != null) {
-                contentContainerTypeCursor.dispose();
-            }
         }
     }
 
