@@ -49,12 +49,15 @@ class WsdlProjectContentInExternalFileSpec extends Specification {
         }
     }
 
-    def "project with a beforeRun script get auto-converted"() {
-        given: "a project with a beforeRun script and no external content existing"
+    @Unroll
+    def "project with a #name script get auto-converted"(String name, String type, String content) {
+        given: "a project with a #name script and no external content existing"
 
-        String projectXml = '''\
+        Map binding = [ name : name, type : type, content : content ]
+
+        String projectXmlTemplate = '''\
             <?xml version="1.0" encoding="UTF-8"?>
-            <con:soapui-project name="a project with a beforeRun script"
+            <con:soapui-project name="a project with a ${name} script"
                     soapui-version="5.2.0-SNAPSHOT"
                     abortOnError="false"
                     runType="SEQUENTIAL"
@@ -62,8 +65,11 @@ class WsdlProjectContentInExternalFileSpec extends Specification {
                     activeEnvironment="Default"
                     xmlns:con="http://eviware.com/soapui/config">
                 <con:settings/>
-                <con:beforeRunScript><![CDATA[log.info("in beforeRun script")]]></con:beforeRunScript>
+                <con:${type}><![CDATA[${content}]]></con:${type}>
             </con:soapui-project>'''
+
+        def engine = new groovy.text.SimpleTemplateEngine()
+        String projectXml = engine.createTemplate(projectXmlTemplate).make(binding).toString()
 
         ensureWorkDirIsClean()
         InputStream projectInputStream = new ByteArrayInputStream(projectXml.stripIndent().getBytes("UTF-8"))
@@ -72,22 +78,47 @@ class WsdlProjectContentInExternalFileSpec extends Specification {
         when: "converted to use content in external file with project listener"
         ContentInExternalFileProjectListener contentInExternalFileProjectListener = new ContentInExternalFileProjectListener()
         contentInExternalFileProjectListener.convertToContentInExternalFileIfNeeded(wsdlProject, wsdlProject.getSettings())
-        ContentInExternalFileSupport contentInExternalFileSupport = wsdlProject.beforeRunContentInExternalFile
+        ContentInExternalFileSupport contentInExternalFileSupport
+        ScriptCategory scriptCategory
+        switch (type) {
+            case 'beforeRunScript':
+                contentInExternalFileSupport = wsdlProject.beforeRunContentInExternalFile
+                scriptCategory = ScriptCategory.PROJECT_BEFORE_RUN
+                break;
+            case 'afterRunScript':
+                contentInExternalFileSupport = wsdlProject.afterRunContentInExternalFile
+                scriptCategory = ScriptCategory.PROJECT_AFTER_RUN
+                break;
+            case 'afterLoadScript':
+                contentInExternalFileSupport = wsdlProject.afterLoadContentInExternalFile
+                scriptCategory = ScriptCategory.PROJECT_AFTER_LOAD
+                break;
+            case 'beforeSaveScript':
+                contentInExternalFileSupport = wsdlProject.beforeSaveContentInExternalFile
+                scriptCategory = ScriptCategory.PROJECT_BEFORE_SAVE
+                break;
+        }
 
         then: "content support is properly initialized"
         contentInExternalFileSupport
         contentInExternalFileSupport.contentInExternalFileCategory == ContentInExternalFileCategory.SCRIPT
-        contentInExternalFileSupport.scriptCategory == ScriptCategory.PROJECT_BEFORE_RUN
-        contentInExternalFileSupport.content == 'log.info("in beforeRun script")'
-        contentInExternalFileSupport.externalFilename == "a project with a beforeRun script-beforeRunScript.groovy"
+        contentInExternalFileSupport.scriptCategory == scriptCategory
+        contentInExternalFileSupport.content == content
+        contentInExternalFileSupport.externalFilename == "a project with a ${name} script-${type}.groovy"
         contentInExternalFileSupport.externalFilenameBuildMode == ExternalFilenameBuildModeConfig.AUTO
 
         and: "content in external file attributes are added to project config"
         contentInExternalFileSupport.actualConfig
         contentInExternalFileSupport.actualConfig.config
-        contentInExternalFileSupport.actualConfig.config.externalFilename == "a project with a beforeRun script-beforeRunScript.groovy"
+        contentInExternalFileSupport.actualConfig.config.externalFilename == "a project with a ${name} script-${type}.groovy"
         contentInExternalFileSupport.actualConfig.config.externalFilenameBuildMode == ExternalFilenameBuildModeConfig.AUTO
 
+        where:
+        name         | type               | content
+        'beforeRun'  | 'beforeRunScript'  | 'log.info("in beforeRun script")'
+        'afterRun'   | 'afterRunScript'   | 'log.info("in afterRun script")'
+        'afterLoad'  | 'afterLoadScript'  | 'log.info("in afterLoad script")'
+        'beforeSave' | 'beforeSaveScript' | 'log.info("in beforeSave script")'
 
     }
 }
