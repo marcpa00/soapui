@@ -158,6 +158,11 @@ public class ContentInExternalFileSupport implements ModelItem {
         if (baseModelItem instanceof WsdlProject) {
             this.project = (WsdlProject) baseModelItem;
         }
+        if (this.project == null) {
+            SoapUI.log.error("ContentInExternalFileSupport constructor failed to set 'project' field : instance is incomplete.");
+            // TODO : throw an exception instead ?
+            return;
+        }
         initExternalFileRootPath();
 
         this.settings = settings;
