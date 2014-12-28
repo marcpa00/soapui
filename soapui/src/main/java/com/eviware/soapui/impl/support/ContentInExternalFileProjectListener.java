@@ -109,146 +109,456 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
         }
     }
 
-    private void convertToContentInExternalFileIfNeeded(WsdlProject wsdlProject, XmlBeansSettingsImpl settings) {
+    private boolean featureIsDisabledOnNode(XmlCursor xmlCursor) {
+        String externalFilenameBuildModeValue = xmlCursor.getAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME);
+        if (externalFilenameBuildModeValue != null && externalFilenameBuildModeValue.equals(ExternalFilenameBuildModeConfig.NONE.toString())) {
+            return true;
+        }
+        return false;
+    }
+
+
+    private boolean featureIsGloballyDisabled(XmlCursor xmlCursor, XmlBeansSettingsImpl settings) {
+        String externalFilenameBuildModeValue = xmlCursor.getAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME);
+        if (externalFilenameBuildModeValue == null && !settings.getBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE)) {
+            // skip this step, it does not use external filename and we are not in auto-convert mode
+            return true;
+        }
+        return false;
+    }
+
+    private void updateConfigWithContentInExternalFileSupport(WsdlProject wsdlProject, XmlBeansSettingsImpl settings, XmlObject xmlObject, XmlCursor contentInExternalFileConfigurationCursor, XmlCursor contentCursor, XmlCursor contentContainerCursor,
+                                                              String externalizableContentName, String externalizableContentType, boolean needsConversion) {
+        StringBuilder stringBuilder = computePathInProject(contentContainerCursor, externalizableContentName);
+        if (needsConversion) {
+            SoapUI.log.debug("AUTO-CONVERT to content in external file : content " + externalizableContentName + " will be stored in an external file.");
+        }
+
+        ContentInExternalFileSupport contentInExternalFileSupport;
+
+        WsdlRequestConfig wsdlRequestConfig;
+        WsdlInterfaceConfig wsdlInterfaceConfig;
+        if (externalizableContentType.equals(REQUEST_TYPE)) {
+            wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
+
+            if (!wsdlRequestConfig.isSetExternalFilename()) {
+                stringBuilder.append(WSDL_REQUEST_SUFFIX);
+
+                // step does not yet use a file element, add it
+                wsdlRequestConfig.setExternalFilename(PathUtils.normalizePath(stringBuilder.toString()));
+                contentInExternalFileSupport = new ContentInExternalFileSupport(wsdlProject, wsdlRequestConfig.getExternalFilename(), settings);
+                contentInExternalFileSupport.setContent(contentCursor.getTextValue());
+                contentInExternalFileSupport.saveToExternalFile(false, false);
+
+                SoapUI.log.debug("   external filename is '" + stringBuilder.toString() + "'");
+                SoapUI.log.debug("   request externalFilename attribute set to '" + wsdlRequestConfig.getExternalFilename());
+                if (needsConversion) {
+                    wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                }
+            } else {
+                // check that filename is normalized and update config if not
+                String normalizedFilename = PathUtils.normalizePath(wsdlRequestConfig.getExternalFilename());
+                if (!normalizedFilename.equals(wsdlRequestConfig.getExternalFilename())) {
+                    wsdlRequestConfig.setExternalFilename(normalizedFilename);
+                    SoapUI.log.debug("   normalized externalFilename to '" + wsdlRequestConfig.getExternalFilename() + "'");
+                }
+            }
+        } else if (externalizableContentType.equals(REQUEST_RESPONSE_TYPE)) {
+            wsdlInterfaceConfig = (WsdlInterfaceConfig) contentInExternalFileConfigurationCursor.getObject().changeType(WsdlInterfaceConfig.type);
+
+            if (!wsdlInterfaceConfig.isSetExternalFilename()) {
+                stringBuilder.append(WSDL_REQUEST_SUFFIX);
+
+                // step does not yet use a file element, add it
+                wsdlInterfaceConfig.setExternalFilename(PathUtils.normalizePath(stringBuilder.toString()));
+                contentInExternalFileSupport = new ContentInExternalFileSupport(wsdlProject, wsdlInterfaceConfig.getExternalFilename(), settings);
+                contentInExternalFileSupport.setContent(contentCursor.getTextValue());
+                contentInExternalFileSupport.saveToExternalFile(false, false);
+
+                SoapUI.log.debug("   external filename is '" + stringBuilder.toString() + "'");
+                SoapUI.log.debug("   request externalFilename attribute set to '" + wsdlInterfaceConfig.getExternalFilename());
+                if (needsConversion) {
+                    wsdlInterfaceConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                }
+            } else {
+                // check that filename is normalized and update config if not
+                String normalizedFilename = PathUtils.normalizePath(wsdlInterfaceConfig.getExternalFilename());
+                if (!normalizedFilename.equals(wsdlInterfaceConfig.getExternalFilename())) {
+                    wsdlInterfaceConfig.setExternalFilename(normalizedFilename);
+                    SoapUI.log.debug("   normalized externalFilename to '" + wsdlInterfaceConfig.getExternalFilename() + "'");
+                }
+            }
+        } else if (externalizableContentType.equals(GROOVY_TYPE)) {
+            String externalFilenameFromAttribute = contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_QNAME);
+            if (externalFilenameFromAttribute == null) {
+                if (needsConversion) {
+                    contentInExternalFileConfigurationCursor.setAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME, ExternalFilenameBuildModeConfig.AUTO.toString());
+                }
+                stringBuilder.append(GROOVY_SCRIPT_SUFFIX);
+                contentInExternalFileConfigurationCursor.setAttributeText(EXTERNAL_FILENAME_QNAME, PathUtils.normalizePath(stringBuilder.toString()));
+                contentInExternalFileSupport = new ContentInExternalFileSupport(wsdlProject, contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_QNAME), settings);
+                contentInExternalFileSupport.setContent(contentCursor.getTextValue());
+                contentInExternalFileSupport.saveToExternalFile(false, false);
+
+                SoapUI.log.debug("    external filename is '" + stringBuilder.toString() + "'");
+                SoapUI.log.debug("    script externalFilename attribute set to '" + contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_QNAME));
+
+            } else {
+                // check that filename is normalized and update config if not
+                String normalizedFilename = PathUtils.normalizePath(externalFilenameFromAttribute);
+                if (!normalizedFilename.equals(contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_QNAME))) {
+                    contentInExternalFileConfigurationCursor.setAttributeText(EXTERNAL_FILENAME_QNAME, normalizedFilename);
+                    SoapUI.log.debug("   normalized externalFilename to '" + contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_QNAME) + "'");
+                }
+            }
+        }
+    }
+
+
+    /**
+     * When feature is enabled, ensure the attributes externalFilenameBuildMode and externalFilename are present.
+     *
+     * @param wsdlProject
+     * @param settings
+     */
+    void convertToContentInExternalFileIfNeeded(WsdlProject wsdlProject, XmlBeansSettingsImpl settings) {
 
         String namespace = CONFIG_NAMESPACE + " " + WSDL_NAMESPACE + " ";
 
         SoapuiProjectDocumentConfig projectDocumentConfig = wsdlProject.getProjectDocument();
-        // When UISettings have USE_EXTERNAL_FILE and step does not override it to NONE ensure that  for every
-        // wsdl request and groovy script, there is an externalFilename attribute present.
+
+        // Find the nodes having content and decorate the appropriate node with our attributes.
+        // Nodes having content are separated by categories (cf. ContentInExternalFile.ALL_PATHS_IN_CONFIG_BY_CATEGORY)
+        // and expressed as XPath expressions to the node in project document.
+
+        // the cursor to the node to decorate is 'contentInExternalFileConfigurationCursor' : nodef (NODE with Filename attribute)
+        // the cursor to the node with content to externalize is 'contentCursor' : c (node with Content)
+        // the cursor to the node used to get the name of entity holding the content is 'contentContainerCursor' : ename (node with Entity NAME)
+        // the cursor to the node used to get the type of entity holding the content is 'contentContainerTypeCursor' : etype (node with Entity TYPE)
+        //
+        // We use a cursor for each of the nodes because they differ for each category.
+        // Each of the xpath expression leads to a 'contentInExternalFileConfiguration' node, the other nodes are
+        // computed relative to that one.
+        XmlCursor contentInExternalFileConfigurationCursor = null;
+        XmlCursor contentCursor = null;
+        XmlCursor contentContainerCursor = null;
+        XmlCursor contentContainerTypeCursor = null;
+        String externalizableContentName = null;
+        String externalizableContentType = null;
+        boolean needsConversion = false;
+
         List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
-        for (String path : ALL_PATHS_IN_CONFIG) {
+        for (String path : GROOVY_SCRIPT_PATHS) {
             xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
         }
-
         for (XmlObject xmlObject : xmlObjects) {
-            boolean needsConversion = false;
-            //
-            // contentInExternalFileConfigurationCursor  is where the externalFilenameBuildMode and externalFilename attributes are to be found
-            // contentCursor is where the text of content is to be found : this is what will be externalized
-            // contentContainerCursor is where the type and name of element (for example, the testStep for a WsdlRequest) are to be found
-            //
-            XmlCursor contentInExternalFileConfigurationCursor = xmlObject.newCursor();
-            XmlCursor contentCursor = xmlObject.newCursor();
-            String namespaceUri = contentCursor.namespaceForPrefix("con");
-            QName innerRequestQName = new QName(namespaceUri, "request");
-            QName scriptRequestQName = new QName(namespaceUri, "script");
+            // nodef = xmlObject
+            // c = xmlObject.text()
+            // ename = xmlObject.@name + "-" + xmlObject.nodename()
+            // etype = GROOVY_SCRIPT
+            contentInExternalFileConfigurationCursor = xmlObject.newCursor();
+            contentCursor = xmlObject.newCursor();
+            contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
+            externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME) + "-" + contentInExternalFileConfigurationCursor.getName().getLocalPart();
+            externalizableContentType = GROOVY_TYPE;
 
-            XmlCursor parentCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
-            XmlCursor contentContainerCursor;
-            XmlCursor contentContainerTypeCursor = null;
 
-            if (contentCursor == null || parentCursor == null) {
-                continue;
-            }
-
-            String externalizableContentName;
-            String externalizableContentType;
-
-            if (ContentInExternalFileConfigUtils.nodeIs(xmlObject, "..", CONFIG_NODENAME)) {
-                contentContainerCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor();
-                externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME);
-                externalizableContentType = contentContainerCursor.getAttributeText(TYPE_QNAME);
-                if (ContentInExternalFileConfigUtils.cursorIsAt(contentCursor, REQUEST_TYPE)) {
-                    if (StringUtils.isNullOrEmpty(contentCursor.getTextValue())) {
-                        // a request without content, nothing to do
-                        continue;
-                    }
-                    if (!contentCursor.toChild(innerRequestQName)) {
-                        SoapUI.log.debug("could not advance to child 'con:request' !");
-                    }
-                } else if (ContentInExternalFileConfigUtils.cursorIsAt(contentCursor, SCRIPT_NODENAME)) {
-                    if (!contentCursor.toChild(scriptRequestQName)) {
-                        SoapUI.log.debug("could not advance to child 'script' !");
-                    }
-                }
-            } else if (ContentInExternalFileConfigUtils.nodeIs(xmlObject, "..", CONFIGURATION_NODENAME) && ContentInExternalFileConfigUtils.nodeIs(xmlObject, "../..", ASSERTION_NODENAME)) {
-                contentContainerCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor();
-                externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME);
-                externalizableContentType = GROOVY_TYPE;
-            } else {
-                contentContainerCursor = parentCursor;
-                externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME) + "-" + contentInExternalFileConfigurationCursor.getName().getLocalPart();
-                externalizableContentType = GROOVY_TYPE;
-            }
-
-            String externalFilenameBuildModeValue = contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME);
-            if (externalFilenameBuildModeValue != null && externalFilenameBuildModeValue.equals(ExternalFilenameBuildModeConfig.NONE.toString())) {
-                // skip this element, it does not want to use external filename
+            // do the processing
+            if (featureIsDisabledOnNode(contentInExternalFileConfigurationCursor)) {
                 SoapUI.log.debug("Content '" + externalizableContentName + "' of type " + externalizableContentType + " : ");
                 SoapUI.log.debug("   does not want to use content in external file (mode is NONE) : skipping it.");
                 continue;
-            }
-            if (externalFilenameBuildModeValue == null && !settings.getBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE)) {
-                // skip this step, it does not use external filename and we are not in auto-convert mode
+            } else if (featureIsGloballyDisabled(contentInExternalFileConfigurationCursor, settings)) {
                 continue;
-            } else if (externalFilenameBuildModeValue == null) {
+            } else {
+                needsConversion = true;
+            }
+            if (externalizableContentType != null) {
+                updateConfigWithContentInExternalFileSupport(wsdlProject, settings, xmlObject, contentInExternalFileConfigurationCursor, contentCursor, contentContainerCursor, externalizableContentName, externalizableContentType, needsConversion);
+            }
+            contentCursor.dispose();
+            contentInExternalFileConfigurationCursor.dispose();
+            contentContainerCursor.dispose();
+            if (contentContainerTypeCursor != null) {
+                contentContainerTypeCursor.dispose();
+            }
+
+        }
+
+        xmlObjects.clear();
+        for (String path : GROOVY_SCRIPT_TESTSTEP_PATHS) {
+            xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
+        }
+        for (XmlObject xmlObject : xmlObjects) {
+            // nodef = xmlObject
+            // c = xmlObject.text()
+            // ename = (xmlObject/../..).@name
+            // etype = (xmlObject/../..).@type
+            contentInExternalFileConfigurationCursor = xmlObject.newCursor();
+            contentCursor = xmlObject.newCursor();
+            contentContainerCursor = xmlObject.selectPath(namespace + "$this/../..")[0].newCursor();
+            contentContainerTypeCursor = contentContainerCursor;
+
+            externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME);
+            externalizableContentType = contentContainerTypeCursor.getAttributeText(TYPE_QNAME);
+            // do the processing
+            if (featureIsDisabledOnNode(contentInExternalFileConfigurationCursor)) {
+                SoapUI.log.debug("Content '" + externalizableContentName + "' of type " + externalizableContentType + " : ");
+                SoapUI.log.debug("   does not want to use content in external file (mode is NONE) : skipping it.");
+                continue;
+            } else if (featureIsGloballyDisabled(contentInExternalFileConfigurationCursor, settings)) {
+                continue;
+            } else {
+                needsConversion = true;
+            }
+            if (externalizableContentType != null) {
+                updateConfigWithContentInExternalFileSupport(wsdlProject, settings, xmlObject, contentInExternalFileConfigurationCursor, contentCursor, contentContainerCursor, externalizableContentName, externalizableContentType, needsConversion);
+            }
+            contentCursor.dispose();
+            contentInExternalFileConfigurationCursor.dispose();
+            contentContainerCursor.dispose();
+            if (contentContainerTypeCursor != null) {
+                contentContainerTypeCursor.dispose();
+            }
+
+        }
+
+        xmlObjects.clear();
+        for (String path : REQUEST_TESTSTEP_PATHS) {
+            xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
+        }
+
+        String namespaceUri = null;
+        QName innerRequestQName = null;
+
+        for (XmlObject xmlObject : xmlObjects) {
+            // nodef = xmlObject
+            // c = (xmlObject/request).text()
+            // ename = (xmlObject/../..).@name
+            // etype = (xmlObject/../..).@type
+            contentInExternalFileConfigurationCursor = xmlObject.newCursor();
+            contentCursor = xmlObject.newCursor();
+            if (namespaceUri == null) {
+                namespaceUri = contentCursor.namespaceForPrefix("con");
+                innerRequestQName = new QName(namespaceUri, REQUEST_TYPE);
+            }
+            if (!contentCursor.toChild(innerRequestQName)) {
+                SoapUI.log.debug("could not advance to child '" + innerRequestQName + "' for xmlObject '" + xmlObject.toString() + "' !");
+                continue;
+            }
+
+            contentContainerCursor = xmlObject.selectPath(namespace + "$this/../..")[0].newCursor();
+            contentContainerTypeCursor = contentContainerCursor;
+            externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME);
+            externalizableContentType = contentContainerTypeCursor.getAttributeText(TYPE_QNAME);
+            // do the processing
+            if (featureIsDisabledOnNode(contentInExternalFileConfigurationCursor)) {
+                SoapUI.log.debug("Content '" + externalizableContentName + "' of type " + externalizableContentType + " : ");
+                SoapUI.log.debug("   does not want to use content in external file (mode is NONE) : skipping it.");
+                continue;
+            } else if (featureIsGloballyDisabled(contentInExternalFileConfigurationCursor, settings)) {
+                continue;
+            } else {
+                needsConversion = true;
+            }
+            if (externalizableContentType != null) {
+                updateConfigWithContentInExternalFileSupport(wsdlProject, settings, xmlObject, contentInExternalFileConfigurationCursor, contentCursor, contentContainerCursor, externalizableContentName, externalizableContentType, needsConversion);
+            }
+            contentCursor.dispose();
+            contentInExternalFileConfigurationCursor.dispose();
+            contentContainerCursor.dispose();
+            if (contentContainerTypeCursor != null) {
+                contentContainerTypeCursor.dispose();
+            }
+
+        }
+
+        xmlObjects.clear();
+        for (String path : REQUEST_IFC_PATHS) {
+            xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
+        }
+        for (XmlObject xmlObject : xmlObjects) {
+            // nodef = xmlObject
+            // c = xmlObject.text()
+            // ename = (xmlObject/..).@name
+            // etype = (xmlObject/../..).@type)
+            contentInExternalFileConfigurationCursor = xmlObject.newCursor();
+            contentCursor = xmlObject.newCursor();
+            contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
+            contentContainerTypeCursor = xmlObject.selectPath(namespace + "$this/../..")[0].newCursor();
+
+            externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME);
+            externalizableContentType = contentContainerTypeCursor.getAttributeText(TYPE_QNAME);
+            // do the processing
+            if (featureIsDisabledOnNode(contentInExternalFileConfigurationCursor)) {
+                SoapUI.log.debug("Content '" + externalizableContentName + "' of type " + externalizableContentType + " : ");
+                SoapUI.log.debug("   does not want to use content in external file (mode is NONE) : skipping it.");
+                continue;
+            } else if (featureIsGloballyDisabled(contentInExternalFileConfigurationCursor, settings)) {
+                continue;
+            } else {
+                needsConversion = true;
+            }
+            if (externalizableContentType != null) {
+                updateConfigWithContentInExternalFileSupport(wsdlProject, settings, xmlObject, contentInExternalFileConfigurationCursor, contentCursor, contentContainerCursor, externalizableContentName, externalizableContentType, needsConversion);
+            }
+            contentCursor.dispose();
+            contentInExternalFileConfigurationCursor.dispose();
+            contentContainerCursor.dispose();
+            if (contentContainerTypeCursor != null) {
+                contentContainerTypeCursor.dispose();
+            }
+
+        }
+
+        xmlObjects.clear();
+        for (String path : EXTERNAL_DATA_PATHS) {
+            xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
+        }
+        for (XmlObject xmlObject : xmlObjects) {
+            // nodef = xmlObject
+            // c = xmlObject.text()
+            // ename = (xmlObject/..).nodename()
+            // etype = DATA
+            contentInExternalFileConfigurationCursor = xmlObject.newCursor();
+            contentCursor = xmlObject.newCursor();
+            contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
+
+            externalizableContentName = contentContainerCursor.getName().getLocalPart();
+            externalizableContentType = EXTERNAL_DATA_TYPE;
+            // do the processing
+            if (featureIsDisabledOnNode(contentInExternalFileConfigurationCursor)) {
+                SoapUI.log.debug("Content '" + externalizableContentName + "' of type " + externalizableContentType + " : ");
+                SoapUI.log.debug("   does not want to use content in external file (mode is NONE) : skipping it.");
+                continue;
+            } else if (featureIsGloballyDisabled(contentInExternalFileConfigurationCursor, settings)) {
+                continue;
+            } else {
+                needsConversion = true;
+            }
+            if (externalizableContentType != null) {
+                updateConfigWithContentInExternalFileSupport(wsdlProject, settings, xmlObject, contentInExternalFileConfigurationCursor, contentCursor, contentContainerCursor, externalizableContentName, externalizableContentType, needsConversion);
+            }
+            contentCursor.dispose();
+            contentInExternalFileConfigurationCursor.dispose();
+            contentContainerCursor.dispose();
+            if (contentContainerTypeCursor != null) {
+                contentContainerTypeCursor.dispose();
+            }
+
+        }
+
+        xmlObjects.clear();
+        for (String path : RESPONSECONTENT_MOCK_PATHS) {
+            xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
+        }
+        for (XmlObject xmlObject : xmlObjects) {
+            // nodef = xmlObject
+            // c = xmlObject.text()
+            // ename = (xmlObject/..).nodename()
+            // etype = RESPONSE_CONTENT
+            contentInExternalFileConfigurationCursor = xmlObject.newCursor();
+            contentCursor = xmlObject.newCursor();
+            contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
+
+            externalizableContentName = contentContainerCursor.getName().getLocalPart();
+            externalizableContentType = RESPONSE_CONTENT_TYPE;
+            // do the processing
+            if (featureIsDisabledOnNode(contentInExternalFileConfigurationCursor)) {
+                SoapUI.log.debug("Content '" + externalizableContentName + "' of type " + externalizableContentType + " : ");
+                SoapUI.log.debug("   does not want to use content in external file (mode is NONE) : skipping it.");
+                continue;
+            } else if (featureIsGloballyDisabled(contentInExternalFileConfigurationCursor, settings)) {
+                continue;
+            } else {
+                needsConversion = true;
+            }
+            if (externalizableContentType != null) {
+                updateConfigWithContentInExternalFileSupport(wsdlProject, settings, xmlObject, contentInExternalFileConfigurationCursor, contentCursor, contentContainerCursor, externalizableContentName, externalizableContentType, needsConversion);
+            }
+            contentCursor.dispose();
+            contentInExternalFileConfigurationCursor.dispose();
+            contentContainerCursor.dispose();
+            if (contentContainerTypeCursor != null) {
+                contentContainerTypeCursor.dispose();
+            }
+
+        }
+
+        xmlObjects.clear();
+        for (String path : RESPONSE_OR_REQUEST_PATHS) {
+            xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
+        }
+        for (XmlObject xmlObject : xmlObjects) {
+            // nodef = xmlObject
+            // c = xmlObject.text()
+            // ename = (xmlObject/../../..).@name
+            // etype = (xmlObject/../../..).@type
+            contentInExternalFileConfigurationCursor = xmlObject.newCursor();
+            contentCursor = xmlObject.newCursor();
+            contentContainerCursor = xmlObject.selectPath(namespace + "$this/../../..")[0].newCursor();
+            contentContainerTypeCursor = contentContainerCursor;
+
+            externalizableContentName = contentContainerCursor.getAttributeText(NAME_QNAME);
+            externalizableContentType = contentContainerTypeCursor.getAttributeText(TYPE_QNAME);
+            // do the processing
+            if (featureIsDisabledOnNode(contentInExternalFileConfigurationCursor)) {
+                SoapUI.log.debug("Content '" + externalizableContentName + "' of type " + externalizableContentType + " : ");
+                SoapUI.log.debug("   does not want to use content in external file (mode is NONE) : skipping it.");
+                continue;
+            } else if (featureIsGloballyDisabled(contentInExternalFileConfigurationCursor, settings)) {
+                continue;
+            } else {
+                needsConversion = true;
+            }
+            if (externalizableContentType != null) {
+                updateConfigWithContentInExternalFileSupport(wsdlProject, settings, xmlObject, contentInExternalFileConfigurationCursor, contentCursor, contentContainerCursor, externalizableContentName, externalizableContentType, needsConversion);
+            }
+            contentCursor.dispose();
+            contentInExternalFileConfigurationCursor.dispose();
+            contentContainerCursor.dispose();
+            if (contentContainerTypeCursor != null) {
+                contentContainerTypeCursor.dispose();
+            }
+
+        }
+
+        xmlObjects.clear();
+        for (String path : EVENT_HANDLER_PATHS) {
+            xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
+        }
+        for (XmlObject xmlObject : xmlObjects) {
+            // nodef = xmlObject
+            // c = xmlObject.text()
+            // ename = (xmlObject/..).nodename()
+            // etype = (xmlObject/..).@type
+            contentInExternalFileConfigurationCursor = xmlObject.newCursor();
+            contentCursor = xmlObject.newCursor();
+            contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
+            contentContainerTypeCursor = contentContainerCursor;
+
+            externalizableContentName = contentContainerCursor.getName().getLocalPart();
+            externalizableContentType = contentContainerTypeCursor.getAttributeText(TYPE_QNAME);
+            // do the processing
+            if (featureIsDisabledOnNode(contentInExternalFileConfigurationCursor)) {
+                SoapUI.log.debug("Content '" + externalizableContentName + "' of type " + externalizableContentType + " : ");
+                SoapUI.log.debug("   does not want to use content in external file (mode is NONE) : skipping it.");
+                continue;
+            } else if (featureIsGloballyDisabled(contentInExternalFileConfigurationCursor, settings)) {
+                continue;
+            } else {
                 needsConversion = true;
             }
 
             if (externalizableContentType != null) {
-                StringBuilder stringBuilder = computePathInProject(contentContainerCursor, externalizableContentName);
-                if (needsConversion) {
-                    SoapUI.log.debug("AUTO-CONVERT to content in external file : content " + externalizableContentName + " will be stored in an external file.");
-                }
-
-                ContentInExternalFileSupport contentInExternalFileSupport;
-
-                WsdlRequestConfig wsdlRequestConfig;
-                if (externalizableContentType.equals(REQUEST_TYPE)) {
-                    wsdlRequestConfig = (WsdlRequestConfig) xmlObject.changeType(WsdlRequestConfig.type);
-
-                    if (!wsdlRequestConfig.isSetExternalFilename()) {
-                        stringBuilder.append(WSDL_REQUEST_SUFFIX);
-
-                        // step does not yet use a file element, add it
-                        wsdlRequestConfig.setExternalFilename(PathUtils.normalizePath(stringBuilder.toString()));
-                        contentInExternalFileSupport = new ContentInExternalFileSupport(wsdlProject, wsdlRequestConfig.getExternalFilename(), settings);
-                        contentInExternalFileSupport.setContent(contentCursor.getTextValue());
-                        contentInExternalFileSupport.saveToExternalFile(false, false);
-
-                        SoapUI.log.debug("   external filename is '" + stringBuilder.toString() + "'");
-                        SoapUI.log.debug("   request externalFilename attribute set to '" + wsdlRequestConfig.getExternalFilename());
-                        if (needsConversion) {
-                            wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
-                        }
-                    } else {
-                        // check that filename is normalized and update config if not
-                        String normalizedFilename = PathUtils.normalizePath(wsdlRequestConfig.getExternalFilename());
-                        if (!normalizedFilename.equals(wsdlRequestConfig.getExternalFilename())) {
-                            wsdlRequestConfig.setExternalFilename(normalizedFilename);
-                            SoapUI.log.debug("   normalized externalFilename to '" + wsdlRequestConfig.getExternalFilename() + "'");
-                        }
-                    }
-                } else if (externalizableContentType.equals(GROOVY_TYPE)) {
-                    String externalFilenameFromAttribute = contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_QNAME);
-                    if (externalFilenameFromAttribute == null) {
-                        if (needsConversion) {
-                            contentInExternalFileConfigurationCursor.setAttributeText(EXTERNAL_FILENAME_BUILD_MODE_QNAME, ExternalFilenameBuildModeConfig.AUTO.toString());
-                        }
-                        stringBuilder.append(GROOVY_SCRIPT_SUFFIX);
-                        contentInExternalFileConfigurationCursor.setAttributeText(EXTERNAL_FILENAME_QNAME, PathUtils.normalizePath(stringBuilder.toString()));
-                        contentInExternalFileSupport = new ContentInExternalFileSupport(wsdlProject, contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_QNAME), settings);
-                        contentInExternalFileSupport.setContent(contentCursor.getTextValue());
-                        contentInExternalFileSupport.saveToExternalFile(false, false);
-
-                        SoapUI.log.debug("    external filename is '" + stringBuilder.toString() + "'");
-                        SoapUI.log.debug("    script externalFilename attribute set to '" + contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_QNAME));
-
-                    } else {
-                        // check that filename is normalized and update config if not
-                        String normalizedFilename = PathUtils.normalizePath(externalFilenameFromAttribute);
-                        if (!normalizedFilename.equals(contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_QNAME))) {
-                            contentInExternalFileConfigurationCursor.setAttributeText(EXTERNAL_FILENAME_QNAME, normalizedFilename);
-                            SoapUI.log.debug("   normalized externalFilename to '" + contentInExternalFileConfigurationCursor.getAttributeText(EXTERNAL_FILENAME_QNAME) + "'");
-                        }
-                    }
-                }
+                updateConfigWithContentInExternalFileSupport(wsdlProject, settings, xmlObject, contentInExternalFileConfigurationCursor, contentCursor, contentContainerCursor, externalizableContentName, externalizableContentType, needsConversion);
             }
             contentCursor.dispose();
             contentInExternalFileConfigurationCursor.dispose();
-            parentCursor.dispose();
             contentContainerCursor.dispose();
+            if (contentContainerTypeCursor != null) {
+                contentContainerTypeCursor.dispose();
+            }
         }
     }
 

@@ -249,7 +249,7 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
         SoapuiProjectDocumentConfig projectDocumentConfig = wsdlProjectAfterSave.getProjectDocument();
 
         List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
-        for (String path : ALL_PATHS_IN_CONFIG) {
+        for (String path : allPathsInConfig()) {
             xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
         }
 

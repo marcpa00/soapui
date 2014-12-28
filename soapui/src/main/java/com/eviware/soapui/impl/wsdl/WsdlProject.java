@@ -2090,7 +2090,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         SoapUI.log.debug("Clearing the textValue of content using an external file (unless they are flagged as not using content in external file).");
 
         List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
-        for (String path : ALL_PATHS_IN_CONFIG) {
+        for (String path : allPathsInConfig()) {
             xmlObjects.addAll(Arrays.asList(projectDocumentCopy.selectPath(CONFIG_NAMESPACE + "$this/" + path)));
         }
 
