@@ -19,6 +19,7 @@ package com.eviware.soapui.impl.wsdl;
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.*;
 import com.eviware.soapui.config.TestSuiteRunTypesConfig.Enum;
+import com.eviware.soapui.impl.support.ContentInExternalFile;
 import com.eviware.soapui.impl.support.ContentInExternalFileSupport;
 import com.eviware.soapui.impl.wsdl.loadtest.WsdlLoadTest;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
@@ -73,6 +74,7 @@ public class WsdlTestSuite extends AbstractTestPropertyHolderWsdlModelItem<TestS
     private SoapUIScriptEngine tearDownScriptEngine;
     private ContentInExternalFileSupport setupScriptContentInExternalFile;
     private ContentInExternalFileSupport tearDownScriptContentInExternalFile;
+    private ContentInExternalFileSupport reportScriptContentInExternalFile;
 
     public WsdlTestSuite(WsdlProject project, TestSuiteConfig config) {
         super(config, project, ICON_NAME);
@@ -106,6 +108,17 @@ public class WsdlTestSuite extends AbstractTestPropertyHolderWsdlModelItem<TestS
         if (ContentInExternalFileSupport.isEnabled()) {
             tearDownScriptContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.TEST_SUITE_TEARDOWN, scriptConfig, getSettings());
             tearDownScriptContentInExternalFile.initExternalFilenameSupport();
+        }
+
+        if (config.isSetReportScript()) {
+            scriptConfig = config.getReportScript();
+        } else if (ContentInExternalFileSupport.isEnabled()) {
+            scriptConfig = ScriptConfig.Factory.newInstance();
+            scriptConfig.setStringValue("");
+        }
+        if (ContentInExternalFileSupport.isEnabled()) {
+            reportScriptContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.TEST_SUITE_REPORT, scriptConfig, getSettings());
+            reportScriptContentInExternalFile.initExternalFilenameSupport();
         }
 
         List<TestCaseConfig> testCaseConfigs = config.getTestCaseList();

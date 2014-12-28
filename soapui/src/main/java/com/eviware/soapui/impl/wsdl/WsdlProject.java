@@ -149,6 +149,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
     private ContentInExternalFileSupport beforeSaveContentInExternalFile;
     private ContentInExternalFileSupport afterRunContentInExternalFile;
     private ContentInExternalFileSupport beforeRunContentInExternalFile;
+    private ContentInExternalFileSupport reportContentInExternalFile;
     private PropertyExpansionContext context = new DefaultPropertyExpansionContext(this);
     protected DefaultWssContainer wssContainer;
     protected OAuth2ProfileContainer oAuth2ProfileContainer;
@@ -456,6 +457,18 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
         if (ContentInExternalFileSupport.isEnabled()) {
             beforeSaveContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_BEFORE_SAVE, scriptConfig, getSettings());
             beforeSaveContentInExternalFile.initExternalFilenameSupport();
+        }
+
+        // REPORT
+        if (getConfig().isSetReportScript()) {
+            scriptConfig = getConfig().getReportScript();
+        } else if (ContentInExternalFileSupport.isEnabled()) {
+            scriptConfig = ScriptConfig.Factory.newInstance();
+            scriptConfig.setStringValue("");
+        }
+        if (ContentInExternalFileSupport.isEnabled()) {
+            reportContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.PROJECT_REPORT, scriptConfig, getSettings());
+            reportContentInExternalFile.initExternalFilenameSupport();
         }
 
         if (ContentInExternalFileSupport.isEnabled()) {

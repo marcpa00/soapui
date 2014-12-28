@@ -7,9 +7,9 @@ import com.eviware.soapui.impl.wsdl.WsdlTestSuite;
  * Enum for script category, i.e. on what this script is applied.
  */
 public enum ScriptCategory {
-    PROJECT_AFTER_LOAD, PROJECT_AFTER_RUN, PROJECT_BEFORE_SAVE, PROJECT_BEFORE_RUN,
+    PROJECT_AFTER_LOAD, PROJECT_AFTER_RUN, PROJECT_BEFORE_SAVE, PROJECT_BEFORE_RUN, PROJECT_REPORT,
     PROJECT_TEST_SUITE_SETUP, PROJECT_TEST_SUITE_TEARDOWN,
-    TEST_SUITE_SETUP, TEST_SUITE_TEARDOWN,
+    TEST_SUITE_SETUP, TEST_SUITE_TEARDOWN, TEST_SUITE_REPORT,
     TEST_CASE_TEARDOWN, TEST_CASE_SETUP,
     TEST_STEP, TEST_STEP_ASSERTION;
 
@@ -23,6 +23,8 @@ public enum ScriptCategory {
                 return "beforeSaveScript";
             case PROJECT_BEFORE_RUN:
                 return "beforeRunScript";
+            case PROJECT_REPORT:
+                return "projectReportScript";
             case PROJECT_TEST_SUITE_SETUP:
             case TEST_SUITE_SETUP:
             case TEST_CASE_SETUP:
@@ -31,6 +33,8 @@ public enum ScriptCategory {
             case TEST_SUITE_TEARDOWN:
             case TEST_CASE_TEARDOWN:
                 return "tearDownScript";
+            case TEST_SUITE_REPORT:
+                return "testSuiteReportScript";
             case TEST_STEP:
                 return "step";
             case TEST_STEP_ASSERTION:
@@ -50,6 +54,8 @@ public enum ScriptCategory {
                 return WsdlProject.BEFORE_SAVE_SCRIPT_PROPERTY;
             case PROJECT_BEFORE_RUN:
                 return WsdlProject.BEFORE_RUN_SCRIPT_PROPERTY;
+            case PROJECT_REPORT:
+                return "reportScript";
             case PROJECT_TEST_SUITE_SETUP:
             case TEST_SUITE_SETUP:
             case TEST_CASE_SETUP:
