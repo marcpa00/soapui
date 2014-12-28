@@ -2,6 +2,7 @@ package com.eviware.soapui.impl.support;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.ExternalFilenameBuildModeConfig;
+import com.eviware.soapui.config.ScriptConfig;
 import com.eviware.soapui.config.SoapuiProjectDocumentConfig;
 import com.eviware.soapui.config.WsdlInterfaceConfig;
 import com.eviware.soapui.config.WsdlRequestConfig;
@@ -256,6 +257,10 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = xmlObject.@name + "-" + xmlObject.nodename()
             // etype = GROOVY_SCRIPT
+            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+                continue;
+            }
+
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
             contentCursor = xmlObject.newCursor();
             contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
@@ -294,6 +299,9 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/../..).@name
             // etype = (xmlObject/../..).@type
+            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+                continue;
+            }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
             contentCursor = xmlObject.newCursor();
             contentContainerCursor = xmlObject.selectPath(namespace + "$this/../..")[0].newCursor();
@@ -336,6 +344,9 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = (xmlObject/request).text()
             // ename = (xmlObject/../..).@name
             // etype = (xmlObject/../..).@type
+            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+                continue;
+            }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
             contentCursor = xmlObject.newCursor();
             if (namespaceUri == null) {
@@ -382,6 +393,9 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/..).@name
             // etype = (xmlObject/../..).@type)
+            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+                continue;
+            }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
             contentCursor = xmlObject.newCursor();
             contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
@@ -420,6 +434,9 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/..).nodename()
             // etype = DATA
+            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+                continue;
+            }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
             contentCursor = xmlObject.newCursor();
             contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
@@ -457,6 +474,9 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/..).nodename()
             // etype = RESPONSE_CONTENT
+            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+                continue;
+            }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
             contentCursor = xmlObject.newCursor();
             contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
@@ -494,6 +514,9 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/../../..).@name
             // etype = (xmlObject/../../..).@type
+            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+                continue;
+            }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
             contentCursor = xmlObject.newCursor();
             contentContainerCursor = xmlObject.selectPath(namespace + "$this/../../..")[0].newCursor();
@@ -532,6 +555,9 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/..).nodename()
             // etype = (xmlObject/..).@type
+            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+                continue;
+            }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
             contentCursor = xmlObject.newCursor();
             contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
