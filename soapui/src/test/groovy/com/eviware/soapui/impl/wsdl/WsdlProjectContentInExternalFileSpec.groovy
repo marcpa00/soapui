@@ -70,18 +70,17 @@ class WsdlProjectContentInExternalFileSpec extends Specification {
         SoapUI.getSettings().setBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, true)
         SoapUI.getSettings().setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, true)
 
-        System.setProperty("user.dir", tempDir.absolutePath)
+        File workDir = new File(tempDir, projectDocumentFolder)
+        if (workDir.exists()) {
+            FileUtils.cleanDirectory(workDir)
+        } else {
+            FileUtils.forceMkdir(workDir)
+        }
+        System.setProperty("user.dir", workDir.absolutePath)
     }
 
-    def ensureWorkDirIsClean() {
-        File externalFileRoot = new File(new File(System.getProperty('user.dir')), projectDocumentFolder)
-        if (externalFileRoot.exists()) {
-            if (externalFileRoot.isDirectory()) {
-                FileUtils.deleteDirectory(externalFileRoot);
-            } else {
-                FileUtils.deleteQuietly(externalFileRoot);
-            }
-        }
+    def cleanupSpec() {
+        FileUtils.deleteDirectory(tempDir);
     }
 
     @Unroll
@@ -93,7 +92,6 @@ class WsdlProjectContentInExternalFileSpec extends Specification {
         def engine = new groovy.text.SimpleTemplateEngine()
         String projectXml = engine.createTemplate(template).make(binding).toString()
 
-        ensureWorkDirIsClean()
         InputStream projectInputStream = new ByteArrayInputStream(projectXml.stripIndent().getBytes("UTF-8"))
         WsdlProject wsdlProject = new WsdlProject(projectInputStream, null)
 
@@ -131,7 +129,7 @@ class WsdlProjectContentInExternalFileSpec extends Specification {
                         scriptCategory = ScriptCategory.PROJECT_REPORT
                         externalFilename = "a project with a ${name} script-${type}.groovy"
                         break;
-                    case 'suite' :
+                    case 'testSuite' :
                         contentInExternalFileSupport = wsdlProject.testSuiteList.first().reportScriptContentInExternalFile
                         scriptCategory = ScriptCategory.TEST_SUITE_REPORT
                         externalFilename = "project, suite with a ${name} script/${name}-${type}.groovy"
@@ -140,7 +138,7 @@ class WsdlProjectContentInExternalFileSpec extends Specification {
                 break;
             case 'setupScript':
                 switch (level) {
-                    case 'suite':
+                    case 'testSuite':
                         contentInExternalFileSupport = wsdlProject.testSuiteList.first().setupScriptContentInExternalFile
                         scriptCategory = ScriptCategory.TEST_SUITE_SETUP
                         externalFilename = "project, suite with a ${name} script/${name}-${type}.groovy"
@@ -149,7 +147,7 @@ class WsdlProjectContentInExternalFileSpec extends Specification {
                 break;
             case 'tearDownScript':
                 switch (level) {
-                    case 'suite':
+                    case 'testSuite':
                         contentInExternalFileSupport = wsdlProject.testSuiteList.first().tearDownScriptContentInExternalFile
                         scriptCategory = ScriptCategory.TEST_SUITE_TEARDOWN
                         externalFilename = "project, suite with a ${name} script/${name}-${type}.groovy"
@@ -180,9 +178,9 @@ class WsdlProjectContentInExternalFileSpec extends Specification {
         'beforeSave' | 'beforeSaveScript' | 'project' | 'log.info("in beforeSave script")'           | projectXmlTemplate.stripIndent()
         'report'     | 'reportScript'     | 'project' | 'log.info("in report script")'               | projectXmlTemplate.stripIndent()
 
-        'setup'      | 'setupScript'      | 'suite'   | 'log.info("in setupScript of testSuite")'    | projectSuiteXmlTemplate.stripIndent()
-        'tearDown'   | 'tearDownScript'   | 'suite'   | 'log.info("in tearDownScript of testSuite")' | projectSuiteXmlTemplate.stripIndent()
-        'report'     | 'reportScript'     | 'suite'   | 'log.info("in reportScript of testSuite")'   | projectSuiteXmlTemplate.stripIndent()
+        'setup'      | 'setupScript'      | 'testSuite'   | 'log.info("in setupScript of testSuite")'    | projectSuiteXmlTemplate.stripIndent()
+        'tearDown'   | 'tearDownScript'   | 'testSuite'   | 'log.info("in tearDownScript of testSuite")' | projectSuiteXmlTemplate.stripIndent()
+        'report'     | 'reportScript'     | 'testSuite'   | 'log.info("in reportScript of testSuite")'   | projectSuiteXmlTemplate.stripIndent()
 
     }
 }
