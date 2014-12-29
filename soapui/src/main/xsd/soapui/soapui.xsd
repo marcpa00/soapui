@@ -148,8 +148,6 @@
                 </xsd:attribute>
                 <xsd:attribute name="wsaVersion" type="tns:WsaVersionType"></xsd:attribute>
                 <xsd:attribute name="anonymous" type="tns:AnonymousType"></xsd:attribute>
-                <xsd:attribute name="externalFilenameBuildMode" type="tns:ExternalFilenameBuildMode"></xsd:attribute>
-                <xsd:attribute name="externalFilename" type="xsd:string"></xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
 
