@@ -8,10 +8,12 @@ import com.eviware.soapui.config.WsdlInterfaceConfig;
 import com.eviware.soapui.config.WsdlRequestConfig;
 import com.eviware.soapui.impl.settings.XmlBeansSettingsImpl;
 import com.eviware.soapui.impl.wsdl.WsdlProject;
+import com.eviware.soapui.impl.wsdl.WsdlRequest;
 import com.eviware.soapui.impl.wsdl.WsdlTestSuite;
 import com.eviware.soapui.impl.wsdl.support.PathUtils;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
 import com.eviware.soapui.impl.wsdl.teststeps.HttpTestRequestStep;
+import com.eviware.soapui.impl.wsdl.teststeps.Script;
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlGroovyScriptTestStep;
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequest;
 import com.eviware.soapui.impl.wsdl.teststeps.WsdlTestRequestStep;
@@ -165,28 +167,28 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
                 }
             }
         } else if (externalizableContentType.equals(REQUEST_RESPONSE_TYPE)) {
-            wsdlInterfaceConfig = (WsdlInterfaceConfig) contentInExternalFileConfigurationCursor.getObject().changeType(WsdlInterfaceConfig.type);
+            wsdlRequestConfig = (WsdlRequestConfig) contentInExternalFileConfigurationCursor.getObject().changeType(WsdlRequestConfig.type);
 
-            if (!wsdlInterfaceConfig.isSetExternalFilename()) {
+            if (!wsdlRequestConfig.isSetExternalFilename()) {
                 stringBuilder.append(WSDL_REQUEST_SUFFIX);
 
                 // step does not yet use a file element, add it
-                wsdlInterfaceConfig.setExternalFilename(PathUtils.normalizePath(stringBuilder.toString()));
-                contentInExternalFileSupport = new ContentInExternalFileSupport(wsdlProject, wsdlInterfaceConfig.getExternalFilename(), settings);
+                wsdlRequestConfig.setExternalFilename(PathUtils.normalizePath(stringBuilder.toString()));
+                contentInExternalFileSupport = new ContentInExternalFileSupport(wsdlProject, wsdlRequestConfig.getExternalFilename(), settings);
                 contentInExternalFileSupport.setContent(contentCursor.getTextValue());
                 contentInExternalFileSupport.saveToExternalFile(false, false);
 
                 SoapUI.log.debug("   external filename is '" + stringBuilder.toString() + "'");
-                SoapUI.log.debug("   request externalFilename attribute set to '" + wsdlInterfaceConfig.getExternalFilename());
+                SoapUI.log.debug("   request externalFilename attribute set to '" + wsdlRequestConfig.getExternalFilename());
                 if (needsConversion) {
-                    wsdlInterfaceConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
+                    wsdlRequestConfig.setExternalFilenameBuildMode(ExternalFilenameBuildModeConfig.AUTO);
                 }
             } else {
                 // check that filename is normalized and update config if not
-                String normalizedFilename = PathUtils.normalizePath(wsdlInterfaceConfig.getExternalFilename());
-                if (!normalizedFilename.equals(wsdlInterfaceConfig.getExternalFilename())) {
-                    wsdlInterfaceConfig.setExternalFilename(normalizedFilename);
-                    SoapUI.log.debug("   normalized externalFilename to '" + wsdlInterfaceConfig.getExternalFilename() + "'");
+                String normalizedFilename = PathUtils.normalizePath(wsdlRequestConfig.getExternalFilename());
+                if (!normalizedFilename.equals(wsdlRequestConfig.getExternalFilename())) {
+                    wsdlRequestConfig.setExternalFilename(normalizedFilename);
+                    SoapUI.log.debug("   normalized externalFilename to '" + wsdlRequestConfig.getExternalFilename() + "'");
                 }
             }
         } else if (externalizableContentType.equals(GROOVY_TYPE)) {
@@ -389,14 +391,14 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             xmlObjects.addAll(Arrays.asList(projectDocumentConfig.selectPath(namespace + "$this/" + path)));
         }
         for (XmlObject xmlObject : xmlObjects) {
-            // nodef = xmlObject
+            // nodef = xmlObject/..
             // c = xmlObject.text()
             // ename = (xmlObject/..).@name
             // etype = (xmlObject/../..).@type)
             if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
                 continue;
             }
-            contentInExternalFileConfigurationCursor = xmlObject.newCursor();
+            contentInExternalFileConfigurationCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
             contentCursor = xmlObject.newCursor();
             contentContainerCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
             contentContainerTypeCursor = xmlObject.selectPath(namespace + "$this/../..")[0].newCursor();
