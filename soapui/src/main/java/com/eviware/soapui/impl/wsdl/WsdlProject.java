@@ -2095,6 +2095,8 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
      * @param projectDocumentCopy The project XML document to modify
      */
     private void clearContentValuesForContentInExternalFile(SoapuiProjectDocumentConfig projectDocumentCopy) {
+        String namespace = CONFIG_NAMESPACE + " " + WSDL_NAMESPACE + " ";
+
         // When UISettings have USE_EXTERNAL_FILE and step does not override it to NONE :
         //
         //   for elements having an 'externalFilename' attribute, modify the project copy to clear out the
@@ -2104,12 +2106,12 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
 
         List<XmlObject> xmlObjects = new ArrayList<XmlObject>();
         for (String path : allPathsInConfig()) {
-            xmlObjects.addAll(Arrays.asList(projectDocumentCopy.selectPath(CONFIG_NAMESPACE + "$this/" + path)));
+            xmlObjects.addAll(Arrays.asList(projectDocumentCopy.selectPath(namespace + "$this/" + path)));
         }
 
         for (XmlObject xmlObject : xmlObjects) {
             XmlCursor contentCursor = xmlObject.newCursor();
-            XmlCursor parentCursor = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/..")[0].newCursor();
+            XmlCursor parentCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
 
             if (contentCursor == null || parentCursor == null) {
                 continue;
@@ -2131,7 +2133,7 @@ public class WsdlProject extends AbstractTestPropertyHolderWsdlModelItem<Project
             // Otherwise, we assume type is GROOVY_TYPE
             String externalizableContentType;
             if ("config".equals(parentCursor.getName().getLocalPart())) {
-                externalizableContentType = xmlObject.selectPath(CONFIG_NAMESPACE + "$this/../..")[0].newCursor().getAttributeText(TYPE_QNAME);
+                externalizableContentType = xmlObject.selectPath(namespace + "$this/../..")[0].newCursor().getAttributeText(TYPE_QNAME);
             } else {
                 externalizableContentType = GROOVY_TYPE;
             }
