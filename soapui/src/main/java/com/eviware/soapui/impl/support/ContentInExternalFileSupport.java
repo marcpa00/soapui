@@ -461,7 +461,7 @@ public class ContentInExternalFileSupport implements ModelItem {
         }
         if (externalFileRootPath != null && externalFileRootPath.endsWith(PROJECT_FILE_SUFFIX)) {
             externalFileRootPath = externalFileRootPath.replaceAll(PROJECT_FILE_SUFFIX, EXTERNAL_FILE_ROOT_PATH_SUFFIX);
-        } else {
+        } else if (externalFileRootPath != null && ! externalFileRootPath.endsWith(EXTERNAL_FILE_ROOT_PATH_SUFFIX)) {
             externalFileRootPath = externalFileRootPath + EXTERNAL_FILE_ROOT_PATH_SUFFIX;
         }
     }
