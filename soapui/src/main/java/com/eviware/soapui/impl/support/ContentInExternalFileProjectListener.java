@@ -259,7 +259,7 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = xmlObject.@name + "-" + xmlObject.nodename()
             // etype = GROOVY_SCRIPT
-            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+            if (xmlObject instanceof ScriptConfig && ((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
                 continue;
             }
 
@@ -301,7 +301,7 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/../..).@name
             // etype = (xmlObject/../..).@type
-            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+            if (xmlObject instanceof ScriptConfig && ((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
                 continue;
             }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
@@ -346,7 +346,7 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = (xmlObject/request).text()
             // ename = (xmlObject/../..).@name
             // etype = (xmlObject/../..).@type
-            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+            if (xmlObject instanceof ScriptConfig && ((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
                 continue;
             }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
@@ -395,7 +395,7 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/..).@name
             // etype = (xmlObject/../..).@type)
-            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+            if (xmlObject instanceof ScriptConfig && ((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
                 continue;
             }
             contentInExternalFileConfigurationCursor = xmlObject.selectPath(namespace + "$this/..")[0].newCursor();
@@ -436,7 +436,7 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/..).nodename()
             // etype = DATA
-            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+            if (xmlObject instanceof ScriptConfig && ((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
                 continue;
             }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
@@ -476,7 +476,7 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/..).nodename()
             // etype = RESPONSE_CONTENT
-            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+            if (xmlObject instanceof ScriptConfig && ((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
                 continue;
             }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
@@ -516,7 +516,7 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/../../..).@name
             // etype = (xmlObject/../../..).@type
-            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+            if (xmlObject instanceof ScriptConfig && ((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
                 continue;
             }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
@@ -557,7 +557,7 @@ public class ContentInExternalFileProjectListener extends ProjectListenerAdapter
             // c = xmlObject.text()
             // ename = (xmlObject/..).nodename()
             // etype = (xmlObject/..).@type
-            if (((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
+            if (xmlObject instanceof ScriptConfig && ((ScriptConfig)xmlObject).getStringValue().trim().isEmpty() && ! ((ScriptConfig) xmlObject).isSetExternalFilename()) {
                 continue;
             }
             contentInExternalFileConfigurationCursor = xmlObject.newCursor();
