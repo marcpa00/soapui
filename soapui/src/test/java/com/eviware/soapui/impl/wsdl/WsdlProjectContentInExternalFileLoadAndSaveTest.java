@@ -65,6 +65,14 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
         SoapUI.getSettings().setBoolean(UISettings.CONTENT_IN_EXTERNAL_FILE, true);
         SoapUI.getSettings().setBoolean(UISettings.ALSO_KEEP_IN_PROJECT_WHEN_CONTENT_IN_EXTERNAL_FILE, true);
         SoapUI.getSettings().setBoolean(UISettings.AUTO_CONVERT_CONTENT_TO_USE_EXTERNAL_FILE, true);
+
+        File workDir = new File(TEMPORARY_FOLDER, PROJECT_NAME);
+        if (workDir.exists()) {
+            FileUtils.cleanDirectory(workDir);
+        } else {
+            FileUtils.forceMkdir(workDir);
+        }
+        System.setProperty("user.dir", workDir.getAbsolutePath());
     }
 
     @After
