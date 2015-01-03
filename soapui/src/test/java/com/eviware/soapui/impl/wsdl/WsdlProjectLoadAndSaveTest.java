@@ -34,15 +34,25 @@ public class WsdlProjectLoadAndSaveTest extends StubbedDialogsTestBase {
             = WsdlProjectLoadAndSaveTest.class.getResource(SAMPLE_PROJECT_RELATIVE_PATH).getPath();
 
     private final InputStream sampleProjectInputSteam = getClass().getResourceAsStream(SAMPLE_PROJECT_RELATIVE_PATH);
+    private static final String initialUserDir = new File(System.getProperty("user.dir")).getAbsolutePath();
 
     @Before
     public void setup() throws IOException {
         resetSampleProjectFileToWritable();
+        File workDir = new File(TEMPORARY_FOLDER, PROJECT_NAME);
+        if (workDir.exists()) {
+            FileUtils.cleanDirectory(workDir);
+        } else {
+            FileUtils.forceMkdir(workDir);
+        }
+        System.setProperty("user.dir", workDir.getAbsolutePath());
+
     }
 
     @AfterClass
     public static void teardown() throws IOException {
         FileUtils.deleteDirectory(TEMPORARY_FOLDER);
+        System.setProperty("user.dir", initialUserDir);
     }
 
     @Test

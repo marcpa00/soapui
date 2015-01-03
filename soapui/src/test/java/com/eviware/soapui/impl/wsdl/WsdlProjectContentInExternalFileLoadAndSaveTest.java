@@ -57,6 +57,7 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
             = WsdlProjectContentInExternalFileLoadAndSaveTest.class.getResource(SAMPLE_PROJECT_RELATIVE_PATH).getPath();
 
     private final InputStream sampleProjectInputSteam = getClass().getResourceAsStream(SAMPLE_PROJECT_RELATIVE_PATH);
+    private static final String initialUserDir = new File(System.getProperty("user.dir")).getAbsolutePath();
 
     @Before
     public void setup() throws IOException {
@@ -94,6 +95,7 @@ public class WsdlProjectContentInExternalFileLoadAndSaveTest extends StubbedDial
     @AfterClass
     public static void teardown() throws IOException {
         FileUtils.deleteDirectory(TEMPORARY_FOLDER);
+        System.setProperty("user.dir", initialUserDir);
     }
 
     @Test
