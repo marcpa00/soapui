@@ -94,6 +94,8 @@ public class WsdlTestSuite extends AbstractTestPropertyHolderWsdlModelItem<TestS
 
         if (ContentInExternalFileSupport.isEnabled()) {
             setupScriptContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.TEST_SUITE_SETUP, scriptConfig, getSettings());
+            addPropertyChangeListener(SETUP_SCRIPT_PROPERTY, setupScriptContentInExternalFile.getPropertyChangeListener());
+            addPropertyChangeListener(SETUP_SCRIPT_PROPERTY_RELOAD, setupScriptContentInExternalFile.getPropertyChangeListener());
             setupScriptContentInExternalFile.initExternalFilenameSupport();
         }
 
@@ -105,6 +107,8 @@ public class WsdlTestSuite extends AbstractTestPropertyHolderWsdlModelItem<TestS
         }
         if (ContentInExternalFileSupport.isEnabled()) {
             tearDownScriptContentInExternalFile = new ContentInExternalFileSupport(this, ScriptCategory.TEST_SUITE_TEARDOWN, scriptConfig, getSettings());
+            addPropertyChangeListener(TEARDOWN_SCRIPT_PROPERTY, tearDownScriptContentInExternalFile.getPropertyChangeListener());
+            addPropertyChangeListener(TEARDOWN_SCRIPT_PROPERTY_RELOAD, tearDownScriptContentInExternalFile.getPropertyChangeListener());
             tearDownScriptContentInExternalFile.initExternalFilenameSupport();
         }
 
